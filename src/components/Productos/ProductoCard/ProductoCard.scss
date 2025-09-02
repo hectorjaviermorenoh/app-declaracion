@@ -1,0 +1,13 @@
+.producto-card {
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+
+  &.cargado {
+    border: 2px solid green;
+    background-color: #f0fff0;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

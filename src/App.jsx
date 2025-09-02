@@ -1,27 +1,33 @@
 import React from 'react'
 import { Container } from 'react-bootstrap'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
+import AppNavbar from './components/Navbar/Navbar'
 
-function Home() {
-  return <h1>Pantalla Principal - Productos</h1>
-}
+import AddProducto from "./pages/AddProducto";
+import Productos from "./pages/Productos/Productos";
+
 
 function Config() {
-  return <h1>Configuración</h1>
+  return (
+    <>
+    <h1>Configuración</h1>
+    <h2>prueba de javier</h2>
+    </>
+  )
 }
 
 function App() {
   return (
-    <Container className="mt-4">
-      <nav>
-        <Link to="/">Home</Link> |{" "}
-        <Link to="/config">Config</Link>
-      </nav>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/config" element={<Config />} />
-      </Routes>
-    </Container>
+    <>
+      <AppNavbar />
+      <Container className="mt-4">
+        <Routes>
+          <Route path="/" element={<Productos />} />
+          <Route path="/config" element={<Config />} />
+          <Route path="/productos/add" element={<AddProducto />} />
+        </Routes>
+      </Container>
+    </>
   )
 }
 

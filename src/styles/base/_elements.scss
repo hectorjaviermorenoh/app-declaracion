@@ -1,7 +1,10 @@
-button {
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: $font-size-base;
-  cursor: pointer;
+@use "variables" as *;
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-base;
+  color: $color-primary;
 }
-a { text-decoration: none; color: $color-primary; }
+
+p {
+  margin-bottom: 1rem;
+}
