@@ -6,6 +6,11 @@ import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
 import "./Productos.scss";
 
+// email autorizado para reemplazar archivos (configurable)
+const AUTH_REEMPLAZO_EMAIL = "hectorjaviermorenoh@gmail.com";
+// año que se declara: año actual - 1 (si estamos en 2025, será 2024)
+const anioAnterior = new Date().getFullYear() - 1;
+
 export default function Productos() {
   const { backendUrl } = useBackendUrl();
   const [productos, setProductos] = useState([]);
@@ -38,18 +43,57 @@ export default function Productos() {
 
   }, [backendUrl]);
 
+  const fetchArchivosPorAnio = async (anio) => {
+    if (!backendUrl) return [];
+    try {
+      const resp = await fetch(`${backendUrl}?accion=getArchivosPorAnio&anio=${anio}`);
+      const data = await resp.json();
+      if (data && data.status === "ok") return data.archivos || [];
+      return data.archivos || [];
+    } catch (err) {
+      console.error("❌ Error al obtener archivos por año:", err);
+      return [];
+    }
+  };
+
+
   const fetchProductos = async () => {
     try {
       setLoading(true);
+      // 1. obtener productos
       const resp = await fetch(`${backendUrl}?accion=getProductos`);
       const data = await resp.json();
-      setProductos(data.data);
+      const productosRaw = data.data || [];
+
+      // 2. obtener archivos del año anterior
+      const archivos = await fetchArchivosPorAnio(String(anioAnterior)); // usar string por compatibilidad
+
+      // 3. cruzar y marcar estado
+      const productosConEstado = productosRaw.map((prod) => {
+        // buscar si existe un registro para este producto en ese año
+        const archivoAsociado =
+          archivos.find(a => {
+            // comparar productoId y año (string/number)
+            const mismoProducto = a.productoId === prod.id || a.productoId === prod.id;
+            const mismoAnio = String(a.anio) === String(anioAnterior);
+            return mismoProducto && mismoAnio;
+          }) || null;
+
+        return {
+          ...prod,
+          tieneArchivo: !!archivoAsociado,
+          archivoInfo: archivoAsociado,
+        };
+      });
+
+      setProductos(productosConEstado);
     } catch (err) {
       console.error("❌ Error cargando productos:", err);
     } finally {
       setLoading(false);
     }
   };
+
 
   // ✅ Abrir modal de subir archivo
   const handleUpload = (producto) => {
@@ -66,8 +110,16 @@ export default function Productos() {
     setArchivo(file);
 
     if (aplicaVarios) {
+      // abrir modal de seleccionar varios productos
       setShowSelectModal(true);
+      return;
+    }
+
+    // si no aplica para varios y el producto ya tenía archivo, llamar replaceArchivo
+    if (selectedProducto && selectedProducto.tieneArchivo) {
+      await replaceArchivo(selectedProducto.id, anio, file);
     } else {
+      // caso normal: subir archivo (single product)
       await subirArchivo([selectedProducto.id], anio, file);
     }
   };
@@ -131,6 +183,56 @@ export default function Productos() {
       setLoading(false);
     }
   };
+  const replaceArchivo = async (productoId, anio, file) => {
+    if (!backendUrl) return alert("⚠️ Configure primero la URL del backend");
+    if (!file) return alert("⚠️ Seleccione un archivo para reemplazar");
+
+    setLoading(true);
+    try {
+      const base64 = await toBase64(file);
+
+      const payload = {
+        accion: "replaceArchivo",
+        productoId,
+        anio: String(anio),
+        correo: AUTH_REEMPLAZO_EMAIL,
+        archivo: {
+          nombre: file.name,
+          base64,
+          tipo: file.type,
+        },
+      };
+
+      const resp = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await resp.json();
+      console.log("🔁 Respuesta replaceArchivo:", data);
+
+      if (data.status === "ok" || data.success === true) {
+        setToastVariant("success");
+        setToastMsg("✅ Archivo reemplazado correctamente");
+        setShowToast(true);
+        await fetchProductos();
+      } else {
+        setToastVariant("danger");
+        setToastMsg("❌ Error al reemplazar: " + (data.mensaje || data.message || "sin detalle"));
+        setShowToast(true);
+        console.error("replaceArchivo error", data);
+      }
+    } catch (err) {
+      setToastVariant("danger");
+      setToastMsg("❌ Error en replaceArchivo");
+      setShowToast(true);
+      console.error("❌ Error reemplazando archivo:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // 🔧 Helper: archivo a Base64
   const toBase64 = (file) =>
@@ -141,6 +243,8 @@ export default function Productos() {
       reader.onerror = (error) => reject(error);
     });
 
+    console.log("productos", productos)
+
   return (
     <>
       <Container className="productos-page">
@@ -148,17 +252,39 @@ export default function Productos() {
         <Row>
           {productos.map((prod) => (
             <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
-              <Card className="producto-card">
+              <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
                 <Card.Body>
                   <Card.Title>{prod.nombre}</Card.Title>
                   <Card.Text>{prod.descripcion}</Card.Text>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleUpload(prod)}
-                  >
-                    Subir Archivo
-                  </Button>
+
+                  {prod.tieneArchivo ? (
+                    <>
+                      <p className="mb-2 hector">
+                        <small>
+                          Archivo ({prod.archivoInfo?.anio}):{" "}
+                          <a href={prod.archivoInfo?.link} target="_blank" rel="noopener noreferrer">
+                            {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
+                          </a>
+                        </small>
+                      </p>
+
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        onClick={() => handleUpload(prod)}
+                      >
+                        Modificar archivo
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleUpload(prod)}
+                    >
+                      Subir Archivo
+                    </Button>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
@@ -199,3 +325,8 @@ export default function Productos() {
     </>
   );
 }
+
+
+
+
+
