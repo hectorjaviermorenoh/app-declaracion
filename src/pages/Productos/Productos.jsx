@@ -105,7 +105,7 @@ export default function Productos() {
   };
 
   // ✅ Confirmación en primer modal
-  const handleUploadConfirm = async (anio, aplicaVarios, file) => {
+  const handleUploadConfirm = async (anio, aplicaVarios, file, replaceOnlyThis) => {
     setShowUploadModal(false);
     setAnioSeleccionado(anio);
     setArchivo(file);
@@ -118,7 +118,7 @@ export default function Productos() {
 
     // si no aplica para varios y el producto ya tenía archivo, llamar replaceArchivo
     if (selectedProducto && selectedProducto.tieneArchivo) {
-      await replaceArchivo(selectedProducto.id, anio, file);
+      await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
     } else {
       // caso normal: subir archivo (single product)
       await subirArchivo([selectedProducto.id], anio, file);
@@ -184,7 +184,56 @@ export default function Productos() {
       setLoading(false);
     }
   };
-  const replaceArchivo = async (productoId, anio, file) => {
+  // const replaceArchivo = async (productoId, anio, file) => {
+  //   if (!backendUrl) return alert("⚠️ Configure primero la URL del backend");
+  //   if (!file) return alert("⚠️ Seleccione un archivo para reemplazar");
+
+  //   setLoading(true);
+  //   try {
+  //     const base64 = await toBase64(file);
+
+  //     const payload = {
+  //       accion: "replaceArchivo",
+  //       productoId,
+  //       anio: String(anio),
+  //       correo: AUTH_REEMPLAZO_EMAIL,
+  //       archivo: {
+  //         nombre: file.name,
+  //         base64,
+  //         tipo: file.type,
+  //       },
+  //     };
+
+  //     const resp = await fetch(backendUrl, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     const data = await resp.json();
+  //     console.log("🔁 Respuesta replaceArchivo:", data);
+
+  //     if (data.status === "ok" || data.success === true) {
+  //       setToastVariant("success");
+  //       setToastMsg("✅ Archivo reemplazado correctamente");
+  //       setShowToast(true);
+  //       await fetchProductos();
+  //     } else {
+  //       setToastVariant("danger");
+  //       setToastMsg("❌ Error al reemplazar: " + (data.mensaje || data.message || "sin detalle"));
+  //       setShowToast(true);
+  //       console.error("replaceArchivo error", data);
+  //     }
+  //   } catch (err) {
+  //     setToastVariant("danger");
+  //     setToastMsg("❌ Error en replaceArchivo");
+  //     setShowToast(true);
+  //     console.error("❌ Error reemplazando archivo:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const replaceArchivo = async (productoId, anio, file, replaceOnlyThis = false) => {
     if (!backendUrl) return alert("⚠️ Configure primero la URL del backend");
     if (!file) return alert("⚠️ Seleccione un archivo para reemplazar");
 
@@ -197,6 +246,7 @@ export default function Productos() {
         productoId,
         anio: String(anio),
         correo: AUTH_REEMPLAZO_EMAIL,
+        replaceOnlyThis,   // 👈 bandera
         archivo: {
           nombre: file.name,
           base64,
@@ -233,6 +283,8 @@ export default function Productos() {
       setLoading(false);
     }
   };
+
+
   // 🔧 Helper: archivo a Base64
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -306,6 +358,8 @@ export default function Productos() {
               : ""             // para subir archivo normal lo dejamos vacío
           }
         />
+
+
 
         <SelectProductosModal
           show={showSelectModal}

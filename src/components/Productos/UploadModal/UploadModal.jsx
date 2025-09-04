@@ -6,6 +6,8 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
   const [anio, setAnio] = useState("");
   const [aplicaVarios, setAplicaVarios] = useState(false);
   const [file, setFile] = useState(null);
+  const [replaceOnlyThis, setReplaceOnlyThis] = useState(false);
+
 
   // 🔧 Cuando cambie el anioDefault (ej. al abrir modal), actualizamos el estado
   React.useEffect(() => {
@@ -17,8 +19,9 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
       alert("⚠️ Debe seleccionar año y archivo");
       return;
     }
-    onConfirm(anio, aplicaVarios, file);
+    onConfirm(anio, aplicaVarios, file, replaceOnlyThis);
   };
+
 
   return (
     <Modal show={show} onHide={onClose} centered>
@@ -48,15 +51,6 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
               onChange={(e) => setFile(e.target.files[0])}
             />
           </Form.Group>
-
-          {/* <Form.Group className="mt-3">
-            <Form.Check
-              type="checkbox"
-              label="Este archivo aplica a varios productos"
-              checked={aplicaVarios}
-              onChange={(e) => setAplicaVarios(e.target.checked)}
-            />
-          </Form.Group> */}
           <Form.Group className="mt-3">
             {title !== "Remplazar archivo" && (
               <Form.Check
@@ -67,6 +61,18 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
               />
             )}
           </Form.Group>
+
+          <Form.Group className="mt-3">
+            {title === "Remplazar archivo" && (
+              <Form.Check
+                type="checkbox"
+                label="Reemplazar solo en este producto"
+                checked={replaceOnlyThis}
+                onChange={(e) => setReplaceOnlyThis(e.target.checked)}
+              />
+            )}
+          </Form.Group>
+
 
         </Form>
       </Modal.Body>
