@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useState,  } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import "./UploadModal.scss";
 
-export default function UploadModal({ show, onClose, onConfirm }) {
+export default function UploadModal({ show, onClose, onConfirm, title, anioDefault }) {
   const [anio, setAnio] = useState("");
   const [aplicaVarios, setAplicaVarios] = useState(false);
   const [file, setFile] = useState(null);
+
+  // 🔧 Cuando cambie el anioDefault (ej. al abrir modal), actualizamos el estado
+  React.useEffect(() => {
+    setAnio(anioDefault || "");
+  }, [anioDefault]);
 
   const handleSubmit = () => {
     if (!anio || !file) {
@@ -18,7 +23,10 @@ export default function UploadModal({ show, onClose, onConfirm }) {
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Subir Archivo</Modal.Title>
+        {/* <Modal.Title>{title}</Modal.Title> */}
+        <Modal.Title>
+          {title === "Remplazar archivo" ? "Reemplazar archivo" : "Subir archivo"}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
@@ -26,9 +34,10 @@ export default function UploadModal({ show, onClose, onConfirm }) {
             <Form.Label>Año</Form.Label>
             <Form.Control
               type="number"
-              placeholder="Ej: 2024"
+              placeholder={`Ejm: ${new Date().getFullYear() - 1}`}
               value={anio}
               onChange={(e) => setAnio(e.target.value)}
+              disabled={title === "Remplazar archivo"} // 👈 bloqueamos cuando es reemplazo
             />
           </Form.Group>
 
@@ -40,20 +49,39 @@ export default function UploadModal({ show, onClose, onConfirm }) {
             />
           </Form.Group>
 
-          <Form.Group className="mt-3">
+          {/* <Form.Group className="mt-3">
             <Form.Check
               type="checkbox"
               label="Este archivo aplica a varios productos"
               checked={aplicaVarios}
               onChange={(e) => setAplicaVarios(e.target.checked)}
             />
+          </Form.Group> */}
+          <Form.Group className="mt-3">
+            {title !== "Remplazar archivo" && (
+              <Form.Check
+                type="checkbox"
+                label="Este archivo aplica a varios productos"
+                checked={aplicaVarios}
+                onChange={(e) => setAplicaVarios(e.target.checked)}
+              />
+            )}
           </Form.Group>
+
         </Form>
       </Modal.Body>
-      <Modal.Footer>
+
+      {/* <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>
         <Button variant="primary" onClick={handleSubmit}>Subir</Button>
+      </Modal.Footer> */}
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+        <Button variant="primary" onClick={handleSubmit}>
+          {title === "Remplazar archivo" ? "Reemplazar" : "Subir"}
+        </Button>
       </Modal.Footer>
+
     </Modal>
   );
 }

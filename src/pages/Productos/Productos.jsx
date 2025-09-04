@@ -22,6 +22,7 @@ export default function Productos() {
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [archivo, setArchivo] = useState(null);
   const [anioSeleccionado, setAnioSeleccionado] = useState("");
+  const [showTitle, setshowTitle] = useState("");
 
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
@@ -232,8 +233,6 @@ export default function Productos() {
       setLoading(false);
     }
   };
-
-
   // 🔧 Helper: archivo a Base64
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -242,8 +241,6 @@ export default function Productos() {
       reader.onload = () => resolve(reader.result.split(",")[1]);
       reader.onerror = (error) => reject(error);
     });
-
-    console.log("productos", productos)
 
   return (
     <>
@@ -271,7 +268,10 @@ export default function Productos() {
                       <Button
                         variant="warning"
                         size="sm"
-                        onClick={() => handleUpload(prod)}
+                        onClick={() => {
+                          handleUpload(prod)
+                          setshowTitle("Remplazar archivo");
+                        } }
                       >
                         Modificar archivo
                       </Button>
@@ -280,7 +280,10 @@ export default function Productos() {
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => handleUpload(prod)}
+                      onClick={() => {
+                        handleUpload(prod)
+                        setshowTitle("Subir Archivo");
+                      } }
                     >
                       Subir Archivo
                     </Button>
@@ -296,6 +299,12 @@ export default function Productos() {
           show={showUploadModal}
           onClose={() => setShowUploadModal(false)}
           onConfirm={handleUploadConfirm}
+          title={showTitle}
+          anioDefault={
+            showTitle === "Remplazar archivo"
+              ? anioAnterior   // 👈 le mandamos el año calculado
+              : ""             // para subir archivo normal lo dejamos vacío
+          }
         />
 
         <SelectProductosModal
