@@ -5,10 +5,12 @@ import AddProductoModal from "../AddProductoModal/AddProductoModal";
 
 import { Link } from "react-router-dom";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
+import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
 import "./Navbar.scss";
 
 function AppNavbar() {
   const { backendUrl, saveBackendUrl } = useBackendUrl();
+  const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
   const [showModal, setShowModal] = useState(false);
   const [tempUrl, setTempUrl] = useState(backendUrl || "");
   const [showToast, setShowToast] = useState(false);
@@ -106,7 +108,8 @@ function AppNavbar() {
         show={showAddModal}
         onHide={() => setShowAddModal(false)}
         onProductoAgregado={() => {
-          // puedes emitir un evento o refrescar productos desde aquí
+          refreshProductos();   // ✅ ahora refresca el listado global
+          setShowAddModal(false); // cerramos el modal
         }}
       />
 
