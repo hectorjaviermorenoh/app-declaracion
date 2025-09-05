@@ -18,6 +18,7 @@ export default function Productos() {
   const { backendUrl } = useBackendUrl();
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
 
   // Estados para flujo de subida
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -30,6 +31,135 @@ export default function Productos() {
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    // Leer posición guardada
+    const savedPos = localStorage.getItem("btnAddProductoPos");
+    if (savedPos) {
+      setBtnPos(JSON.parse(savedPos));
+    }
+  }, []);
+
+  // const handleDragEnd = (e) => {
+  //   const newPos = {
+  //     top: e.clientY - 20,
+  //     left: e.clientX - 20,
+  //     right: "auto",
+  //   };
+  //   setBtnPos(newPos);
+  //   localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
+  // };
+
+  // const handleDragEnd = (e) => {
+  //   const btnWidth = 45;   // tamaño del botón
+  //   const btnHeight = 45;
+  //   const padding = 10;    // margen mínimo respecto a los bordes
+
+  //   const viewportWidth = window.innerWidth;
+  //   const viewportHeight = window.innerHeight;
+
+  //   // Posición calculada
+  //   let newLeft = e.clientX - btnWidth / 2;
+  //   let newTop = e.clientY - btnHeight / 2;
+
+  //   // --- 🔒 Límites ---
+  //   if (newLeft < padding) newLeft = padding;
+  //   if (newTop < padding) newTop = padding;
+  //   if (newLeft + btnWidth > viewportWidth - padding)
+  //     newLeft = viewportWidth - btnWidth - padding;
+  //   if (newTop + btnHeight > viewportHeight - padding)
+  //     newTop = viewportHeight - btnHeight - padding;
+
+  //   const newPos = {
+  //     top: newTop,
+  //     left: newLeft,
+  //     right: "auto",
+  //   };
+
+  //   setBtnPos(newPos);
+  //   localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
+  // };
+
+  // const handleDragEnd = (e) => {
+  //   const btnWidth = 45;
+  //   const btnHeight = 45;
+  //   const padding = 10;
+
+  //   const viewportWidth = window.innerWidth;
+  //   const viewportHeight = window.innerHeight;
+
+  //   // Posición calculada al soltar
+  //   let newLeft = e.clientX - btnWidth / 2;
+  //   let newTop = e.clientY - btnHeight / 2;
+
+  //   // --- Límites básicos ---
+  //   if (newLeft < padding) newLeft = padding;
+  //   if (newTop < padding) newTop = padding;
+  //   if (newLeft + btnWidth > viewportWidth - padding)
+  //     newLeft = viewportWidth - btnWidth - padding;
+  //   if (newTop + btnHeight > viewportHeight - padding)
+  //     newTop = viewportHeight - btnHeight - padding;
+
+  //   // --- 🧲 Snap a la esquina más cercana ---
+  //   const middleX = viewportWidth / 2;
+  //   const middleY = viewportHeight / 2;
+
+  //   let finalLeft, finalTop;
+
+  //   if (newLeft < middleX) {
+  //     // lado izquierdo
+  //     finalLeft = padding;
+  //   } else {
+  //     // lado derecho
+  //     finalLeft = viewportWidth - btnWidth - padding;
+  //   }
+
+  //   if (newTop < middleY) {
+  //     // arriba
+  //     finalTop = padding;
+  //   } else {
+  //     // abajo
+  //     finalTop = viewportHeight - btnHeight - padding;
+  //   }
+
+  //   const newPos = {
+  //     top: finalTop,
+  //     left: finalLeft,
+  //     right: "auto",
+  //   };
+
+  //   setBtnPos(newPos);
+  //   localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
+  // };
+
+  const handleDragEnd = (e) => {
+    const btnWidth = 45;
+    const btnHeight = 45;
+    const padding = 10;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Posición al soltar
+    let newLeft = e.clientX - btnWidth / 2;
+    let newTop = e.clientY - btnHeight / 2;
+
+    // Mantener dentro de la pantalla
+    if (newLeft < padding) newLeft = padding;
+    if (newTop < padding) newTop = padding;
+    if (newLeft + btnWidth > viewportWidth - padding)
+      newLeft = viewportWidth - btnWidth - padding;
+    if (newTop + btnHeight > viewportHeight - padding)
+      newTop = viewportHeight - btnHeight - padding;
+
+    const newPos = { top: newTop, left: newLeft, right: "auto" };
+
+    setBtnPos(newPos);
+    localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
+  };
+
+
+
 
 
   // ✅ Cargar productos al inicio
@@ -304,6 +434,21 @@ export default function Productos() {
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
           <Button
+            className="btn-add-producto fab-move"
+            style={{
+              top: btnPos.top,
+              left: btnPos.left,
+              right: btnPos.right,
+              position: "fixed",
+            }}
+            draggable
+            onDragEnd={handleDragEnd}
+            onClick={() => navigate("/productos/add")}
+            title="Adicionar Producto"
+          >
+            +
+          </Button>
+          {/* <Button
             className="btn-add-producto"
             draggable
             onDragEnd={(e) => {
@@ -317,7 +462,7 @@ export default function Productos() {
             title="Adicionar Producto"
           >
             +
-          </Button>
+          </Button> */}
 
           {/* <Button
             className="btn-add-producto"
