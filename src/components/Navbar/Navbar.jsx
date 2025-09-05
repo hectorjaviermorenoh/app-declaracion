@@ -14,6 +14,8 @@ function AppNavbar() {
   const [showModal, setShowModal] = useState(false);
   const [tempUrl, setTempUrl] = useState(backendUrl || "");
   const [showToast, setShowToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastVariant, setToastVariant] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [show, setShow] = useState(false);
@@ -104,12 +106,15 @@ function AppNavbar() {
         </Modal.Footer>
       </Modal>
 
-      <AddProductoModal
+        <AddProductoModal
         show={showAddModal}
         onHide={() => setShowAddModal(false)}
         onProductoAgregado={() => {
-          refreshProductos();   // ✅ ahora refresca el listado global
-          setShowAddModal(false); // cerramos el modal
+          refreshProductos();   // ✅ refresca el contexto
+          setShowAddModal(false); // cierra modal
+          setToastVariant("success");
+          setToastMsg("✅ Producto agregado correctamente");
+         setShowToast(true);
         }}
       />
 
@@ -117,17 +122,17 @@ function AppNavbar() {
       {/* Toast de confirmación */}
       <ToastContainer position="bottom-end" className="p-3">
         <Toast
-          bg="success"
+          bg={toastVariant}
           show={showToast}
           autohide
           delay={3000}
           onClose={() => setShowToast(false)}
         >
           <Toast.Header>
-            <strong className="me-auto">Configuración</strong>
+            <strong className="me-auto">Notificación</strong>
           </Toast.Header>
           <Toast.Body className="text-white">
-            ✅ URL del backend guardada correctamente.
+            {toastMsg}
           </Toast.Body>
         </Toast>
       </ToastContainer>
