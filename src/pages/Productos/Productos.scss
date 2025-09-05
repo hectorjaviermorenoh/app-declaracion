@@ -22,3 +22,33 @@
   }
 }
 
+.btn-add-producto {
+  position: fixed;
+  top: 80px; // debajo del navbar
+  right: 20px;
+  z-index: 1100;
+
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #0d6efd; // azul bootstrap
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+
+  &:hover {
+    background-color: #0b5ed7;
+  }
+}
+
+.productos-container {
+  position: relative;
+}
+
+
+

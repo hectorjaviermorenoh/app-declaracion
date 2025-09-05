@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button, Toast, ToastContainer } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import UploadModal from "../../components/productos/UploadModal/UploadModal";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
@@ -12,6 +13,8 @@ const AUTH_REEMPLAZO_EMAIL = "hectorjaviermorenoh@gmail.com";
 const anioAnterior = new Date().getFullYear() - 1;
 
 export default function Productos() {
+
+  const navigate = useNavigate();
   const { backendUrl } = useBackendUrl();
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -297,7 +300,34 @@ export default function Productos() {
   return (
     <>
       <Container className="productos-page">
-        <h2 className="mb-4">Productos</h2>
+
+        <div className="productos-container">
+          <h2 className="mb-4">Productos</h2>
+          <Button
+            className="btn-add-producto"
+            draggable
+            onDragEnd={(e) => {
+              const btn = e.target;
+              btn.style.top = `${e.clientY - 20}px`;
+              btn.style.left = `${e.clientX - 20}px`;
+              btn.style.right = "auto"; // quitamos right si el user lo mueve
+              btn.style.position = "fixed";
+            }}
+            onClick={() => navigate("/productos/add")}
+            title="Adicionar Producto"
+          >
+            +
+          </Button>
+
+          {/* <Button
+            className="btn-add-producto"
+            onClick={() => navigate("/productos/add")}
+            title="Adicionar Producto"
+          >
+            +
+          </Button> */}
+        </div>
+
         <Row>
           {productos.map((prod) => (
             <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
