@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
+import AddProductoModal from "../AddProductoModal/AddProductoModal";
+
 
 import { Link } from "react-router-dom";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
@@ -10,6 +12,7 @@ function AppNavbar() {
   const [showModal, setShowModal] = useState(false);
   const [tempUrl, setTempUrl] = useState(backendUrl || "");
   const [showToast, setShowToast] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
@@ -45,7 +48,10 @@ function AppNavbar() {
               <Nav
                 className="justify-content-end flex-grow-1 pe-3"
               >
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/productos/add">Adicionar Producto</Nav.Link>
+                {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/productos/add">Adicionar Producto</Nav.Link> */}
+                <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>
+                  Adicionar Producto
+                </Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link>
@@ -95,6 +101,15 @@ function AppNavbar() {
           <Button variant="primary" onClick={handleSave}>Guardar</Button>
         </Modal.Footer>
       </Modal>
+
+      <AddProductoModal
+        show={showAddModal}
+        onHide={() => setShowAddModal(false)}
+        onProductoAgregado={() => {
+          // puedes emitir un evento o refrescar productos desde aquí
+        }}
+      />
+
 
       {/* Toast de confirmación */}
       <ToastContainer position="bottom-end" className="p-3">

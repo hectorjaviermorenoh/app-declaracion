@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import UploadModal from "../../components/productos/UploadModal/UploadModal";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
+import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
 import "./Productos.scss";
 
@@ -19,6 +20,7 @@ export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Estados para flujo de subida
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -443,7 +445,8 @@ export default function Productos() {
             }}
             draggable
             onDragEnd={handleDragEnd}
-            onClick={() => navigate("/productos/add")}
+            // onClick={() => navigate("/productos/add")}
+            onClick={() => setShowAddModal(true)}
             title="Adicionar Producto"
           >
             +
@@ -541,6 +544,15 @@ export default function Productos() {
           onClose={() => setShowSelectModal(false)}
           productos={productos}
           onConfirm={handleSelectProductos}
+        />
+
+        <AddProductoModal
+          show={showAddModal}
+          onHide={() => setShowAddModal(false)}
+          onProductoAgregado={(nuevo) => {
+            // refrescar lista de productos
+            fetchProductos();
+          }}
         />
 
         {/* Overlay loading */}
