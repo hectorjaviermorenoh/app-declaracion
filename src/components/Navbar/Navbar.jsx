@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
 import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
 import ReinitModal from "../ReinitModal/ReinitModal";
+import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import "./Navbar.scss";
 
 function AppNavbar() {
@@ -14,9 +15,21 @@ function AppNavbar() {
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
   const [showModal, setShowModal] = useState(false);
   const [tempUrl, setTempUrl] = useState(backendUrl || "");
+
+
+
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
+  const [toastTitle, setToastTitle] = useState("Notificación");
+
+
+
+  const [loading, setLoading] = useState(false);
+
+
+
+
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [showReinitModal, setShowReinitModal] = useState(false);
@@ -30,7 +43,12 @@ function AppNavbar() {
       saveBackendUrl(tempUrl.trim());   // guarda en localStorage
       setTempUrl("");                   // limpia el input
       setShowModal(false);              // cierra modal
-      setShowToast(true);               // muestra el toast ✅
+
+      setToastVariant("success");
+      setToastTitle("Configuración");
+      setToastMsg("✅ URL del backend guardada correctamente.");
+      setShowToast(true);
+
     }
   };
 
@@ -124,11 +142,18 @@ function AppNavbar() {
         }}
       />
 
+
+
+
       <ReinitModal
         show={showReinitModal}
         onHide={() => setShowReinitModal(false)}
         onConfirm={async (confirmText, borrarCarpetas) => {
           if (confirmText !== "INICIALIZAR") return;
+
+          // 👇 Cierra el modal ANTES de arrancar el loading
+          setShowReinitModal(false);
+          setLoading(true);
 
           try {
             const resp = await fetch(backendUrl, {
@@ -136,7 +161,7 @@ function AppNavbar() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 accion: "inicializarForzado",
-                correoAdmin: "hectorjaviermorenoh@gmail.com", // 🔹 luego se reemplaza con email admin real
+                correoAdmin: "hectorjaviermorenoh@gmail.com",
                 confirmar: confirmText,
                 borrarCarpetas,
               }),
@@ -146,16 +171,29 @@ function AppNavbar() {
             console.log("⚡ Reinicialización:", data);
 
             if (data.status === "ok") {
-              alert("✅ Proyecto reinicializado correctamente");
+              setToastVariant("success");
+              setToastTitle("Reinicialización");
+              setToastMsg("✅ Proyecto reinicializado correctamente");
             } else {
-              alert("❌ Error: " + (data.mensaje || "No se pudo reinicializar"));
+              setToastVariant("danger");
+              setToastTitle("Reinicialización");
+              setToastMsg("❌ Error: " + (data.mensaje || "No se pudo reinicializar"));
             }
+            setShowToast(true);
+
           } catch (err) {
             console.error("❌ Error reinicializando:", err);
-            alert("⚠️ Error de conexión con backend");
+            setToastVariant("danger");
+            setToastTitle("Reinicialización");
+            setToastMsg("⚠️ Error de conexión con backend");
+            setShowToast(true);
+          } finally {
+            setLoading(false);
           }
         }}
       />
+
+
 
 
       {/* Toast de confirmación */}
@@ -168,13 +206,14 @@ function AppNavbar() {
           onClose={() => setShowToast(false)}
         >
           <Toast.Header>
-            <strong className="me-auto">Notificación</strong>
+            <strong className="me-auto">{toastTitle}</strong>
           </Toast.Header>
-          <Toast.Body className="text-white">
-            {toastMsg}
-          </Toast.Body>
+          <Toast.Body className="text-white">{toastMsg}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+
+      <LoadingOverlay show={loading} />
     </>
   );
 }
