@@ -6,6 +6,7 @@ import AddProductoModal from "../AddProductoModal/AddProductoModal";
 import { Link } from "react-router-dom";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
 import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
+import ReinitModal from "../ReinitModal/ReinitModal";
 import "./Navbar.scss";
 
 function AppNavbar() {
@@ -17,6 +18,8 @@ function AppNavbar() {
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
+
+  const [showReinitModal, setShowReinitModal] = useState(false);
 
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
@@ -30,6 +33,8 @@ function AppNavbar() {
       setShowToast(true);               // muestra el toast ✅
     }
   };
+
+
 
   return (
     <>
@@ -64,6 +69,7 @@ function AppNavbar() {
                 <NavDropdown title="Más" id="nav-dropdown">
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/logs">Logs</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/archivos">Archivos</NavDropdown.Item>
+                  <NavDropdown.Item onClick={() => { setShowReinitModal(true); setShow(false); }} >Reinicializar Proyecto</NavDropdown.Item>
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>
                 </NavDropdown>
@@ -115,6 +121,39 @@ function AppNavbar() {
           setToastVariant("success");
           setToastMsg("✅ Producto agregado correctamente");
          setShowToast(true);
+        }}
+      />
+
+      <ReinitModal
+        show={showReinitModal}
+        onHide={() => setShowReinitModal(false)}
+        onConfirm={async (confirmText, borrarCarpetas) => {
+          if (confirmText !== "INICIALIZAR") return;
+
+          try {
+            const resp = await fetch(backendUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                accion: "inicializarForzado",
+                correoAdmin: "hectorjaviermorenoh@gmail.com", // 🔹 luego se reemplaza con email admin real
+                confirmar: confirmText,
+                borrarCarpetas,
+              }),
+            });
+
+            const data = await resp.json();
+            console.log("⚡ Reinicialización:", data);
+
+            if (data.status === "ok") {
+              alert("✅ Proyecto reinicializado correctamente");
+            } else {
+              alert("❌ Error: " + (data.mensaje || "No se pudo reinicializar"));
+            }
+          } catch (err) {
+            console.error("❌ Error reinicializando:", err);
+            alert("⚠️ Error de conexión con backend");
+          }
         }}
       />
 
