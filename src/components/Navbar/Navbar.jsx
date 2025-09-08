@@ -17,17 +17,13 @@ function AppNavbar() {
   const [tempUrl, setTempUrl] = useState(backendUrl || "");
 
 
-
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [toastTitle, setToastTitle] = useState("Notificación");
 
 
-
   const [loading, setLoading] = useState(false);
-
-
 
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -100,6 +96,7 @@ function AppNavbar() {
                 >
                   ⋮
                 </Nav.Link>
+                
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>
@@ -130,7 +127,7 @@ function AppNavbar() {
         </Modal.Footer>
       </Modal>
 
-        <AddProductoModal
+      <AddProductoModal
         show={showAddModal}
         onHide={() => setShowAddModal(false)}
         onProductoAgregado={() => {
@@ -141,9 +138,6 @@ function AppNavbar() {
          setShowToast(true);
         }}
       />
-
-
-
 
       <ReinitModal
         show={showReinitModal}
@@ -195,8 +189,6 @@ function AppNavbar() {
       />
 
 
-
-
       {/* Toast de confirmación */}
       <ToastContainer position="bottom-end" className="p-3">
         <Toast
@@ -212,7 +204,6 @@ function AppNavbar() {
           <Toast.Body className="text-white">{toastMsg}</Toast.Body>
         </Toast>
       </ToastContainer>
-
 
       <LoadingOverlay show={loading} />
     </>
