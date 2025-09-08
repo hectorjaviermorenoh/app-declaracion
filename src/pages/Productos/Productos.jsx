@@ -4,6 +4,7 @@ import UploadModal from "../../components/productos/UploadModal/UploadModal";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
+import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
 import { useBackendUrl } from "../../hooks/useBackendUrl.js";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import "./Productos.scss";
@@ -32,6 +33,9 @@ export default function Productos() {
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [showToast, setShowToast] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
 
   useEffect(() => {
     const savedPos = localStorage.getItem("btnAddProductoPos");
@@ -113,6 +117,50 @@ export default function Productos() {
     }
   };
 
+  const deleteProducto = async (productoId) => {
+    if (!backendUrl) return;
+
+    setShowDeleteModal(false); // 👈 cerrar modal siempre
+
+
+    try {
+      const payload = {
+        accion: "deleteProducto",
+        id: productoId,
+      };
+
+      const resp = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+
+      const data = await resp.json();
+      console.log("🗑️ Respuesta deleteProducto:", data);
+
+      if (data.status === "ok") {
+        setToastVariant("success");
+        setToastMsg("✅ Producto eliminado correctamente");
+        setShowToast(true);
+        await refreshProductos();   // 👈 refrescar productos
+      } else {
+        setToastVariant("danger");
+        setToastMsg("❌ Error al eliminar: " + (data.mensaje || "sin detalle"));
+        setShowToast(true);
+      }
+    } catch (err) {
+      console.error("❌ Error eliminando producto:", err);
+      setToastVariant("danger");
+      setToastMsg("❌ Error eliminando producto");
+      setShowToast(true);
+    } finally {
+      setShowDeleteModal(false); // 👈 cerrar modal siempre
+    }
+  };
+
+
+
   return (
     <>
       <Container className="productos-page">
@@ -135,8 +183,21 @@ export default function Productos() {
         <Row>
           {productos.map((prod) => (
             <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
+
               <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
                 <Card.Body>
+
+                  <button
+                    type="button"
+                    className="btn-close position-absolute top-0 end-0 m-2"
+                    aria-label="borrar"
+                    onClick={() => {
+                      setSelectedProducto(prod);
+                      setShowDeleteModal(true);
+                    }}
+                  ></button>
+
+
                   <Card.Title>{prod.nombre}</Card.Title>
                   <Card.Text>{prod.descripcion}</Card.Text>
 
@@ -175,6 +236,8 @@ export default function Productos() {
                   )}
                 </Card.Body>
               </Card>
+
+
             </Col>
           ))}
         </Row>
@@ -200,6 +263,14 @@ export default function Productos() {
           onHide={() => setShowAddModal(false)}
           onProductoAgregado={() => refreshProductos()}
         />
+
+        <DeleteProductoModal
+          show={showDeleteModal}
+          onHide={() => setShowDeleteModal(false)}
+          producto={selectedProducto}
+          onDelete={deleteProducto}
+        />
+
 
         <LoadingOverlay show={loading} />
       </Container>

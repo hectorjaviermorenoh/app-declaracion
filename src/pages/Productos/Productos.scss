@@ -98,5 +98,21 @@
 }
 
 
+.producto-card {
+  position: relative;
+
+  .btn-close {
+    border-radius: 50%;
+    opacity: 0.9;
+
+    &:hover {
+      background-color: red;
+      opacity: 1;
+    }
+  }
+}
+
+
+
 
 
