@@ -79,7 +79,7 @@ function AppNavbar() {
                 <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>
                   Adicionar Producto
                 </Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
+                <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos1</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios</Nav.Link>
@@ -171,6 +171,7 @@ function AppNavbar() {
             console.log("⚡ Reinicialización:", data);
 
             if (data.status === "ok") {
+              refreshProductos();
               setToastVariant("success");
               setToastTitle("Reinicialización");
               setToastMsg("✅ Proyecto reinicializado correctamente");
