@@ -142,7 +142,7 @@ export default function Productos() {
 
       if (data.status === "ok") {
         setToastVariant("success");
-        setToastMsg("✅ Producto eliminado correctamente JAJAJA");
+        setToastMsg("✅ Producto eliminado correctamente");
         setShowToast(true);
         await refreshProductos();   // 👈 refrescar productos
       } else {
@@ -259,10 +259,11 @@ export default function Productos() {
           onConfirm={handleSelectProductos}
         />
 
+
         <AddProductoModal
           show={showAddModal}
           onHide={() => setShowAddModal(false)}
-          onProductoAgregado={() => refreshProductos()}
+          onProductoAgregado={() => setShowAddModal(false)}
         />
 
         <DeleteProductoModal

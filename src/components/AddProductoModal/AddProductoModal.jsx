@@ -49,22 +49,45 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
 
       const data = await response.json();
 
-      setToastVariant("success");
-      setToastMsg("✅ Producto agregado con éxito");
-      setShowToast(true);
+      // setToastVariant("success");
+      // setToastMsg("✅ Producto agregado con éxito");
+      // setShowToast(true);
 
       // notificar al padre que hay un producto nuevo
-      if (onProductoAgregado) onProductoAgregado(data);
-      await refreshProductos();
+      // if (onProductoAgregado) onProductoAgregado(data);
+      // await refreshProductos();
 
       // limpiar
-      setNombre("");
-      setDescripcion("");
-      setEntidad("");
-      setTipo("");
+      // setNombre("");
+      // setDescripcion("");
+      // setEntidad("");
+      // setTipo("");
 
       // cerrar modal
-      onHide();
+      // onHide();
+
+      if (data.status === "ok") {+
+        setToastVariant("success");
+        setToastMsg("✅ Producto agregado con éxito");
+        setShowToast(true);
+
+        if (onProductoAgregado) onProductoAgregado(data);
+        await refreshProductos();
+
+        // limpiar
+        setNombre("");
+        setDescripcion("");
+        setEntidad("");
+        setTipo("");
+
+        // cerrar modal
+        onHide();
+      } else {
+        setToastVariant("danger");
+        setToastMsg(`❌ ${data.mensaje || "Error al guardar el producto"}`);
+        setShowToast(true);
+      }
+
     } catch (error) {
       setToastVariant("danger");
       setToastMsg("❌ Error al guardar el producto");

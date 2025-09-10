@@ -220,11 +220,7 @@ function AppNavbar() {
         show={showAddModal}
         onHide={() => setShowAddModal(false)}
         onProductoAgregado={() => {
-          refreshProductos();   // ✅ refresca el contexto
-          setShowAddModal(false); // cierra modal
-          setToastVariant("success");
-          setToastMsg("✅ Producto agregado correctamente PRIME");
-         setShowToast(true);
+          setShowAddModal(false);
         }}
       />
 
