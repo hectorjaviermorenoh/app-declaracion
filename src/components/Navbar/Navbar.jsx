@@ -1,20 +1,36 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
-import AddProductoModal from "../AddProductoModal/AddProductoModal";
-
-
 import { Link } from "react-router-dom";
-import { useBackendUrl } from "../../hooks/useBackendUrl.js";
-import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
+
+import AddProductoModal from "../AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
+
+
+import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
+import { useBackends } from "../../context/BackendsContext.jsx";
+
 import "./Navbar.scss";
 
 function AppNavbar() {
-  const { backendUrl, saveBackendUrl } = useBackendUrl();
+  const {
+    backends, activeBackend, addBackend, deleteBackend, setActiveBackend
+  } = useBackends();
+
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+
+  // ---------------- Estados de UI ----------------
+  const [newAlias, setNewAlias] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [aliasToDelete, setAliasToDelete] = useState(null);
+
+
   const [showModal, setShowModal] = useState(false);
-  const [tempUrl, setTempUrl] = useState(backendUrl || "");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showReinitModal, setShowReinitModal] = useState(false);
+  const [show, setShow] = useState(false);
+
+  const [loading, setLoading] = useState(false);
 
 
   const [showToast, setShowToast] = useState(false);
@@ -23,29 +39,42 @@ function AppNavbar() {
   const [toastTitle, setToastTitle] = useState("Notificación");
 
 
-  const [loading, setLoading] = useState(false);
-
-
-  const [showAddModal, setShowAddModal] = useState(false);
-
-  const [showReinitModal, setShowReinitModal] = useState(false);
-
-  const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
 
+    // ---------------- Funciones ----------------
+  const handleSetActive = (alias) => {
+    setActiveBackend(alias);   // 👈 ya lo hace el contexto
+    setToastVariant("success");
+    setToastTitle("Backends");
+    setToastMsg(`✅ Ahora estás usando "${alias}"`);
+    setShowToast(true);
+    refreshProductos();
+  };
 
-  const handleSave = () => {
-    if (tempUrl.trim()) {
-      saveBackendUrl(tempUrl.trim());   // guarda en localStorage
-      setTempUrl("");                   // limpia el input
-      setShowModal(false);              // cierra modal
-
-      setToastVariant("success");
-      setToastTitle("Configuración");
-      setToastMsg("✅ URL del backend guardada correctamente.");
+  const handleAddBackend = () => {
+    if (!newAlias.trim() || !newUrl.trim()) {
+      setToastVariant("danger");
+      setToastTitle("Backends");
+      setToastMsg("⚠️ Alias y URL son obligatorios");
       setShowToast(true);
-
+      return;
     }
+    addBackend(newAlias, newUrl);
+    setToastVariant("success");
+    setToastTitle("Backends");
+    setToastMsg(`✅ Backend "${newAlias}" agregado`);
+    setShowToast(true);
+    setNewAlias("");
+    setNewUrl("");
+  };
+
+  const handleDeleteBackend = (alias) => {
+    deleteBackend(alias);
+    setAliasToDelete(null);
+    setToastVariant("success");
+    setToastTitle("Backends");
+    setToastMsg(`✅ Backend "${alias}" eliminado`);
+    setShowToast(true);
   };
 
 
@@ -54,7 +83,20 @@ function AppNavbar() {
     <>
       <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3">
         <Container fluid>
-          <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
+
+          <div className="backend-circle-Brand">
+            {activeBackend && (
+              <div
+                className="backend-circle ms-2"
+                title={`Backend: ${activeBackend.alias}`}
+                onClick={() => setShowModal(true)} // abre modal de gestión
+              >
+                {activeBackend.alias.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
+          </div>
+
           <Navbar.Toggle onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
           <Navbar.Offcanvas
             show={show}
@@ -66,16 +108,14 @@ function AppNavbar() {
             <Offcanvas.Header closeButton>
               <Offcanvas.Title id="offcanvasNavbarLabel-expand-lg">Menú</Offcanvas.Title>
             </Offcanvas.Header>
+
             <Offcanvas.Body>
-              {/* 🔥 Con onSelect, ya no repetimos setShow(false) en cada Nav.Link */}
               <Nav
                 className="justify-content-end flex-grow-1 pe-3"
               >
-                {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/productos/add">Adicionar Producto</Nav.Link> */}
-                <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>
-                  Adicionar Producto
-                </Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos1</Nav.Link>
+
+                <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Adicionar Producto</Nav.Link>
+                <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios</Nav.Link>
@@ -96,34 +136,83 @@ function AppNavbar() {
                 >
                   ⋮
                 </Nav.Link>
-                
+
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>
         </Container>
       </Navbar>
 
-      {/* Modal para configurar la URL */}
+      {/* Modal gestión de Backends */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Configurar Backend</Modal.Title>
+          <Modal.Title>Configurar Backends</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {backends.length === 0 ? (
+            <p>No hay backends configurados.</p>
+          ) : (
+            <ul className="list-group">
+              {backends.map((b) => (
+                <li
+                  key={b.alias}
+                  className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
+                >
+                  <span>{b.alias}</span>
+                  <div>
+                    <Button size="sm" variant="success" onClick={() => handleSetActive(b.alias)}>
+                      Usar
+                    </Button>{" "}
+                    <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
+                      Eliminar
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <hr />
+          <h6>➕ Agregar nuevo Backend</h6>
           <Form>
-            <Form.Group controlId="backendUrl">
-              <Form.Label>URL del Backend</Form.Label>
+            <Form.Group className="mb-2">
+              <Form.Label>Alias</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Ej: Cliente1"
+                value={newAlias}
+                onChange={(e) => setNewAlias(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>URL</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="http://localhost:8080"
-                value={tempUrl}
-                onChange={(e) => setTempUrl(e.target.value)}
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
               />
             </Form.Group>
+            <Button variant="primary" onClick={handleAddBackend}>
+              Guardar
+            </Button>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      {/* Modal confirmación eliminación */}
+      <Modal show={!!aliasToDelete} onHide={() => setAliasToDelete(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Eliminar Backend</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          ¿Seguro que deseas eliminar la configuración <strong>{aliasToDelete}</strong>?
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave}>Guardar</Button>
+          <Button variant="secondary" onClick={() => setAliasToDelete(null)}>Cancelar</Button>
+          <Button variant="danger" onClick={() => handleDeleteBackend(aliasToDelete)}>
+            Eliminar
+          </Button>
         </Modal.Footer>
       </Modal>
 
@@ -134,7 +223,7 @@ function AppNavbar() {
           refreshProductos();   // ✅ refresca el contexto
           setShowAddModal(false); // cierra modal
           setToastVariant("success");
-          setToastMsg("✅ Producto agregado correctamente");
+          setToastMsg("✅ Producto agregado correctamente PRIME");
          setShowToast(true);
         }}
       />
@@ -150,7 +239,7 @@ function AppNavbar() {
           setLoading(true);
 
           try {
-            const resp = await fetch(backendUrl, {
+            const resp = await fetch(activeBackend?.url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -187,6 +276,71 @@ function AppNavbar() {
           }
         }}
       />
+
+    <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Configurar Backends line 351</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {backends.length === 0 ? (
+          <p>No hay backends configurados.</p>
+        ) : (
+          <ul className="list-group">
+            {backends.map((b) => (
+              <li
+                key={b.alias}
+                className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
+              >
+                <span>{b.alias}</span>
+                <div>
+                  <Button size="sm" variant="success" onClick={() => setActiveBackend(b.alias)}>
+                    Usar
+                  </Button>{" "}
+                  <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
+                    Eliminar1
+                  </Button>
+
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+
+      <hr />
+      <h6>➕ Agregar nuevo Backend</h6>
+      <Form>
+        <Form.Group className="mb-2">
+          <Form.Label>Alias</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Ej: Cliente1"
+            value={newAlias}
+            onChange={(e) => setNewAlias(e.target.value)}
+          />
+        </Form.Group>
+        <Form.Group className="mb-2">
+          <Form.Label>URL</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="http://localhost:8080"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+          />
+        </Form.Group>
+        <Button variant="primary" onClick={() => addBackend(newAlias, newUrl)}>
+          Guardar
+        </Button>
+      </Form>
+
+
+
+
+      </Modal.Body>
+    </Modal>
+
+
+
 
 
       {/* Toast de confirmación */}

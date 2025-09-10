@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { Modal, Form, Button, Toast, ToastContainer, Spinner } from "react-bootstrap";
-import { useBackendUrl } from "../../hooks/useBackendUrl.js";
+
+import { useBackends } from "../../context/BackendsContext.jsx";
+import { useProductos } from "../../context/ProductosContext.jsx";
+
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay.jsx";
 import "./AddProductoModal.scss";
 
 function AddProductoModal({ show, onHide, onProductoAgregado }) {
-  const { backendUrl } = useBackendUrl();
+  const { activeBackend } = useBackends();
+  const { refreshProductos } = useProductos();
+
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [entidad, setEntidad] = useState("");
@@ -18,7 +23,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!backendUrl) {
+    if (!activeBackend) {
       setToastVariant("danger");
       setToastMsg("⚠️ No hay URL configurada para el backend.");
       setShowToast(true);
@@ -28,7 +33,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`${backendUrl}/producto`, {
+      const response = await fetch(`${activeBackend.url}/producto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,6 +55,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
 
       // notificar al padre que hay un producto nuevo
       if (onProductoAgregado) onProductoAgregado(data);
+      await refreshProductos();
 
       // limpiar
       setNombre("");

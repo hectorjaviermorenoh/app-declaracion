@@ -5,12 +5,13 @@ import SelectProductosModal from "../../components/productos/SelectProductosModa
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
 import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
-import { useBackendUrl } from "../../hooks/useBackendUrl.js";
+import { useBackends } from "../../context/BackendsContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import "./Productos.scss";
 
 export default function Productos() {
-  const { backendUrl } = useBackendUrl();
+  // const { activeBackend } = useBackends();
+  const { activeBackend, loading: backendsLoading } = useBackends();
   const {
     productos,
     loading,
@@ -65,14 +66,14 @@ export default function Productos() {
 
   // ✅ carga inicial
   useEffect(() => {
-    if (!backendUrl) {
+    if (!backendsLoading && !activeBackend ) {
       setToastVariant("danger");
       setToastMsg("⚠️ No hay URL configurada para el backend.");
       setShowToast(true);
       return;
     }
     refreshProductos(); // ahora lo hace el contexto
-  }, [backendUrl, refreshProductos]);
+  }, [activeBackend, refreshProductos]);
 
   // abrir modal subir/replace
   const handleUpload = (producto) => {
@@ -118,7 +119,7 @@ export default function Productos() {
   };
 
   const deleteProducto = async (productoId) => {
-    if (!backendUrl) return;
+    if (!activeBackend ) return;
 
     setShowDeleteModal(false); // 👈 cerrar modal siempre
 
@@ -129,7 +130,7 @@ export default function Productos() {
         id: productoId,
       };
 
-      const resp = await fetch(backendUrl, {
+      const resp = await fetch(activeBackend.url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -141,7 +142,7 @@ export default function Productos() {
 
       if (data.status === "ok") {
         setToastVariant("success");
-        setToastMsg("✅ Producto eliminado correctamente");
+        setToastMsg("✅ Producto eliminado correctamente JAJAJA");
         setShowToast(true);
         await refreshProductos();   // 👈 refrescar productos
       } else {

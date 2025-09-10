@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { useBackendUrl } from "../hooks/useBackendUrl";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useBackends } from "../context/BackendsContext";
 
 const ProductosContext = createContext(null);
 
@@ -9,9 +9,15 @@ const AUTH_REEMPLAZO_EMAIL =
 const anioAnterior = new Date().getFullYear() - 1;
 
 export function ProductosProvider({ children }) {
-  const { backendUrl } = useBackendUrl();
+
+  const { activeBackend, loading } = useBackends(); // 👈 obtenemos backend activo
+  const backendUrl = activeBackend?.url || null;
+
+
   const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingProductos, setLoadingProductos] = useState(false);
+
+
 
   const fetchArchivosPorAnio = useCallback(async (anio) => {
     if (!backendUrl) return [];
@@ -28,7 +34,7 @@ export function ProductosProvider({ children }) {
 
   const refreshProductos = useCallback(async () => {
     if (!backendUrl) return;
-    setLoading(true);
+    setLoadingProductos(true);
     try {
       // 1) productos
       const resp = await fetch(`${backendUrl}?accion=getProductos`);
@@ -54,9 +60,17 @@ export function ProductosProvider({ children }) {
     } catch (e) {
       console.error("❌ Error refreshProductos:", e);
     } finally {
-      setLoading(false);
+      setLoadingProductos(false);
     }
   }, [backendUrl, fetchArchivosPorAnio]);
+
+
+  useEffect(() => {
+    // 👇 Esperar a que BackendsContext termine de cargar
+    if (!loading && backendUrl) {
+      refreshProductos();
+    }
+  }, [loading, backendUrl, refreshProductos]);
 
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -70,7 +84,7 @@ export function ProductosProvider({ children }) {
     if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
     if (!file) return { ok: false, mensaje: "Seleccione un archivo" };
 
-    setLoading(true);
+    setLoadingProductos(true);
     try {
       const base64 = await toBase64(file);
       const payload = {
@@ -100,7 +114,7 @@ export function ProductosProvider({ children }) {
       console.error("❌ subirArchivo:", e);
       return { ok: false, mensaje: "Error al subir archivo" };
     } finally {
-      setLoading(false);
+      setLoadingProductos(false);
     }
   }, [backendUrl, refreshProductos]);
 
@@ -108,7 +122,7 @@ export function ProductosProvider({ children }) {
     if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
     if (!file) return { ok: false, mensaje: "Seleccione un archivo para reemplazar" };
 
-    setLoading(true);
+    setLoadingProductos(true);
     try {
       const base64 = await toBase64(file);
       const payload = {
@@ -140,7 +154,7 @@ export function ProductosProvider({ children }) {
       console.error("❌ replaceArchivo:", e);
       return { ok: false, mensaje: "Error al reemplazar archivo" };
     } finally {
-      setLoading(false);
+      setLoadingProductos(false);
     }
   }, [backendUrl, refreshProductos]);
 
@@ -148,11 +162,11 @@ export function ProductosProvider({ children }) {
     <ProductosContext.Provider
       value={{
         productos,
-        loading,
-        anioAnterior,
         refreshProductos,
+        anioAnterior,
         subirArchivo,
         replaceArchivo,
+        loading: loading || loadingProductos
       }}
     >
       {children}

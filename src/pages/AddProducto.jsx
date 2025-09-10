@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Form, Button, Card, Toast, ToastContainer, Spinner } from "react-bootstrap";
-import { useBackendUrl } from "../hooks/useBackendUrl.js";
+import { useBackends } from "../context/BackendsContext";
+import { useProductos } from "../context/ProductosContext";
 import LoadingOverlay from "../components/LoadingOverlay/LoadingOverlay";
 
 
 function AddProducto() {
-  const { backendUrl } = useBackendUrl();
+  const { activeBackend } = useBackends();
+  const { refreshProductos } = useProductos();
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [entidad, setEntidad] = useState("");
@@ -19,7 +21,7 @@ function AddProducto() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!backendUrl) {
+    if (!activeBackend.url) {
       setToastVariant("danger");
       setToastMsg("⚠️ No hay URL configurada para el backend.");
       setShowToast(true);
@@ -29,7 +31,7 @@ function AddProducto() {
     setLoading(true); // 👈 mostrar spinner
 
     try {
-      const response = await fetch(`${backendUrl}/producto`, {
+      const response = await fetch(`${activeBackend.url}/producto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,6 +58,9 @@ function AddProducto() {
       setTipo("");
 
       console.log("Respuesta backend:", data);
+
+      // 🔄 refrescar productos globales
+      await refreshProductos();
 
     } catch (error) {
       setToastVariant("danger");
