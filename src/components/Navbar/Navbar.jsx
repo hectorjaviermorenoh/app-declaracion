@@ -30,6 +30,8 @@ function AppNavbar() {
   const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
 
+  const [showAddForm, setShowAddForm] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
 
@@ -143,63 +145,6 @@ function AppNavbar() {
         </Container>
       </Navbar>
 
-      {/* Modal gestión de Backends */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Configurar Backends</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {backends.length === 0 ? (
-            <p>No hay backends configurados.</p>
-          ) : (
-            <ul className="list-group">
-              {backends.map((b) => (
-                <li
-                  key={b.alias}
-                  className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
-                >
-                  <span>{b.alias}</span>
-                  <div>
-                    <Button size="sm" variant="success" onClick={() => handleSetActive(b.alias)}>
-                      Usar
-                    </Button>{" "}
-                    <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
-                      Eliminar
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <hr />
-          <h6>➕ Agregar nuevo Backend</h6>
-          <Form>
-            <Form.Group className="mb-2">
-              <Form.Label>Alias</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ej: Cliente1"
-                value={newAlias}
-                onChange={(e) => setNewAlias(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>URL</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="http://localhost:8080"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={handleAddBackend}>
-              Guardar
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
       {/* Modal confirmación eliminación */}
       <Modal show={!!aliasToDelete} onHide={() => setAliasToDelete(null)} centered>
         <Modal.Header closeButton>
@@ -273,9 +218,10 @@ function AppNavbar() {
         }}
       />
 
+    {/* Modal gestión de Backends */}
     <Modal show={showModal} onHide={() => setShowModal(false)} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Configurar Backends line 351</Modal.Title>
+        <Modal.Title>Configurar Backends line 277</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {backends.length === 0 ? (
@@ -302,32 +248,47 @@ function AppNavbar() {
           </ul>
         )}
 
+        <hr />
+        <h6
+          style={{ cursor: "pointer", color: "#0d6efd" }}
+          onClick={() => setShowAddForm((prev) => !prev)}
+        >
+          {showAddForm ? "➖ Cancelar" : "➕ Agregar nuevo Backend"}
+        </h6>
 
-      <hr />
-      <h6>➕ Agregar nuevo Backend</h6>
-      <Form>
-        <Form.Group className="mb-2">
-          <Form.Label>Alias</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Ej: Cliente1"
-            value={newAlias}
-            onChange={(e) => setNewAlias(e.target.value)}
-          />
-        </Form.Group>
-        <Form.Group className="mb-2">
-          <Form.Label>URL</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="http://localhost:8080"
-            value={newUrl}
-            onChange={(e) => setNewUrl(e.target.value)}
-          />
-        </Form.Group>
-        <Button variant="primary" onClick={() => addBackend(newAlias, newUrl)}>
-          Guardar
-        </Button>
-      </Form>
+        {showAddForm && (
+          <Form>
+            <Form.Group className="mb-2">
+              <Form.Label>Alias</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Ej: Cliente1"
+                value={newAlias}
+                onChange={(e) => setNewAlias(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-2">
+              <Form.Label>URL</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="http://localhost:8080"
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+              />
+            </Form.Group>
+            <Button
+              variant="primary"
+              onClick={() => {
+                addBackend(newAlias, newUrl);
+                setNewAlias("");   // limpiar inputs
+                setNewUrl("");     // limpiar inputs
+                setShowAddForm(false); // ocultar form después de guardar
+              }}
+            >
+              Guardar
+            </Button>
+          </Form>
+        )}
 
 
 
