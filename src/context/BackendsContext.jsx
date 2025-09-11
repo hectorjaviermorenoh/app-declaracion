@@ -35,12 +35,28 @@ export function BackendsProvider({ children }) {
     );
   }, [backends, activeBackend, isLoaded]);
 
-  // ➕ Agregar nuevo backend
+
   const addBackend = (alias, url, avatar = null) => {
-    const newBackend = { alias, url, avatar };
+    if (!alias?.trim() || !url?.trim()) {
+      throw new Error("Alias y URL son obligatorios");
+    }
+
+    // evitar duplicados por alias
+    if (backends.some((b) => b.alias === alias.trim())) {
+      throw new Error(`Ya existe un backend con alias "${alias}"`);
+    }
+
+    const newBackend = {
+      id: Date.now(),
+      alias: alias.trim(),
+      url: url.trim(),
+      avatar,
+    };
+
     setBackends((prev) => [...prev, newBackend]);
     if (!activeBackend) setActiveBackend(newBackend);
   };
+
 
   // ❌ Eliminar backend
   const deleteBackend = (alias) => {
