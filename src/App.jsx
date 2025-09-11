@@ -5,6 +5,7 @@ import AppNavbar from './components/Navbar/Navbar'
 
 
 import Productos from "./pages/Productos/Productos";
+import DatosTributarios from "./pages/DatosTributarios/DatosTributarios";
 
 
 function Config() {
@@ -24,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Productos />} />
           <Route path="/config" element={<Config />} />
+          <Route path="/datos-tributarios" element={<DatosTributarios />} />
         </Routes>
       </Container>
     </>

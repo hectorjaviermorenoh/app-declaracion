@@ -12,14 +12,7 @@ import "./Productos.scss";
 export default function Productos() {
   // const { activeBackend } = useBackends();
   const { activeBackend, loading: backendsLoading } = useBackends();
-  const {
-    productos,
-    loading,
-    anioAnterior,
-    refreshProductos,
-    subirArchivo,
-    replaceArchivo
-  } = useProductos();
+  const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo } = useProductos();
 
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,6 +27,7 @@ export default function Productos() {
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [showToast, setShowToast] = useState(false);
+  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 

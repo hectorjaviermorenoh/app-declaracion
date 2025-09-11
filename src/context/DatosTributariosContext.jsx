@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "./BackendsContext";
+import { useToast } from "../context/ToastContext";
 
 // Crear contexto
 const DatosTributariosContext = createContext(null);
@@ -7,7 +8,10 @@ const DatosTributariosContext = createContext(null);
 export function DatosTributariosProvider({ children }) {
   const { activeBackend } = useBackends();
   const [datos, setDatos] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+  const [loading, setLoading] = useState(false); // 🔹 nuevo estado global de loading
+
+  const { showToast } = useToast();
 
 
   // 🔹 Cargar datos tributarios
@@ -40,6 +44,7 @@ export function DatosTributariosProvider({ children }) {
   // 🔹 Adicionar
   const addDato = async ({ label, valor }) => {
     if (!activeBackend?.url) return;
+    setLoading(true);
     console.log("label", label)
     try {
       const payload = {
@@ -57,16 +62,22 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
+        showToast("✅ Guardado correctamente", "success");
+      } else {
+        showToast("❌ Error al guardar", "danger");
       }
       return data;
     } catch (err) {
       console.error("❌ addDato error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   // 🔹 Actualizar
   const updateDato = async (id, { valor, label }) => {
     if (!activeBackend?.url) return;
+    setLoading(true);
     try {
       const payload = {
         accion: "updateDatoTributario",
@@ -83,16 +94,22 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
+        showToast("✅ Modificado correctamente", "success");
+      } else {
+        showToast("❌ Error al modificar", "danger");
       }
       return data;
     } catch (err) {
       console.error("❌ updateDato error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   // 🔹 Eliminar
   const deleteDato = async (id) => {
     if (!activeBackend?.url) return;
+    setLoading(true);
     try {
       const payload = {
         accion: "deleteDatoTributario",
@@ -107,10 +124,15 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
+        showToast("✅ Eliminado correctamente", "success");
+      } else {
+        showToast("❌ Error al Eliminar", "danger");
       }
       return data;
     } catch (err) {
       console.error("❌ deleteDato error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
