@@ -10,6 +10,9 @@ import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
 import { useBackends } from "../../context/BackendsContext.jsx";
 
+import { useDatosTributarios } from "../../context/DatosTributariosContext";
+import { Bell } from "react-bootstrap-icons"; // npm install react-bootstrap-icons
+
 import "./Navbar.scss";
 
 function AppNavbar() {
@@ -18,6 +21,7 @@ function AppNavbar() {
   } = useBackends();
 
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+
 
   // ---------------- Estados de UI ----------------
   const [newAlias, setNewAlias] = useState("");
@@ -40,6 +44,15 @@ function AppNavbar() {
   const [toastVariant, setToastVariant] = useState("success");
   const [toastTitle, setToastTitle] = useState("Notificación");
 
+  const { datos, addDato, updateDato, deleteDato,} = useDatosTributarios();
+
+
+  // 🔔 Offcanvas Datos Tributarios
+  const [showDatos, setShowDatos] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [temp, setTemp] = useState({});
+  const [newRow, setNewRow] = useState(false);
+
 
   const handleClose = () => setShow(false);
 
@@ -51,6 +64,37 @@ function AppNavbar() {
     setToastTitle("Backends");
     setToastMsg(`✅ Backend "${alias}" eliminado`);
     setShowToast(true);
+  };
+
+
+  const handleEdit = (d) => {
+    setEditingId(d.id);
+    setTemp({ ...d });
+  };
+
+  const handleSave = async (id) => {
+    await updateDato(id, temp);
+    setEditingId(null);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setTemp({});
+    setNewRow(false);
+  };
+
+  const handleAdd = () => {
+    const fakeId = "temp_" + Date.now();
+    setEditingId(fakeId);
+    setTemp({ label: "", valor: "" });
+    setNewRow(true);
+  };
+
+  const handleSaveNew = async () => {
+    await addDato(temp);
+    setNewRow(false);
+    setEditingId(null);
+    setTemp({});
   };
 
 
@@ -73,7 +117,17 @@ function AppNavbar() {
             <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
           </div>
 
-          <Navbar.Toggle onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
+          <div className="contCamp">
+            <div className="d-flex align-items-center">
+              <Bell
+                size={22}
+                className="me-3 cursor-pointer"
+                onClick={() => setShowDatos(true)}
+              />
+            </div>
+            <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
+          </div>
+
           <Navbar.Offcanvas
             show={show}
             onHide={handleClose}
@@ -116,6 +170,9 @@ function AppNavbar() {
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>
+
+
+
         </Container>
       </Navbar>
 
@@ -192,100 +249,159 @@ function AppNavbar() {
         }}
       />
 
-    {/* Modal gestión de Backends */}
-    <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Configurar Backends</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {backends.length === 0 ? (
-          <p>No hay backends configurados.</p>
-        ) : (
-          <ul className="list-group">
-            {backends.map((b) => (
-              <li
-                key={b.alias}
-                className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
+      {/* Modal gestión de Backends */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Configurar Backends</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {backends.length === 0 ? (
+            <p>No hay backends configurados.</p>
+          ) : (
+            <ul className="list-group">
+              {backends.map((b) => (
+                <li
+                  key={b.alias}
+                  className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
+                >
+                  <span>{b.alias}</span>
+                  <div>
+                    <Button size="sm" variant="success" onClick={() => setActiveBackend(b.alias)}>
+                      Usar
+                    </Button>{" "}
+                    <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
+                      Eliminar1
+                    </Button>
+
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <hr />
+          <h6
+            style={{ cursor: "pointer", color: "#0d6efd" }}
+            onClick={() => setShowAddForm((prev) => !prev)}
+          >
+            {showAddForm ? "➖ Cancelar" : "➕ Agregar nuevo Backend"}
+          </h6>
+
+          {showAddForm && (
+            <Form>
+              <Form.Group className="mb-2">
+                <Form.Label>Alias</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Ej: Cliente1"
+                  value={newAlias}
+                  onChange={(e) => setNewAlias(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label>URL</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="http://localhost:8080"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                />
+              </Form.Group>
+              <Button
+                variant="primary"
+                onClick={() => {
+
+                  try {
+                    addBackend(newAlias, newUrl);
+                    setToastVariant("success");
+                    setToastTitle("Backends");
+                    setToastMsg(`✅ Backend "${newAlias}" agregado`);
+                    setNewAlias("");
+                    setNewUrl("");
+                    setShowAddForm(false); // ocultar form después de guardar
+                  } catch (err) {
+                    setToastVariant("danger");
+                    setToastTitle("Backends");
+                    setToastMsg(`❌ ${err.message}`);
+                  } finally {
+                    setShowToast(true);
+                  }
+
+                }}
               >
-                <span>{b.alias}</span>
-                <div>
-                  <Button size="sm" variant="success" onClick={() => setActiveBackend(b.alias)}>
-                    Usar
-                  </Button>{" "}
-                  <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
-                    Eliminar1
-                  </Button>
+                Guardar
+              </Button>
+            </Form>
+          )}
 
-                </div>
-              </li>
+
+
+
+        </Modal.Body>
+      </Modal>
+
+      {/* Offcanvas de Datos Tributarios */}
+      <Offcanvas show={showDatos} onHide={() => setShowDatos(false)} placement="end">
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>📑 Datos Tributarios</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <Button variant="primary" size="sm" className="mb-3" onClick={handleAdd}>
+            ➕ Nuevo
+          </Button>
+
+          <div className="datos-tributarios-list">
+            {datos.map((d) => (
+              <div key={d.id} className="dato-item">
+                {editingId === d.id ? (
+                  <>
+                    <textarea
+                      value={temp.label}
+                      onChange={(e) => setTemp({ ...temp, label: e.target.value })}
+                    />
+                    <textarea
+                      value={temp.valor}
+                      onChange={(e) => setTemp({ ...temp, valor: e.target.value })}
+                    />
+                    <div className="actions">
+                      <Button size="sm" variant="success" onClick={() => handleSave(d.id)}>💾</Button>{" "}
+                      <Button size="sm" variant="secondary" onClick={handleCancel}>✖️</Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="dato-label">{d.label}</div>
+                    <div className="dato-valor">{d.valor}</div>
+                    <div className="actions">
+                      <Button size="sm" variant="warning" onClick={() => handleEdit(d)}>✏️</Button>{" "}
+                      <Button size="sm" variant="danger" onClick={() => deleteDato(d.id)}>❌</Button>
+                    </div>
+                  </>
+                )}
+              </div>
             ))}
-          </ul>
-        )}
 
-        <hr />
-        <h6
-          style={{ cursor: "pointer", color: "#0d6efd" }}
-          onClick={() => setShowAddForm((prev) => !prev)}
-        >
-          {showAddForm ? "➖ Cancelar" : "➕ Agregar nuevo Backend"}
-        </h6>
-
-        {showAddForm && (
-          <Form>
-            <Form.Group className="mb-2">
-              <Form.Label>Alias</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ej: Cliente1"
-                value={newAlias}
-                onChange={(e) => setNewAlias(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>URL</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="http://localhost:8080"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
-            </Form.Group>
-            <Button
-              variant="primary"
-              onClick={() => {
-
-                try {
-                  addBackend(newAlias, newUrl);
-                  setToastVariant("success");
-                  setToastTitle("Backends");
-                  setToastMsg(`✅ Backend "${newAlias}" agregado`);
-                  setNewAlias("");
-                  setNewUrl("");
-                  setShowAddForm(false); // ocultar form después de guardar
-                } catch (err) {
-                  setToastVariant("danger");
-                  setToastTitle("Backends");
-                  setToastMsg(`❌ ${err.message}`);
-                } finally {
-                  setShowToast(true);
-                }
-
-              }}
-            >
-              Guardar
-            </Button>
-          </Form>
-        )}
-
-
-
-
-      </Modal.Body>
-    </Modal>
-
-
-
-
+            {newRow && editingId?.startsWith("temp_") && (
+              <div className="dato-item">
+                <textarea
+                  placeholder="Label"
+                  value={temp.label}
+                  onChange={(e) => setTemp({ ...temp, label: e.target.value })}
+                />
+                <textarea
+                  placeholder="Valor"
+                  value={temp.valor}
+                  onChange={(e) => setTemp({ ...temp, valor: e.target.value })}
+                />
+                <div className="actions">
+                  <Button size="sm" variant="success" onClick={handleSaveNew}>💾</Button>{" "}
+                  <Button size="sm" variant="secondary" onClick={handleCancel}>✖️</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
 
       {/* Toast de confirmación */}
       <ToastContainer position="bottom-end" className="p-3">

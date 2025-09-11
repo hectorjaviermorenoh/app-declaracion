@@ -104,3 +104,50 @@ $hover-bg: #f1f1f1;
   align-items: center;
   gap: 0.5rem;
 }
+
+
+.contCamp {
+  display: flex;
+}
+
+.datos-tributarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dato-item {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 0.5rem;
+  align-items: start;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 40px;
+  }
+
+  .dato-label {
+    font-weight: bold;
+  }
+
+  .dato-valor {
+    white-space: pre-wrap;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dato-item {
+    grid-template-columns: 1fr;
+  }
+}
