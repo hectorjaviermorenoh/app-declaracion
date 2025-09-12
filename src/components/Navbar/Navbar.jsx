@@ -7,11 +7,10 @@ import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 
 
-import { useProductos } from "../../context/ProductosContext.jsx";   // 👈 importar contexto
+import { useProductos } from "../../context/ProductosContext.jsx";
 import { useBackends } from "../../context/BackendsContext.jsx";
 
-import { useDatosTributarios } from "../../context/DatosTributariosContext";
-import { Bell } from "react-bootstrap-icons"; // npm install react-bootstrap-icons
+import { Bell } from "react-bootstrap-icons";
 
 import "./Navbar.scss";
 
@@ -44,15 +43,6 @@ function AppNavbar() {
   const [toastVariant, setToastVariant] = useState("success");
   const [toastTitle, setToastTitle] = useState("Notificación");
 
-  const { datos, addDato, updateDato, deleteDato,} = useDatosTributarios();
-
-
-  // 🔔 Offcanvas Datos Tributarios
-  const [showDatos, setShowDatos] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [temp, setTemp] = useState({});
-  const [newRow, setNewRow] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
   const [prevPath, setPrevPath] = useState("/");
@@ -71,37 +61,6 @@ function AppNavbar() {
   };
 
 
-  const handleEdit = (d) => {
-    setEditingId(d.id);
-    setTemp({ ...d });
-  };
-
-  const handleSave = async (id) => {
-    await updateDato(id, temp);
-    setEditingId(null);
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setTemp({});
-    setNewRow(false);
-  };
-
-  const handleAdd = () => {
-    const fakeId = "temp_" + Date.now();
-    setEditingId(fakeId);
-    setTemp({ label: "", valor: "" });
-    setNewRow(true);
-  };
-
-  const handleSaveNew = async () => {
-    await addDato(temp);
-    setNewRow(false);
-    setEditingId(null);
-    setTemp({});
-  };
-
-
   const handleToggle = () => {
     if (location.pathname === "/datos-tributarios") {
       // Si ya estamos en datos-tributarios, regresar a la ruta anterior
@@ -112,7 +71,6 @@ function AppNavbar() {
       navigate("/datos-tributarios");
     }
   };
-
 
 
   return (
@@ -133,41 +91,16 @@ function AppNavbar() {
             <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
           </div>
 
-          {/* <div className="contCamp">
+          <div className="contCamp">
             <div className="d-flex align-items-center">
               <Bell
                 size={22}
                 className="me-3 cursor-pointer"
-                onClick={() => setShowDatos(true)}
+                onClick={handleToggle}
               />
             </div>
             <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
-          </div> */}
-
-          {/* <div className="contCamp">
-            <div className="d-flex align-items-center">
-              <Nav.Link as={Link} to="/datos-tributarios" className="p-0">
-                <Bell size={22} className="me-3 cursor-pointer" />
-              </Nav.Link>
-            </div>
-            <Nav.Link as={Link} to="/datos-tributarios" className="p-0">
-              <Navbar.Toggle
-                className="hjm"
-                aria-controls="offcanvasNavbar-expand-lg"
-              />
-            </Nav.Link>
-          </div> */}
-
-        <div className="contCamp">
-          <div className="d-flex align-items-center">
-            <Bell
-              size={22}
-              className="me-3 cursor-pointer"
-              onClick={handleToggle}
-            />
           </div>
-          <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
-        </div>
 
           <Navbar.Offcanvas
             show={show}
@@ -190,7 +123,6 @@ function AppNavbar() {
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios</Nav.Link>
-                <Nav.Link as={Link} to="/datos-tributarios">📊 Datos Tributarios</Nav.Link>
 
                 <NavDropdown title="Más" id="nav-dropdown">
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/logs">Logs</NavDropdown.Item>
@@ -381,69 +313,6 @@ function AppNavbar() {
 
         </Modal.Body>
       </Modal>
-
-      {/* Offcanvas de Datos Tributarios */}
-      <Offcanvas show={showDatos} onHide={() => setShowDatos(false)} placement="end">
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>📑 Datos Tributarios</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Button variant="primary" size="sm" className="mb-3" onClick={handleAdd}>
-            ➕ Nuevo
-          </Button>
-
-          <div className="datos-tributarios-list">
-            {datos.map((d) => (
-              <div key={d.id} className="dato-item">
-                {editingId === d.id ? (
-                  <>
-                    <textarea
-                      value={temp.label}
-                      onChange={(e) => setTemp({ ...temp, label: e.target.value })}
-                    />
-                    <textarea
-                      value={temp.valor}
-                      onChange={(e) => setTemp({ ...temp, valor: e.target.value })}
-                    />
-                    <div className="actions">
-                      <Button size="sm" variant="success" onClick={() => handleSave(d.id)}>💾</Button>{" "}
-                      <Button size="sm" variant="secondary" onClick={handleCancel}>✖️</Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="dato-label">{d.label}</div>
-                    <div className="dato-valor">{d.valor}</div>
-                    <div className="actions">
-                      <Button size="sm" variant="warning" onClick={() => handleEdit(d)}>✏️</Button>{" "}
-                      <Button size="sm" variant="danger" onClick={() => deleteDato(d.id)}>❌</Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-
-            {newRow && editingId?.startsWith("temp_") && (
-              <div className="dato-item">
-                <textarea
-                  placeholder="Label"
-                  value={temp.label}
-                  onChange={(e) => setTemp({ ...temp, label: e.target.value })}
-                />
-                <textarea
-                  placeholder="Valor"
-                  value={temp.valor}
-                  onChange={(e) => setTemp({ ...temp, valor: e.target.value })}
-                />
-                <div className="actions">
-                  <Button size="sm" variant="success" onClick={handleSaveNew}>💾</Button>{" "}
-                  <Button size="sm" variant="secondary" onClick={handleCancel}>✖️</Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </Offcanvas.Body>
-      </Offcanvas>
 
       {/* Toast de confirmación */}
       <ToastContainer position="bottom-end" className="p-3">

@@ -64,7 +64,6 @@ export function ProductosProvider({ children }) {
     }
   }, [backendUrl, fetchArchivosPorAnio]);
 
-
   useEffect(() => {
     // 👇 Esperar a que BackendsContext termine de cargar
     if (!loading && backendUrl) {

@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import "./DatosTributarios.scss";
 
 export default function DatosTributarios() {
-  const { datos, addDato, updateDato, deleteDato, loading } = useDatosTributarios();
+  const { datos, fetchDatos, addDato, updateDato, deleteDato, loading } = useDatosTributarios();
   const [nuevo, setNuevo] = useState({ label: "", valor: "" });
   const [editando, setEditando] = useState(null);
   const [editValores, setEditValores] = useState({ label: "", valor: "" });
+
+  const fetchRef = useRef(fetchDatos);
+
+  useEffect(() => {
+    fetchRef.current = fetchDatos;
+  }, [fetchDatos]);
+
+  useEffect(() => {
+    fetchRef.current();
+  }, []);
 
   const handleSaveNuevo = async () => {
     if (!nuevo.label.trim() || !nuevo.valor.trim()) return;
