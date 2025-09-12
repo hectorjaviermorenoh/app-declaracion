@@ -19,7 +19,6 @@ export function DatosTributariosProvider({ children }) {
     if (!activeBackend?.url) return;
     setLoading(true);
 
-    console.log("se ra que estoy aqui jaja")
     try {
       const resp = await fetch(`${activeBackend.url}?accion=getDatosTributarios`);
       const data = await resp.json();

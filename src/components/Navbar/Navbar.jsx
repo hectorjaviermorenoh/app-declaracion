@@ -1,25 +1,21 @@
 import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-
 import AddProductoModal from "../AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
-
-
+import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { useBackends } from "../../context/BackendsContext.jsx";
-
 import { Bell } from "react-bootstrap-icons";
-
 import "./Navbar.scss";
 
 function AppNavbar() {
-  const {
-    backends, activeBackend, addBackend, deleteBackend, setActiveBackend
-  } = useBackends();
 
+  const { backends, activeBackend, addBackend, deleteBackend, setActiveBackend } = useBackends();
+  const { fetchDatos } = useDatosTributarios(); // 👈 accede al refresco
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+
 
 
   // ---------------- Estados de UI ----------------
@@ -45,7 +41,6 @@ function AppNavbar() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [prevPath, setPrevPath] = useState("/");
 
 
   const handleClose = () => setShow(false);
@@ -60,18 +55,17 @@ function AppNavbar() {
     setShowToast(true);
   };
 
-
   const handleToggle = () => {
     if (location.pathname === "/datos-tributarios") {
-      // Si ya estamos en datos-tributarios, regresar a la ruta anterior
-      navigate(prevPath || "/");
+      // Refrescar datos directamente
+      fetchDatos();
     } else {
-      // Guardamos la ruta actual como "previa"
-      setPrevPath(location.pathname);
       navigate("/datos-tributarios");
+      // setPrevPath(location.pathname);
+      // navigate("/datos-tributarios");
+      console.log("entro en el eslse");
     }
   };
-
 
   return (
     <>
