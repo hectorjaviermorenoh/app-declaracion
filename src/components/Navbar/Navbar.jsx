@@ -1,6 +1,6 @@
 import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import AddProductoModal from "../AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
@@ -53,6 +53,10 @@ function AppNavbar() {
   const [temp, setTemp] = useState({});
   const [newRow, setNewRow] = useState(false);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [prevPath, setPrevPath] = useState("/");
+
 
   const handleClose = () => setShow(false);
 
@@ -98,6 +102,18 @@ function AppNavbar() {
   };
 
 
+  const handleToggle = () => {
+    if (location.pathname === "/datos-tributarios") {
+      // Si ya estamos en datos-tributarios, regresar a la ruta anterior
+      navigate(prevPath || "/");
+    } else {
+      // Guardamos la ruta actual como "previa"
+      setPrevPath(location.pathname);
+      navigate("/datos-tributarios");
+    }
+  };
+
+
 
   return (
     <>
@@ -117,7 +133,7 @@ function AppNavbar() {
             <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
           </div>
 
-          <div className="contCamp">
+          {/* <div className="contCamp">
             <div className="d-flex align-items-center">
               <Bell
                 size={22}
@@ -126,7 +142,32 @@ function AppNavbar() {
               />
             </div>
             <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
+          </div> */}
+
+          {/* <div className="contCamp">
+            <div className="d-flex align-items-center">
+              <Nav.Link as={Link} to="/datos-tributarios" className="p-0">
+                <Bell size={22} className="me-3 cursor-pointer" />
+              </Nav.Link>
+            </div>
+            <Nav.Link as={Link} to="/datos-tributarios" className="p-0">
+              <Navbar.Toggle
+                className="hjm"
+                aria-controls="offcanvasNavbar-expand-lg"
+              />
+            </Nav.Link>
+          </div> */}
+
+        <div className="contCamp">
+          <div className="d-flex align-items-center">
+            <Bell
+              size={22}
+              className="me-3 cursor-pointer"
+              onClick={handleToggle}
+            />
           </div>
+          <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
+        </div>
 
           <Navbar.Offcanvas
             show={show}
