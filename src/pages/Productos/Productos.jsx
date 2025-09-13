@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button, Toast, ToastContainer } from "react-bootstrap";
 import UploadModal from "../../components/productos/UploadModal/UploadModal";
+import { useToast } from "../../context/ToastContext";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
@@ -14,6 +15,8 @@ export default function Productos() {
   const { activeBackend, loading: backendsLoading } = useBackends();
   const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo } = useProductos();
 
+  const { showToast } = useToast();
+
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -24,10 +27,6 @@ export default function Productos() {
   const [anioSeleccionado, setAnioSeleccionado] = useState("");
   const [showTitle, setshowTitle] = useState("");
 
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVariant, setToastVariant] = useState("success");
-  const [showToast, setShowToast] = useState(false);
-  
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 
@@ -61,9 +60,7 @@ export default function Productos() {
   // ✅ carga inicial
   useEffect(() => {
     if (!backendsLoading && !activeBackend ) {
-      setToastVariant("danger");
-      setToastMsg("⚠️ No hay URL configurada para el backend.");
-      setShowToast(true);
+      showToast("⚠️ No hay URL configurada para el backend.", "info", 2000, "Productos");
       return;
     }
     refreshProductos(); // ahora lo hace el contexto
@@ -90,14 +87,10 @@ export default function Productos() {
 
     if (selectedProducto && selectedProducto.tieneArchivo) {
       const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
-      setToastVariant(r.ok ? "success" : "danger");
-      setToastMsg(r.mensaje);
-      setShowToast(true);
+      showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
     } else {
       const r = await subirArchivo([selectedProducto.id], anio, file);
-      setToastVariant(r.ok ? "success" : "danger");
-      setToastMsg(r.mensaje);
-      setShowToast(true);
+      showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
     }
   };
 
@@ -106,9 +99,7 @@ export default function Productos() {
     setShowSelectModal(false);
     if (archivo && anioSeleccionado) {
       const r = await subirArchivo(selectedIds, anioSeleccionado, archivo);
-      setToastVariant(r.ok ? "success" : "danger");
-      setToastMsg(r.mensaje);
-      setShowToast(true);
+      showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
     }
   };
 
@@ -135,20 +126,14 @@ export default function Productos() {
       console.log("🗑️ Respuesta deleteProducto:", data);
 
       if (data.status === "ok") {
-        setToastVariant("success");
-        setToastMsg("✅ Producto eliminado correctamente");
-        setShowToast(true);
+        showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
         await refreshProductos();   // 👈 refrescar productos
       } else {
-        setToastVariant("danger");
-        setToastMsg("❌ Error al eliminar: " + (data.mensaje || "sin detalle"));
-        setShowToast(true);
+        showToast(`❌ Error al eliminar: ${(data.mensaje || "sin detalle")}`, "success", 3000, "Productos");
       }
     } catch (err) {
       console.error("❌ Error eliminando producto:", err);
-      setToastVariant("danger");
-      setToastMsg("❌ Error eliminando producto");
-      setShowToast(true);
+      showToast("❌ Error eliminando producto", "success", 3000, "Productos");
     } finally {
       setShowDeleteModal(false); // 👈 cerrar modal siempre
     }
@@ -271,20 +256,6 @@ export default function Productos() {
         <LoadingOverlay show={loading} />
       </Container>
 
-      <ToastContainer position="bottom-end" className="p-3">
-        <Toast
-          bg={toastVariant}
-          show={showToast}
-          autohide
-          delay={3000}
-          onClose={() => setShowToast(false)}
-        >
-          <Toast.Header>
-            <strong className="me-auto">Productos</strong>
-          </Toast.Header>
-          <Toast.Body className="text-white">{toastMsg}</Toast.Body>
-        </Toast>
-      </ToastContainer>
     </>
   );
 }

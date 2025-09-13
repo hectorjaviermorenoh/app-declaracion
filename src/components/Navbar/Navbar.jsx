@@ -1,6 +1,7 @@
 import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 import AddProductoModal from "../AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
@@ -15,6 +16,8 @@ function AppNavbar() {
   const { backends, activeBackend, addBackend, deleteBackend, setActiveBackend } = useBackends();
   const { fetchDatos } = useDatosTributarios(); // 👈 accede al refresco
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+
+  const { showToast } = useToast();
 
 
 
@@ -33,12 +36,6 @@ function AppNavbar() {
 
   const [loading, setLoading] = useState(false);
 
-
-  const [showToast, setShowToast] = useState(false);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVariant, setToastVariant] = useState("success");
-  const [toastTitle, setToastTitle] = useState("Notificación");
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,10 +46,7 @@ function AppNavbar() {
   const handleDeleteBackend = (alias) => {
     deleteBackend(alias);
     setAliasToDelete(null);
-    setToastVariant("success");
-    setToastTitle("Backends");
-    setToastMsg(`✅ Backend "${alias}" eliminado`);
-    setShowToast(true);
+    showToast(`✅ Backend "${alias}" eliminado`, "success", 3000, "Navbar");
   };
 
   const handleToggle = () => {
@@ -61,9 +55,6 @@ function AppNavbar() {
       fetchDatos();
     } else {
       navigate("/datos-tributarios");
-      // setPrevPath(location.pathname);
-      // navigate("/datos-tributarios");
-      console.log("entro en el eslse");
     }
   };
 
@@ -195,22 +186,14 @@ function AppNavbar() {
 
             if (data.status === "ok") {
               refreshProductos();
-              setToastVariant("success");
-              setToastTitle("Reinicialización");
-              setToastMsg("✅ Proyecto reinicializado correctamente");
+              showToast("✅ Proyecto reinicializado correctamente", "success", 3000, "Navbar");
             } else {
-              setToastVariant("danger");
-              setToastTitle("Reinicialización");
-              setToastMsg("❌ Error: " + (data.mensaje || "No se pudo reinicializar"));
+              showToast("❌ Error: " + (data.mensaje || "No se pudo reinicializar"), "danger", 4000, "Navbar");
             }
-            setShowToast(true);
 
           } catch (err) {
             console.error("❌ Error reinicializando:", err);
-            setToastVariant("danger");
-            setToastTitle("Reinicialización");
-            setToastMsg("⚠️ Error de conexión con backend");
-            setShowToast(true);
+            showToast(`❌ Error reinicializando: ${err}`, "danger", 4000, "Navbar");
           } finally {
             setLoading(false);
           }
@@ -281,18 +264,12 @@ function AppNavbar() {
 
                   try {
                     addBackend(newAlias, newUrl);
-                    setToastVariant("success");
-                    setToastTitle("Backends");
-                    setToastMsg(`✅ Backend "${newAlias}" agregado`);
+                    showToast(`✅ Backend "${newAlias}" agregado`, "success", 3000, "Navbar");
                     setNewAlias("");
                     setNewUrl("");
                     setShowAddForm(false); // ocultar form después de guardar
                   } catch (err) {
-                    setToastVariant("danger");
-                    setToastTitle("Backends");
-                    setToastMsg(`❌ ${err.message}`);
-                  } finally {
-                    setShowToast(true);
+                    showToast(`❌ ${err.message}`, "success", 3000, "Navbar");
                   }
 
                 }}
@@ -307,22 +284,6 @@ function AppNavbar() {
 
         </Modal.Body>
       </Modal>
-
-      {/* Toast de confirmación */}
-      <ToastContainer position="bottom-end" className="p-3">
-        <Toast
-          bg={toastVariant}
-          show={showToast}
-          autohide
-          delay={3000}
-          onClose={() => setShowToast(false)}
-        >
-          <Toast.Header>
-            <strong className="me-auto">{toastTitle}</strong>
-          </Toast.Header>
-          <Toast.Body className="text-white">{toastMsg}</Toast.Body>
-        </Toast>
-      </ToastContainer>
 
       <LoadingOverlay show={loading} />
     </>

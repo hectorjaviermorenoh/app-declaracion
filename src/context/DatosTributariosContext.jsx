@@ -22,7 +22,6 @@ export function DatosTributariosProvider({ children }) {
     try {
       const resp = await fetch(`${activeBackend.url}?accion=getDatosTributarios`);
       const data = await resp.json();
-      console.log(data)
       if (data.status === "ok") {
         setDatos(data.data || []);
       } else {
@@ -61,9 +60,9 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
-        showToast("✅ Guardado correctamente", "success");
+        showToast("✅ Guardados correctamente", "success", 3000, "DatosTributarios");
       } else {
-        showToast("❌ Error al guardar", "danger");
+        showToast("❌ Error al guardar", "danger", 4000, "DatosTributarios");
       }
       return data;
     } catch (err) {
@@ -93,9 +92,9 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
-        showToast("✅ Modificado correctamente", "success");
+        showToast("✅ Actualizado correctamente", "success", 3000, "DatosTributarios");
       } else {
-        showToast("❌ Error al modificar", "danger");
+        showToast("❌ Error al modificar", "danger", 4000, "DatosTributarios");
       }
       return data;
     } catch (err) {
@@ -123,9 +122,9 @@ export function DatosTributariosProvider({ children }) {
       const data = await resp.json();
       if (data.status === "ok") {
         await fetchDatos();
-        showToast("✅ Eliminado correctamente", "success");
+        showToast("✅ Eliminado correctamente", "success", 3000, "DatosTributarios");
       } else {
-        showToast("❌ Error al Eliminar", "danger");
+        showToast("❌ Error al Eliminar", "danger", 4000, "DatosTributarios");
       }
       return data;
     } catch (err) {
