@@ -108,7 +108,6 @@ export default function Productos() {
 
     setShowDeleteModal(false); // 👈 cerrar modal siempre
 
-
     try {
       const payload = {
         accion: "deleteProducto",
