@@ -1,4 +1,5 @@
-import React, { useState,  } from "react";
+// src/components/productos/UploadModal/UploadModal.jsx
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import "./UploadModal.scss";
 
@@ -8,25 +9,31 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
   const [file, setFile] = useState(null);
   const [replaceOnlyThis, setReplaceOnlyThis] = useState(false);
 
-
-  // 🔧 Cuando cambie el anioDefault (ej. al abrir modal), actualizamos el estado
-  React.useEffect(() => {
-    setAnio(anioDefault || "");
-  }, [anioDefault]);
+  // Cuando abrimos el modal o cambia el title/anioDefault, resetear lo relevante.
+  useEffect(() => {
+    if (show) {
+      setAnio(anioDefault || "");
+      setAplicaVarios(false);      // ✅ important: evitar valor heredado de sesiones previas
+      setFile(null);
+      setReplaceOnlyThis(false);
+    }
+  }, [show, anioDefault, title]);
 
   const handleSubmit = () => {
     if (!anio || !file) {
       alert("⚠️ Debe seleccionar año y archivo");
       return;
     }
-    onConfirm(anio, aplicaVarios, file, replaceOnlyThis);
-  };
 
+    // En modo 'Remplazar archivo' nunca respetamos aplicaVarios
+    const effectiveAplicaVarios = title === "Remplazar archivo" ? false : aplicaVarios;
+
+    onConfirm(anio, effectiveAplicaVarios, file, replaceOnlyThis);
+  };
 
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
-        {/* <Modal.Title>{title}</Modal.Title> */}
         <Modal.Title>
           {title === "Remplazar archivo" ? "Reemplazar archivo" : "Subir archivo"}
         </Modal.Title>
@@ -40,7 +47,7 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
               placeholder={`Ejm: ${new Date().getFullYear() - 1}`}
               value={anio}
               onChange={(e) => setAnio(e.target.value)}
-              disabled={title === "Remplazar archivo"} // 👈 bloqueamos cuando es reemplazo
+              disabled={title === "Remplazar archivo"}
             />
           </Form.Group>
 
@@ -51,6 +58,7 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
               onChange={(e) => setFile(e.target.files[0])}
             />
           </Form.Group>
+
           <Form.Group className="mt-3">
             {title !== "Remplazar archivo" && (
               <Form.Check
@@ -72,22 +80,15 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
               />
             )}
           </Form.Group>
-
-
         </Form>
       </Modal.Body>
 
-      {/* <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-        <Button variant="primary" onClick={handleSubmit}>Subir</Button>
-      </Modal.Footer> */}
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>
         <Button variant="primary" onClick={handleSubmit}>
           {title === "Remplazar archivo" ? "Reemplazar" : "Subir"}
         </Button>
       </Modal.Footer>
-
     </Modal>
   );
 }

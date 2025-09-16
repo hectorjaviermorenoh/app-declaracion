@@ -194,8 +194,8 @@ export default function Productos() {
                         variant="warning"
                         size="sm"
                         onClick={() => {
-                          handleUpload(prod);
                           setshowTitle("Remplazar archivo");
+                          handleUpload(prod);
                         }}
                       >
                         Modificar archivo
@@ -206,8 +206,8 @@ export default function Productos() {
                       variant="primary"
                       size="sm"
                       onClick={() => {
-                        handleUpload(prod);
                         setshowTitle("Subir Archivo");
+                        handleUpload(prod);
                       }}
                     >
                       Subir Archivo
