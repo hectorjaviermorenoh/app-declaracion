@@ -29,6 +29,8 @@ export default function Productos() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const [productoOrigen, setProductoOrigen] = useState(null);
+
 
 
   useEffect(() => {
@@ -81,8 +83,10 @@ export default function Productos() {
     setArchivo(file);
 
     if (aplicaVarios) {
+      setProductoOrigen(selectedProducto);   // ✅ Guardar producto inicial
       setShowSelectModal(true);
-      return;
+    } else {
+      subirArchivo(selectedProducto, anio, file);
     }
 
     if (selectedProducto && selectedProducto.tieneArchivo) {
@@ -233,8 +237,9 @@ export default function Productos() {
         <SelectProductosModal
           show={showSelectModal}
           onClose={() => setShowSelectModal(false)}
-          productos={productos}
           onConfirm={handleSelectProductos}
+          productoOrigen={productoOrigen}   // ✅ nuevo prop
+          productos={productos}
         />
 
 
