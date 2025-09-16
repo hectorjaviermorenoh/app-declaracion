@@ -1,0 +1,87 @@
+.archivos-por-anio {
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.1rem; // ✅ texto un poco más grande
+    background-color: #fff;
+  }
+
+  thead {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    font-size: 1.15rem;
+    text-align: left;
+
+    th {
+      padding: 12px;
+      border: 1px solid #dee2e6;
+    }
+    .thicon {
+      width: 40px;
+    }
+  }
+
+  tbody {
+    tr {
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+
+      &:hover {
+        background-color: #f1f1f1; // ✅ resaltado al pasar el mouse
+      }
+
+      td {
+        padding: 12px;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+      }
+
+      // ✅ columna de iconos (1ra)
+      td.icono {
+        display: flex;
+        justify-content: center;
+        width: 40px;
+        text-align: center;
+        font-size: 1.3rem; // icono más grande
+      }
+    }
+  }
+
+  // ✅ Mobile first: en pantallas pequeñas, los textos deben ser legibles
+  @media (max-width: 768px) {
+    .table {
+      font-size: 1rem;
+    }
+
+    thead {
+      font-size: 1rem;
+    }
+
+    tbody tr td {
+      padding: 8px;
+    }
+  }
+
+  // ✅ En pantallas grandes (desktop)
+  @media (min-width: 992px) {
+    .table {
+      font-size: 1.15rem;
+    }
+
+    thead {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+// ✅ Mensajes de carga o "no hay datos"
+.archivos-por-anio-mensaje {
+  font-size: 1.1rem;
+  color: #555;
+  margin-top: 1rem;
+}
+
+
+// .icono {
+//   background-color: blue !important;
+// }

@@ -82,27 +82,60 @@ export default function Productos() {
     setAnioSeleccionado(anio);
     setArchivo(file);
 
+    console.log("📤 UploadConfirm payload:", {
+      aplicaVarios,
+      productoOrigen: selectedProducto?.id,
+      anio,
+      file: file?.name,
+      replaceOnlyThis
+    });
+
+    // if (aplicaVarios) {
+    //   setProductoOrigen(selectedProducto);   // ✅ Guardar producto inicial
+    //   setShowSelectModal(true);
+    // } else {
+    //   subirArchivo(selectedProducto, anio, file);
+    // }
+
+    // if (selectedProducto && selectedProducto.tieneArchivo) {
+    //   const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
+    //   showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+    // } else {
+    //   const r = await subirArchivo([selectedProducto.id], anio, file);
+    //   showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+    // }
+
     if (aplicaVarios) {
-      setProductoOrigen(selectedProducto);   // ✅ Guardar producto inicial
+      // 👉 solo abrir el modal, NO subir nada todavía
+      setProductoOrigen(selectedProducto);
       setShowSelectModal(true);
     } else {
-      subirArchivo(selectedProducto, anio, file);
+      if (selectedProducto && selectedProducto.tieneArchivo) {
+        const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
+        console.log("📥 Backend response (replaceArchivo):", r);
+        showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+      } else {
+        const r = await subirArchivo([selectedProducto.id], anio, file);
+        console.log("📥 Backend response (subirArchivo uno):", r);
+        showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+      }
     }
 
-    if (selectedProducto && selectedProducto.tieneArchivo) {
-      const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
-      showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
-    } else {
-      const r = await subirArchivo([selectedProducto.id], anio, file);
-      showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
-    }
   };
 
   // confirm del SelectProductosModal (varios)
   const handleSelectProductos = async (selectedIds) => {
     setShowSelectModal(false);
+
+    console.log("📤 SelectProductos payload:", {
+      selectedIds,
+      anio: anioSeleccionado,
+      file: archivo?.name
+    });
+
     if (archivo && anioSeleccionado) {
       const r = await subirArchivo(selectedIds, anioSeleccionado, archivo);
+      console.log("📥 Backend response (subirArchivo varios):", r);
       showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
     }
   };

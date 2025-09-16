@@ -792,7 +792,8 @@ function getArchivosPorAnio(anio) {
   const resultado = registros.map(r => {
     const prod = productos.find(p => p.id === r.productoId) || {};
     return {
-      idArchivo: r.id,            // 👈 nuevo campo con el ID real en Drive
+      idArchivo: r.id,
+      registroId: r.registroId,            // 👈 nuevo campo con el ID real en Drive
       productoId: r.productoId,
       nombreProducto: r.nombreProducto,
       entidad: prod.entidad || "",
@@ -805,7 +806,7 @@ function getArchivosPorAnio(anio) {
     };
   });
 
-  return respuestaJSON({ status: "ok", anio, archivos: resultado });
+  return respuestaJSON({ status: "ok 808", anio, archivos: resultado });
 }
 function getProductosPorArchivo(fileId) {
   const bddatos = leerJSON(JSON_BDD_DATOS);

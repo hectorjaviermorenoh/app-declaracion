@@ -165,6 +165,7 @@ export function ProductosProvider({ children }) {
         anioAnterior,
         subirArchivo,
         replaceArchivo,
+        fetchArchivosPorAnio,  // 👈 agregar aquí
         loading: loading || loadingProductos
       }}
     >
