@@ -113,6 +113,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 required
+                placeholder="Ej: Tarjeta 6992, Cta 1108, Medicina prepagada, Factura Notaria 38"
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -121,7 +122,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
                 type="text"
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
-                required
+                placeholder="Ej: Certificado de retenciones año 2024, Extracto bancario, Factura de póliza de salud"
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -130,7 +131,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
                 type="text"
                 value={entidad}
                 onChange={(e) => setEntidad(e.target.value)}
-                required
+                placeholder="Ej: Banco de Bogotá, Seguros Sura, Ecopetrol, Colpensiones, Notaria 38"
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -139,7 +140,7 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
                 type="text"
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value)}
-                required
+                placeholder="Ej: Inversión, Ahorro, Deuda, Certificado, Salud, Credito, Debito"
               />
             </Form.Group>
 

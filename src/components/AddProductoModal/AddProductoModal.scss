@@ -3,3 +3,16 @@
     background-color: #f8f9fa;
   }
 }
+
+.mb-3 {
+
+  /* En tu archivo SCSS personalizado o en un archivo CSS global */
+  .form-control::placeholder {
+    color: #a1a6ac !important; /* Ejemplo de color */
+    font-size: 0.7rem !important; /* Ejemplo de tamaño */
+    font-weight: 200;
+    white-space: preserve nowrap !important;
+  }
+
+
+}

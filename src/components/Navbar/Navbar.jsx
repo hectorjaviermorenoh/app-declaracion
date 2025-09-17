@@ -104,11 +104,15 @@ function AppNavbar() {
               >
 
                 <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Adicionar Producto</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/");}}>Productos</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/registros");}}>Contador</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/config");}}>Configuración</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/usuarios");}}>Usuarios</Nav.Link>
+                    {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/registros">Contador</Nav.Link>
                 <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios</Nav.Link>
+                <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link> */}
+                {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios5</Nav.Link> */}
 
                 <NavDropdown title="Más" id="nav-dropdown">
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/logs">Logs</NavDropdown.Item>
