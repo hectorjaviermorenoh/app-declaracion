@@ -87,7 +87,18 @@ export default function DatosTributarios() {
           ) : (
             <>
               <div className="label">{d.label}</div>
-              <div className="valor">{d.valor}</div>
+              {/* <div className="valor">{d.valor}</div> */}
+
+              <div className="valor">
+                {d.valor.startsWith("http://") || d.valor.startsWith("https://") ? (
+                  <a href={d.valor} target="_blank" rel="noopener noreferrer">
+                    {d.valor}
+                  </a>
+                ) : (
+                  d.valor
+                )}
+              </div>
+              
               <div className="acciones">
                 <button
                   className="btn btn-sm btn-primary"
