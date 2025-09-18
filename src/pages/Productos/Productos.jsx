@@ -214,7 +214,7 @@ export default function Productos() {
                   ></button>
 
 
-                  <Card.Title>{prod.nombre}</Card.Title>
+                  <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
                   <Card.Text>{prod.descripcion}</Card.Text>
 
                   {prod.tieneArchivo ? (

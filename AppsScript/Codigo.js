@@ -575,6 +575,15 @@ function subirArchivoUniversal(e, isMultipart) {
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   try {
+
+    // 👀 Capturamos el payload que llegó
+    let debugPayload = {
+      parametros: e.parameter || null,
+      postData: e.postData ? e.postData.contents : null,
+      isMultipart
+    };
+
+
     let config = leerJSON(JSON_CONFIGURACION);
 
     let archivoBlob = null;
@@ -590,7 +599,7 @@ function subirArchivoUniversal(e, isMultipart) {
     } else {
       const data = JSON.parse(e.postData.contents);
       if (!data.archivo) {
-        return respuestaJSON({ success: false, message: "❌ No se envió archivo" });
+        return respuestaJSON({ success: false, message: "❌ No se envió archivo", debug: debugPayload,});
       }
 
       archivoBlob = Utilities.newBlob(
@@ -604,8 +613,12 @@ function subirArchivoUniversal(e, isMultipart) {
     }
 
     if (!archivoBlob || productosId.length === 0 || !anio) {
-      return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios" });
+      return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios", debug: debugPayload,});
     }
+
+    // if (!archivoBlob || productosId.length === 0 || !anio) {
+    //   return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios", debug: debugPayload,});
+    // }
 
     // --- Validar extensión y tamaño ---
     let extension = archivoBlob.getName().split(".").pop().toLowerCase();
@@ -681,7 +694,8 @@ function subirArchivoUniversal(e, isMultipart) {
       message: "📂 Archivo subido correctamente",
       idArchivo: file.getId(),          // 👈 ID en Drive
       link: file.getUrl(),              // 👈 Enlace de Drive
-      productosAsociados: productosId
+      productosAsociados: productosId,
+      debug: debugPayload, // 👈 siempre devolvemos lo que entró
     });
 
   } finally {
@@ -846,8 +860,10 @@ function addDatoTributario(data) {
     // 🔎 Validar duplicados en label o valor normalizados
     const yaExiste = datos.some(d =>
       normalizarTexto(d.label) === normalizarTexto(data.label) ||
-      normalizarTexto(d.valor) === normalizarTexto(data.valor)
+      (normalizarTexto(d.label) === normalizarTexto(data.label) && normalizarTexto(d.valor) === normalizarTexto(data.valor))
     );
+
+
 
     if (yaExiste) {
       return respuestaJSON({
