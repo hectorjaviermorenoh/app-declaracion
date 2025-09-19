@@ -16,7 +16,7 @@ const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
   PERMITIR_DESCARGA: false,
   TAMANO_MAX_MB: 10,
-  TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt"]
+  TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt", "xlsx"]
 };
 
 const DATOS_TRIBUTARIOS_INICIALES = [
@@ -674,6 +674,8 @@ function subirArchivoUniversal(e, isMultipart) {
         productoId: pid,
         nombreProducto: prod.nombre,
         descripcion: prod.descripcion || "",
+        entidad: prod.entidad || "", 
+        tipo: prod.tipo || "", 
         anio,
         nombreArchivo: nuevoNombre,
         link: file.getUrl(),
@@ -814,9 +816,9 @@ function getArchivosPorAnio(anio) {
       registroId: r.registroId,            // 👈 nuevo campo con el ID real en Drive
       productoId: r.productoId,
       nombreProducto: r.nombreProducto,
-      entidad: prod.entidad || "",
-      tipo: prod.tipo || "",
-      descripcion: prod.descripcion || "",
+      entidad: r.entidad || "",
+      tipo: r.tipo || "",
+      descripcion: r.descripcion || "",
       anio: r.anio,
       nombreArchivo: r.nombreArchivo,
       link: r.link,

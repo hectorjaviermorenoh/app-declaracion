@@ -16,6 +16,7 @@ function ArchivosPorAnio() {
     setLoading(true);
     try {
       const data = await fetchArchivosPorAnio(anioSeleccionado);
+      console.log("que data llega", data);
       setArchivos(data);
     } catch (e) {
       showToast(`❌ Error cargando archivos ${e}`, "danger");
