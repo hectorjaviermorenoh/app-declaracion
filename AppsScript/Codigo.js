@@ -927,27 +927,21 @@ function updateDatoTributario(data) {
   try {
     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
 
-    // ⚡ Normalizar: asignar orden único si falta
-    let maxOrden = datos.reduce((max, d) => Math.max(max, d.orden || 0), 0);
-    datos.forEach((d) => {
-      if (d.orden === undefined) {
-        maxOrden++;
-        d.orden = maxOrden;
-      }
-    });
-
     const idx = datos.findIndex(d => d.id === data.id);
     if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
 
-    // datos[idx] = data;
-
-    datos[idx] = {
-      ...datos[idx],   // mantiene id y orden
-      ...data          // sobreescribe label y valor si llegan
+    // ⚡ Solo persistir estos campos
+    const dataLimpia = {
+      id: datos[idx].id,                 // nunca cambia
+      orden: data.orden ?? datos[idx].orden, // conservar si no viene
+      label: data.label ?? datos[idx].label,
+      valor: data.valor ?? datos[idx].valor
     };
+
+    datos[idx] = dataLimpia;
     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
-    // ✅ Registrar log
+     // ✅ Registrar log
     registrarLog("updateDatoTributario", Session.getActiveUser().getEmail(), {
       datoTributarioActualizado: data
     });

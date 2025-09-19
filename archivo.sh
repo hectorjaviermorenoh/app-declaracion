@@ -1,3 +1,7 @@
+cd AppsScript
+./pull.sh
+cd ..
+
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/hectorjaviermorenoh
 
