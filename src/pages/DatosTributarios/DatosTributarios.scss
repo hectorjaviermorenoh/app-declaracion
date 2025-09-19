@@ -17,6 +17,19 @@
       display: flex;
       gap: 0.25rem;
     }
+
+    .label {
+      white-space: normal;        /* Permite múltiples líneas */
+      word-wrap: break-word;      /* Rompe las palabras largas si es necesario */
+      word-break: break-word;
+      font-weight: 400;
+      color: #002152;
+    }
+    .valor {
+      white-space: normal;        /* Permite múltiples líneas */
+      word-wrap: break-word;      /* Rompe las palabras largas si es necesario */
+      word-break: break-word;
+    }
   }
 
   .fila-nueva {
