@@ -90,7 +90,9 @@ export function DatosTributariosProvider({ children }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await resp.json();
+
       if (data.status === "ok") {
         await fetchDatos();
         showToast("✅ Actualizado correctamente", "success", 3000, "DatosTributarios");

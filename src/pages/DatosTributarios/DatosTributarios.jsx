@@ -91,8 +91,8 @@ export default function DatosTributarios() {
               </>
             ) : (
               <>
-                <div className="label">{d.label}</div>
-                <div className="valor">
+                <div className="label fila-label-valor fila-label">{d.label}</div>
+                <div className="valor fila-label-valor">
                   {d.valor.startsWith("http://") || d.valor.startsWith("https://") ? (
                     <a href={d.valor} target="_blank" rel="noopener noreferrer">
                       {d.valor}
