@@ -73,7 +73,7 @@ export function DatosTributariosProvider({ children }) {
   };
 
   // 🔹 Actualizar
-  const updateDato = async (id, { valor, label }) => {
+  const updateDato = async (id, { valor, label, orden }) => {
     if (!activeBackend?.url) return;
     setLoading(true);
     try {
@@ -83,6 +83,7 @@ export function DatosTributariosProvider({ children }) {
         valor,
       };
       if (label) payload.label = label;
+      if (orden !== undefined) payload.orden = orden;
 
       const resp = await fetch(activeBackend.url, {
         method: "POST",
@@ -134,6 +135,38 @@ export function DatosTributariosProvider({ children }) {
     }
   };
 
+  // 🔹 Mover (subir/bajar)
+  const moveDato = async (id, direction) => {
+    if (!activeBackend?.url) return;
+    setLoading(true);
+    try {
+      const payload = {
+        accion: "moveDatoTributario",
+        id,
+        direction,
+      };
+
+      const resp = await fetch(activeBackend.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      if (data.status === "ok") {
+        await fetchDatos(); // recargar en orden actualizado
+        showToast("↕️ Orden cambiado", "info", 2500, "DatosTributarios");
+      } else {
+        showToast("❌ Error al mover", "danger", 4000, "DatosTributarios");
+      }
+      return data;
+    } catch (err) {
+      console.error("❌ moveDato error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <DatosTributariosContext.Provider
       value={{
@@ -143,6 +176,7 @@ export function DatosTributariosProvider({ children }) {
         addDato,
         updateDato,
         deleteDato,
+        moveDato,
       }}
     >
       {children}

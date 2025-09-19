@@ -33,3 +33,14 @@
     }
   }
 }
+
+
+.btn-subir-bajar {
+  display: flex;
+  flex-direction: column;
+  .btn {
+    padding: 0;
+    border: 0px;
+
+  }
+}

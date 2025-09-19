@@ -18,15 +18,18 @@ const CONFIG_INICIAL = {
   TAMANO_MAX_MB: 10,
   TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt"]
 };
+
 const DATOS_TRIBUTARIOS_INICIALES = [
-  { id: "nit", label: "Número de Identificación Tributaria (NIT)", valor: "" },
-  { id: "primerApellido", label: "Primer apellido", valor: "" },
-  { id: "segundoApellido", label: "Segundo apellido", valor: "" },
-  { id: "primerNombre", label: "Primer nombre", valor: "" },
-  { id: "otrosNombres", label: "Otros nombres", valor: "" },
-  { id: "codigoDireccionSeccional", label: "Código Dirección Seccional", valor: "" },
-  { id: "codigoActividadEconomica", label: "Cód. Actividad económica", valor: "" }
+  { id: "nit", label: "Número de Identificación Tributaria (NIT)", valor: "", orden: 1 },
+  { id: "primerApellido", label: "Primer apellido", valor: "", orden: 2 },
+  { id: "segundoApellido", label: "Segundo apellido", valor: "", orden: 3 },
+  { id: "primerNombre", label: "Primer nombre", valor: "", orden: 4 },
+  { id: "otrosNombres", label: "Otros nombres", valor: "", orden: 5 },
+  { id: "codigoDireccionSeccional", label: "Código Dirección Seccional", valor: "", orden: 6 },
+  { id: "codigoActividadEconomica", label: "Cód. Actividad económica", valor: "", orden: 7 }
 ];
+
+
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
  ******************************/
@@ -292,7 +295,7 @@ function doGet(e) {
         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
 
       case "getDatosTributarios":
-        return respuestaJSON({status: "ok", data: leerJSON(JSON_DATOS_TRIBUTARIOS)});
+        return getDatosTributarios();
 
       case "getLogs":
         return respuestaJSON(leerJSON(JSON_LOGS));
@@ -409,7 +412,8 @@ function doPost(e) {
 
       case "deleteDatoTributario":
         return deleteDatoTributario(data);
-
+      case "moveDatoTributario":
+        return moveDatoTributario(data);
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
     }
@@ -850,6 +854,26 @@ function getProductosPorArchivo(fileId) {
 
   return respuestaJSON({ status: "ok", fileId, productos: resultado });
 }
+function getDatosTributarios() {
+  let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+
+  // ⚡ Normalizar: asignar orden único si falta
+  let maxOrden = datos.reduce((max, d) => Math.max(max, d.orden || 0), 0);
+  datos.forEach((d) => {
+    if (d.orden === undefined) {
+      maxOrden++;
+      d.orden = maxOrden;
+    }
+  });
+
+  // Guardar de nuevo si hubo cambios
+  guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+  // Ordenar siempre por orden
+  datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+  return respuestaJSON({ status: "ok", data: datos });
+}
 function addDatoTributario(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
@@ -872,11 +896,15 @@ function addDatoTributario(data) {
       });
     }
 
+    // 🔹 Calcular el orden (último + 1)
+    const maxOrden = datos.length > 0 ? Math.max(...datos.map(d => d.orden || 0)) : 0;
+
     // 📦 Crear nuevo registro (guardamos lo que llega sin cambios)
     const nuevo = {
       id: data.id || ("dato" + new Date().getTime()),
       label: data.label || "",
-      valor: data.valor || ""
+      valor: data.valor || "",
+      orden: maxOrden + 1
     };
 
     datos.push(nuevo);
@@ -898,10 +926,25 @@ function updateDatoTributario(data) {
 
   try {
     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+
+    // ⚡ Normalizar: asignar orden único si falta
+    let maxOrden = datos.reduce((max, d) => Math.max(max, d.orden || 0), 0);
+    datos.forEach((d) => {
+      if (d.orden === undefined) {
+        maxOrden++;
+        d.orden = maxOrden;
+      }
+    });
+
     const idx = datos.findIndex(d => d.id === data.id);
     if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
 
-    datos[idx] = data;
+    // datos[idx] = data;
+
+    datos[idx] = {
+      ...datos[idx],   // mantiene id y orden
+      ...data          // sobreescribe label y valor si llegan
+    };
     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
     // ✅ Registrar log
@@ -925,6 +968,47 @@ function deleteDatoTributario(data) {
   });
   return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
 }
+function moveDatoTributario(data) {
+  const { id, direction } = data;  // 👈 desestructurar el objeto
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+
+    // Ordenarlos antes de mover
+    datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+    const index = datos.findIndex(d => d.id === id);
+    if (index === -1) {
+      return respuestaJSON({ status: "error", mensaje: "❌ No se encontró el dato" });
+    }
+
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= datos.length) {
+      return respuestaJSON({ status: "error", mensaje: "⚠️ Movimiento inválido" });
+    }
+
+
+    // Intercambiar orden
+    const tempOrden = datos[index].orden;
+    datos[index].orden = datos[targetIndex].orden;
+    datos[targetIndex].orden = tempOrden;
+
+    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+    registrarLog("moveDatoTributario", Session.getActiveUser().getEmail(), {
+      idMovido: id,
+      direccion: direction
+    });
+
+    return respuestaJSON({ status: "ok", mensaje: "Dato movido", datos });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
 /******************************
  * MANEJO CENTRALIZADO DE ERRORES
  ******************************/
