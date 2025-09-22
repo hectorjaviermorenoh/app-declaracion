@@ -669,7 +669,7 @@ function subirArchivoUniversal(e, isMultipart) {
       let prod = productos.find(p => p.id === pid);
       if (prod) {
         let registro = {
-        registroId: "reg" + new Date().getTime(),
+        registroId: "reg" + new Date().getTime() + "_" + pid,
         fileId: file.getId(),       // 👈 ahora explícito
         productoId: pid,
         nombreProducto: prod.nombre,

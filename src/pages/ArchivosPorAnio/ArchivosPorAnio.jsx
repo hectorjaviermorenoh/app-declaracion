@@ -12,6 +12,12 @@ function ArchivosPorAnio() {
   const [archivos, setArchivos] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [filters, setFilters] = useState({
+    entidad: "",
+    nombreProducto: "",
+    tipo: "",
+  });
+
   const cargarArchivos = async (anioSeleccionado) => {
     setLoading(true);
     try {
@@ -25,43 +31,92 @@ function ArchivosPorAnio() {
     }
   };
 
-  // ✅ cargar solo una vez al inicio y cada vez que cambia el año
   useEffect(() => {
     cargarArchivos(anio);
+    setFilters({ entidad: "", nombreProducto: "", tipo: "" }); // reset filtros
   }, [anio]);
 
   const getFileIcon = (filename) => {
     if (!filename) return "📄";
-
     const ext = filename.split(".").pop().toLowerCase();
-
     switch (ext) {
       case "pdf":
-        return "📕"; // rojo para PDF
+        return "📕";
       case "doc":
       case "docx":
-        return "📝"; // documento Word
+        return "📝";
       case "xls":
       case "xlsx":
-        return "📊"; // Excel
+        return "📊";
       case "ppt":
       case "pptx":
-        return "📽️"; // PowerPoint
+        return "📽️";
       case "jpg":
       case "jpeg":
       case "png":
       case "gif":
-        return "🖼️"; // imagen
+        return "🖼️";
       case "txt":
-        return "📃"; // texto plano
+        return "📃";
       case "zip":
       case "rar":
-        return "🗜️"; // comprimido
+        return "🗜️";
       default:
-        return "📄"; // genérico
+        return "📄";
     }
   };
 
+  // 🔹 Normalización para evitar duplicados (acentos, espacios, mayúsculas)
+  const normalizeText = (str) =>
+    (str || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // elimina tildes
+
+  // 🔹 Filtrado + orden por entidad
+  const filteredArchivos = archivos
+    .filter((a) => {
+      const entidad = normalizeText(a.entidad);
+      const producto = normalizeText(a.nombreProducto);
+      const tipo = normalizeText(a.tipo);
+
+      return (
+        (filters.entidad ? entidad === filters.entidad : true) &&
+        (filters.nombreProducto ? producto === filters.nombreProducto : true) &&
+        (filters.tipo ? tipo === filters.tipo : true)
+      );
+    })
+    .sort((a, b) => normalizeText(a.entidad).localeCompare(normalizeText(b.entidad)));
+
+  // 🔹 Listas únicas con clave normalizada y label original
+  const entidades = [
+    ...new Map(
+      archivos.map((a) => [
+        normalizeText(a.entidad),
+        { value: normalizeText(a.entidad), label: (a.entidad || "").trim() },
+      ])
+    ).values(),
+  ];
+
+  const productos = [
+    ...new Map(
+      filteredArchivos.map((a) => [
+        normalizeText(a.nombreProducto),
+        { value: normalizeText(a.nombreProducto), label: (a.nombreProducto || "").trim() },
+      ])
+    ).values(),
+  ];
+
+  const tipos = [
+    ...new Map(
+      filteredArchivos.map((a) => [
+        normalizeText(a.tipo),
+        { value: normalizeText(a.tipo), label: (a.tipo || "").trim() },
+      ])
+    ).values(),
+  ];
 
   return (
     <div className="container mt-4">
@@ -87,23 +142,73 @@ function ArchivosPorAnio() {
 
       {loading ? (
         <p>Cargando...</p>
-      ) : archivos.length === 0 ? (
+      ) : filteredArchivos.length === 0 ? (
         <p>No hay archivos para este año.</p>
       ) : (
-        <div className="table-responsive archivos-por-anio ">
+        <div className="table-responsive archivos-por-anio">
           <table className="table table-bordered table-hover">
             <thead className="table-light">
               <tr>
                 <th className="thicon"></th>
-                <th>Entidad</th>
-                <th>Nombre del producto</th>
-                <th>Tipo</th>
+                <th>
+                  Entidad
+                  <select
+                    className="form-select form-select-sm mt-1"
+                    value={filters.entidad}
+                    onChange={(e) =>
+                      setFilters({ ...filters, entidad: e.target.value })
+                    }
+                  >
+                    <option value="">Todas</option>
+                    {entidades.map((ent) => (
+                      <option key={ent.value} value={ent.value}>
+                        {ent.label}
+                      </option>
+                    ))}
+                  </select>
+                </th>
+
+                <th>
+                  Nombre del producto
+                  <select
+                    className="form-select form-select-sm mt-1"
+                    value={filters.nombreProducto}
+                    onChange={(e) =>
+                      setFilters({ ...filters, nombreProducto: e.target.value })
+                    }
+                  >
+                    <option value="">Todos</option>
+                    {productos.map((prod) => (
+                      <option key={prod.value} value={prod.value}>
+                        {prod.label}
+                      </option>
+                    ))}
+                  </select>
+                </th>
+
+                <th>
+                  Tipo
+                  <select
+                    className="form-select form-select-sm mt-1"
+                    value={filters.tipo}
+                    onChange={(e) =>
+                      setFilters({ ...filters, tipo: e.target.value })
+                    }
+                  >
+                    <option value="">Todos</option>
+                    {tipos.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </th>
+
                 <th>Descripción</th>
               </tr>
             </thead>
             <tbody>
-              {archivos.map((a) => {
-                return (
+              {filteredArchivos.map((a) => (
                 <tr
                   key={a.registroId}
                   onClick={() => window.open(a.link, "_blank")}
@@ -114,8 +219,7 @@ function ArchivosPorAnio() {
                   <td>{a.tipo || "-"}</td>
                   <td>{a.descripcion || "-"}</td>
                 </tr>
-                )
-              })}
+              ))}
             </tbody>
           </table>
         </div>
