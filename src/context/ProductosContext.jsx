@@ -56,7 +56,17 @@ export function ProductosProvider({ children }) {
         };
       });
 
-      setProductos(productosConEstado);
+      // 4) ordenar: primero los que NO tienen archivo
+      const productosOrdenados = productosConEstado.sort((a, b) => {
+        if (a.tieneArchivo === false && b.tieneArchivo === true) return -1;
+        if (a.tieneArchivo === true && b.tieneArchivo === false) return 1;
+        return 0;
+      });
+
+      console.log("productos con estado", productosOrdenados);
+
+
+      setProductos(productosOrdenados);
     } catch (e) {
       console.error("❌ Error refreshProductos:", e);
     } finally {
