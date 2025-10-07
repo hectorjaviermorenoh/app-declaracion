@@ -89,7 +89,7 @@ export function ProductosProvider({ children }) {
       reader.onerror = (error) => reject(error);
     });
 
-  const subirArchivo = useCallback(async (productosId, anio, file) => {
+  const subirArchivo = useCallback(async (productosId, anio, file, usarExistente = false) => {
     if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
     if (!file) return { ok: false, mensaje: "Seleccione un archivo" };
 
@@ -100,6 +100,7 @@ export function ProductosProvider({ children }) {
         accion: "subirArchivo",
         anio,
         productosId,
+        usarExistente,
         archivo: {
           nombre: file.name,
           base64,
@@ -118,6 +119,16 @@ export function ProductosProvider({ children }) {
         await refreshProductos();
         return { ok: true, mensaje: "Archivo subido correctamente", data };
       }
+
+      if (data.status === "exists") {
+        return {
+          ok: false,
+          existe: true, // 👈 NUEVO: para que el frontend muestre confirmación
+          mensaje: data.message || "⚠️ Ya existe un archivo con este nombre. ¿Desea usar el existente?",
+          data,
+        };
+      }
+      
       return { ok: false, mensaje: data.mensaje || "Error al subir archivo", data };
     } catch (e) {
       console.error("❌ subirArchivo:", e);

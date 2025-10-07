@@ -620,10 +620,6 @@ function subirArchivoUniversal(e, isMultipart) {
       return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios", debug: debugPayload,});
     }
 
-    // if (!archivoBlob || productosId.length === 0 || !anio) {
-    //   return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios", debug: debugPayload,});
-    // }
-
     // --- Validar extensión y tamaño ---
     let extension = archivoBlob.getName().split(".").pop().toLowerCase();
     let tamanoMB = archivoBlob.getBytes().length / (1024 * 1024);
@@ -649,16 +645,47 @@ function subirArchivoUniversal(e, isMultipart) {
     let existente = null;
     let archivos = carpetaAnio.getFilesByName(nuevoNombre);
     if (archivos.hasNext()) {
-      existente = archivos.next(); // usamos el existente
+      existente = archivos.next();
     }
 
+    // ⚙️ Revisar si el frontend indicó usar el existente
+    let usarExistente = false;
+    if (isMultipart) {
+      usarExistente = e.parameter.usarExistente === "true";
+    } else {
+      try {
+        const dataParsed = JSON.parse(e.postData.contents);
+        usarExistente = dataParsed.usarExistente === true;
+      } catch (err) {
+        usarExistente = false;
+      }
+    }
+
+    // 🧠 Lógica principal de creación / uso
     let file;
     if (existente) {
+      // ⚠️ Si el archivo ya existe y el usuario aún no confirmó usarlo
+      if (!usarExistente) {
+        return respuestaJSON({
+          success: true,
+          status: "exists",
+          message: "⚠️ Ya existe un archivo con este nombre para el año seleccionado. ¿Desea usar el existente?",
+          idArchivo: existente.getId(),
+          link: existente.getUrl(),
+          nombreArchivo: nuevoNombre,
+          productosAsociados: productosId,
+          debug: debugPayload
+        });
+      }
+
+      // ✅ El usuario confirmó usar el existente
       file = existente;
     } else {
+      // 📂 Si no existe, se crea normalmente
       file = carpetaAnio.createFile(archivoBlob);
       file.setName(nuevoNombre);
     }
+
 
 
     // --- Registrar en base de datos ---

@@ -1,16 +1,3 @@
-// Ejemplo de uso desde cualquier archivo
-// import { useToast } from "../context/ToastContext";
-// const { showToast } = useToast();
-
-// Ejemplo éxito
-// showToast("✅ Datos guardados correctamente", "success", 3000, "DatosTributarios");
-
-// Ejemplo error
-// showToast("❌ Error al conectar con el backend", "danger", 4000, "Navbar.jsx");
-
-// Ejemplo info
-// showToast("Conectando al servidor...", "info", 2000, "Login.jsx");
-
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { Toast, ToastContainer } from "react-bootstrap";
 

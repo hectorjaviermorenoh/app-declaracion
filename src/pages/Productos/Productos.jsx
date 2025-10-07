@@ -8,6 +8,7 @@ import AddProductoModal from "../../components/AddProductoModal/AddProductoModal
 import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
 import { useBackends } from "../../context/BackendsContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
+import { confirmarAccion } from "../../utils/alerts.js";
 import "./Productos.scss";
 
 export default function Productos() {
@@ -90,20 +91,6 @@ export default function Productos() {
       replaceOnlyThis
     });
 
-    // if (aplicaVarios) {
-    //   setProductoOrigen(selectedProducto);   // ✅ Guardar producto inicial
-    //   setShowSelectModal(true);
-    // } else {
-    //   subirArchivo(selectedProducto, anio, file);
-    // }
-
-    // if (selectedProducto && selectedProducto.tieneArchivo) {
-    //   const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
-    //   showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
-    // } else {
-    //   const r = await subirArchivo([selectedProducto.id], anio, file);
-    //   showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
-    // }
 
     if (aplicaVarios) {
       // 👉 solo abrir el modal, NO subir nada todavía
@@ -116,8 +103,30 @@ export default function Productos() {
         showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
       } else {
         const r = await subirArchivo([selectedProducto.id], anio, file);
-        console.log("📥 Backend response (subirArchivo uno):", r);
-        showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+
+        if (r.existe) {
+          // ⚠️ El backend dice que el archivo ya existe
+          const confirmar = await confirmarAccion({
+            titulo: "Archivo existente",
+            mensaje: r.mensaje,
+            textoConfirmar: "✅ Usar archivo existente",
+            textoCancelar: "❌ Cancelar",
+          });
+
+          if (confirmar) {
+            // 👇 usuario acepta usar el archivo existente
+            const r2 = await subirArchivo([selectedProducto.id], anio, file, true);
+            showToast(`${r2.mensaje}`, `${r2.ok ? "success" : "danger"}`, 3000, "Productos");
+          } else {
+            // 👇 usuario cancela
+            showToast("❌ Operación cancelada por el usuario", "warning", 3000, "Productos");
+          }
+        } else {
+          // ✅ flujo normal: subida o error estándar
+          console.log("📥 Backend response (subirArchivo uno):", r);
+          showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+        }
+
       }
     }
 

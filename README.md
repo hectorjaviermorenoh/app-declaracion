@@ -15,6 +15,8 @@ npm run dev
 - React Bootstrap + Bootstrap
 - Sass
 - gh-pages
+- sweetalert2
+
 
 ## 🌍 Deploy en GitHub Pages
 ```sh
