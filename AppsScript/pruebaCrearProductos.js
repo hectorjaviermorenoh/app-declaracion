@@ -1,14 +1,5 @@
-function probarUploadFacturas() {
+function probarCrearProductos() {
   const url = "https://script.google.com/macros/s/AKfycbziHDpQfYjrIdCaiB9w9uZqNgp6czAkNQVoPo0XxPuuWEFXJP0KxqRaZ48VRjRXU1Xx/exec";
-
-
-  // const payload = {
-  //   accion: "addProducto",
-  //   nombre: "tarjeta 5086",
-  //   descripcion: "tarjeta ahorros credito",
-  //   entidad: "Banco Bogota",
-  //   tipo: "Credito"
-  // };
 
   const payload = {
     accion: "addProducto",

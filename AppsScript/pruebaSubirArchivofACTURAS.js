@@ -13,7 +13,7 @@ function probarUploadFacturas() {
     descripcion: "COMPRAS CAMARA",
     valor: 20000,
     metodoPago: "TARJETA",
-    anio: "2024",
+    anio: "2027",
     archivo: {
       nombre: archivo.getName(),
       base64: base64,

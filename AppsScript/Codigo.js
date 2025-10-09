@@ -163,6 +163,90 @@ function limpiarCarpetas() {
   return { mensaje: "🗑️ Carpetas borradas correctamente" };
 
 }
+
+/******************************
+ * FUNCIONES Administrativas Sistema
+ ******************************/
+ function esAdmin(correo) {
+  let usuarios = leerJSON(JSON_USUARIOS);
+  let user = usuarios.find(u => {
+    return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
+  });
+  return user && user.rol === "administrador";
+}
+function registrarLog(accion, usuario, detalle) {
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // hasta 30s esperando
+
+  try {
+    let logs = leerJSON(JSON_LOGS);
+    const nuevoLog = {
+      fecha: new Date().toISOString(),
+      accion,
+      usuario: usuario || "desconocido",
+      detalle: detalle || {}
+    };
+    logs.push(nuevoLog);
+    guardarJSON(JSON_LOGS, logs);
+    return nuevoLog; // opcional, para debug
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+// function getLogs() {
+
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // hasta 30s esperando
+
+//   try {
+//     return respuestaJSON(leerJSON(JSON_LOGS));
+//   } catch {
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+function getLogs() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
+
+  try {
+    const logs = leerJSON(JSON_LOGS);
+
+    // 🧩 Si el archivo está vacío o no hay logs
+    if (!logs || logs.length === 0) {
+      return respuestaJSON({
+        status: "ok",
+        mensaje: "No hay logs para mostrar",
+        logs: []
+      });
+    }
+
+    // ✅ Retorna los logs existentes
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Logs obtenidos correctamente",
+      logs
+    });
+
+  } catch (error) {
+    // 🚨 Si hubo un problema al leer el archivo
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al obtener logs",
+      detalle: error.message || "No se pudo leer el archivo de logs"
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+
 /******************************
  * FUNCIONES AUXILIARES
  ******************************/
@@ -222,7 +306,6 @@ function respuestaJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
 function guardarORecrearJSON(carpeta, nombreArchivo, contenidoInicial) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -235,34 +318,6 @@ function guardarORecrearJSON(carpeta, nombreArchivo, contenidoInicial) {
     } else {
       carpeta.createFile(nombreArchivo, JSON.stringify(contenidoInicial, null, 2), MimeType.PLAIN_TEXT);
     }
-  } finally {
-    lock.releaseLock();
-  }
-}
-function esAdmin(correo) {
-  let usuarios = leerJSON(JSON_USUARIOS);
-  let user = usuarios.find(u => {
-    return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
-  });
-  return user && user.rol === "administrador";
-}
-function registrarLog(accion, usuario, detalle) {
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
-
-  try {
-    let logs = leerJSON(JSON_LOGS);
-    const nuevoLog = {
-      fecha: new Date().toISOString(),
-      accion,
-      usuario: usuario || "desconocido",
-      detalle: detalle || {}
-    };
-    logs.push(nuevoLog);
-    guardarJSON(JSON_LOGS, logs);
-    return nuevoLog; // opcional, para debug
-
   } finally {
     lock.releaseLock();
   }
@@ -427,7 +482,7 @@ function doGet(e) {
         return getDatosTributarios();
 
       case "getLogs":
-        return respuestaJSON(leerJSON(JSON_LOGS));
+        return getLogs();
 
       // --- 📌 Nuevo endpoint ArchivosPorAño ---
       case "getArchivosPorAnio":
@@ -637,40 +692,6 @@ function deleteUsuario(data, correoEjecutor) {
 
 }
 // Productos
-// function addProducto(data) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
-
-//   try {
-
-//     let productos = leerJSON(JSON_PRODUCTOS);
-
-//     const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(data.nombre));
-//     if (yaExiste) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ Ya existe un producto con el nombre ${data.nombre}`
-//       });
-//     }
-//     const nuevoProd = {
-//       id: "prod" + new Date().getTime(),
-//       nombre: data.nombre,
-//       descripcion: data.descripcion || "",
-//       entidad: data.entidad || "",
-//       tipo: data.tipo || ""
-//     };
-//     productos.push(nuevoProd);
-//     guardarJSON(JSON_PRODUCTOS, productos);
-//     // ✅ Registrar log
-//     registrarLog("addProducto", data.usuario || "desconocido", { producto: nuevoProd });
-
-//     return respuestaJSON({ status: "ok", mensaje: "Producto agregado", productos });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
 function addProducto(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -709,9 +730,6 @@ function addProducto(data) {
     lock.releaseLock();
   }
 }
-
-
-
 function deleteProducto(id) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -734,8 +752,6 @@ function deleteProducto(id) {
     lock.releaseLock();
   }
 }
-
-
 
 
 // Archivos
@@ -913,7 +929,7 @@ function subirArchivoFacturas(e, isMultipart) {
     let bddatos = leerJSON(JSON_BDD_FACTURAS);
 
     const registro = {
-      registroId: "fac" + new Date().getTime(),
+      registroId: "fac" + new Date().getTime() + Math.round(Math.random() * 10000),
       fileId: file.getId(),
       anio,
       entidad,

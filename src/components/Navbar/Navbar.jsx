@@ -73,7 +73,7 @@ function AppNavbar() {
                 {activeBackend.alias.slice(0, 2).toUpperCase()}
               </div>
             )}
-            <Navbar.Brand as={Link} to="/">DeclaraciónApp</Navbar.Brand>
+            <Navbar.Brand as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
           </div>
 
           <div className="contCamp">
@@ -108,11 +108,7 @@ function AppNavbar() {
                 <Nav.Link onClick={() => {setShow(false); navigate("/registros");}}>Contador</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/config");}}>Configuración</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/usuarios");}}>Usuarios</Nav.Link>
-                    {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/">Productos</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/registros">Contador</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/config">Configuración</Nav.Link>
-                <Nav.Link onClick={() => setShow(false)} as={Link} to="/usuarios">Usuarios</Nav.Link> */}
-                {/* <Nav.Link onClick={() => setShow(false)} as={Link} to="/tributarios">Datos Tributarios5</Nav.Link> */}
+
 
                 <NavDropdown title="Más" id="nav-dropdown">
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/logs">Logs</NavDropdown.Item>
