@@ -6,6 +6,7 @@ const JSON_CONFIGURACION = "configuracion.json";
 const JSON_USUARIOS = "usuarios.json";
 const JSON_PRODUCTOS = "productos.json";
 const JSON_BDD_DATOS = "bddatos.json";
+const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
 
@@ -57,10 +58,13 @@ function inicializarSistema() {
     // 5. Crear JSON de bddatos si no existe
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_DATOS, []);
 
-    // 6. Crear JSON de logs si no existe
+    // 6. Crear JSON de bddatos si no existe
+    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_FACTURAS, []);
+
+    // 7. Crear JSON de logs si no existe
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_LOGS, []);
 
-    // 7. Crear datos tributarios con valores iniciales
+    // 8. Crear datos tributarios con valores iniciales
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
 
     Logger.log("✅ Sistema inicializado correctamente");
@@ -124,6 +128,7 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     // 3. Vaciar productos, bddatos y logs
     guardarORecrearJSON(carpetaPrincipal, JSON_PRODUCTOS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_DATOS, []);
+    guardarORecrearJSON(carpetaPrincipal, JSON_BDD_FACTURAS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_LOGS, []);
 
 
@@ -217,6 +222,7 @@ function respuestaJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
 function guardarORecrearJSON(carpeta, nombreArchivo, contenidoInicial) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -272,6 +278,129 @@ function normalizarTexto(texto) {
     .replace(/\s+/g, " ")          // múltiples espacios → uno
     .replace(/\./g, "");           // quitar puntos
 }
+function normalizarNombreArchivo(nombreOriginal) {
+  // Elimina la extensión del archivo
+  let nombreBase = nombreOriginal.replace(/\.[^/.]+$/, "");
+
+  // Convierte todo a minúsculas y reemplaza caracteres no alfanuméricos por espacios
+  nombreBase = nombreBase.toLowerCase().replace(/[^a-z0-9]+/gi, " ").trim();
+
+  // Divide en palabras y capitaliza cada una
+  let nombrePascal = nombreBase
+    .split(" ")
+    .filter(Boolean) // elimina espacios dobles
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join("");
+
+  return nombrePascal;
+}
+function normalizarNombreArchivo(nombreOriginal) {
+  // Elimina la extensión del archivo
+  let nombreBase = nombreOriginal.replace(/\.[^/.]+$/, "");
+
+  // Convierte todo a minúsculas y reemplaza caracteres no alfanuméricos por espacios
+  nombreBase = nombreBase.toLowerCase().replace(/[^a-z0-9]+/gi, " ").trim();
+
+  // Divide en palabras y capitaliza cada una
+  let nombrePascal = nombreBase
+    .split(" ")
+    .filter(Boolean) // elimina espacios dobles
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join("");
+
+  return nombrePascal;
+}
+function verificarArchivoDuplicado(carpetaDestino, nombreArchivo) {
+  const archivos = carpetaDestino.getFilesByName(nombreArchivo);
+  return archivos.hasNext() ? archivos.next() : null;
+}
+function validarArchivo(archivoBlob, config) {
+  let extension = archivoBlob.getName().split(".").pop().toLowerCase();
+  let tamanoMB = archivoBlob.getBytes().length / (1024 * 1024);
+
+  if (!config.TIPOS_PERMITIDOS.includes(extension)) {
+    return { ok: false, mensaje: "❌ Tipo de archivo no permitido" };
+  }
+  if (tamanoMB > config.TAMANO_MAX_MB) {
+    return { ok: false, mensaje: `❌ Tamaño máximo permitido: ${config.TAMANO_MAX_MB} MB` };
+  }
+
+  return { ok: true, extension };
+}
+function guardarArchivoEnDrive(config, archivoBlob, anio, subcarpeta, usarExistente) {
+  const nombrePascal = normalizarNombreArchivo(archivoBlob.getName());
+  const extension = archivoBlob.getName().split(".").pop().toLowerCase();
+  const nuevoNombre = `${nombrePascal}.${extension}`;
+
+  const carpetaPrincipal = obtenerOCrearCarpeta(config.CARPETA_PRINCIPAL);
+  const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, anio);
+  const carpetaDestino = subcarpeta
+    ? obtenerOCrearCarpetaEn(carpetaAnio, subcarpeta)
+    : carpetaAnio;
+
+  const existente = verificarArchivoDuplicado(carpetaDestino, nuevoNombre);
+
+  if (existente && !usarExistente) {
+    return {
+      ok: false,
+      status: "exists",
+      mensaje: "⚠️ Ya existe un archivo con este nombre",
+      idArchivo: existente.getId(),
+      link: existente.getUrl(),
+      nombreArchivo: nuevoNombre,
+    };
+  }
+
+  const file = existente && usarExistente
+    ? existente
+    : carpetaDestino.createFile(archivoBlob);
+
+  if (!existente || !usarExistente) file.setName(nuevoNombre);
+
+  return {
+    ok: true,
+    file,
+    nuevoNombre,
+    link: file.getUrl(),
+  };
+}
+function capturarPayload(e, isMultipart) {
+  try {
+    return {
+      parametros: e.parameter || null,
+      postData: e.postData ? e.postData.contents : null,
+      isMultipart: !!isMultipart
+    };
+  } catch (error) {
+    // Si falla la captura, devolvemos un objeto para que el caller lo maneje
+    throw new Error('Error al capturar payload: ' + error.message);
+  }
+}
+function obtenerPayloadArchivo(e, isMultipart, camposEsperados) {
+  const payload = { debug: capturarPayload(e, isMultipart) };
+
+  if (isMultipart) {
+    payload.archivoBlob = e.files.archivo;
+    camposEsperados.forEach(campo => {
+      payload[campo] = e.parameter[campo] || "";
+    });
+  } else {
+    const data = JSON.parse(e.postData.contents);
+    if (!data.archivo) throw new Error("❌ No se envió archivo");
+    payload.archivoBlob = Utilities.newBlob(
+      Utilities.base64Decode(data.archivo.base64),
+      data.archivo.tipo || MimeType.BINARY,
+      data.archivo.nombre
+    );
+    camposEsperados.forEach(campo => {
+      payload[campo] = data[campo] || "";
+    });
+  }
+
+  return payload;
+}
+
+
 /******************************
  * MÉTODO DOGET
  ******************************/
@@ -344,19 +473,6 @@ function doPost(e) {
       data = JSON.parse(e.postData.contents);
       accion = data.accion || "";
     } else {
-      // return respuestaJSON({ status: "error", mensaje: "No se recibieron datos válidos" });
-      // return respuestaJSON({
-      //   status: "error",
-      //   mensaje: "No se recibieron datos válidos",
-      //   parametros: e.parameter || null,
-      //   archivos: e.files || null,
-      //   postData: e.postData ? {
-      //     type: e.postData.type,
-      //     length: e.postData.length,
-      //     contents: e.postData.contents ? e.postData.contents.substring(0, 200) : null // solo los primeros 200 chars para no saturar
-      //   } : null
-      // });
-
       return respuestaJSON({
         status: "debug",
         parametros: e.parameter || null,
@@ -381,7 +497,10 @@ function doPost(e) {
         return respuestaJSON({ ...resultado });
 
       case "subirArchivo":
-        return subirArchivoUniversal(e, isMultipart);
+        return subirArchivoProducto(e, isMultipart);
+
+      case "subirArchivoFacturas":
+        return subirArchivoFacturas(e, isMultipart);
 
       case "setConfig":
         return setConfig(data);
@@ -518,39 +637,81 @@ function deleteUsuario(data, correoEjecutor) {
 
 }
 // Productos
+// function addProducto(data) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+//   try {
+
+//     let productos = leerJSON(JSON_PRODUCTOS);
+
+//     const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(data.nombre));
+//     if (yaExiste) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ Ya existe un producto con el nombre ${data.nombre}`
+//       });
+//     }
+//     const nuevoProd = {
+//       id: "prod" + new Date().getTime(),
+//       nombre: data.nombre,
+//       descripcion: data.descripcion || "",
+//       entidad: data.entidad || "",
+//       tipo: data.tipo || ""
+//     };
+//     productos.push(nuevoProd);
+//     guardarJSON(JSON_PRODUCTOS, productos);
+//     // ✅ Registrar log
+//     registrarLog("addProducto", data.usuario || "desconocido", { producto: nuevoProd });
+
+//     return respuestaJSON({ status: "ok", mensaje: "Producto agregado", productos });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 function addProducto(data) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+  lock.waitLock(30000);
 
   try {
-
     let productos = leerJSON(JSON_PRODUCTOS);
+    let resultados = [];
 
-    const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(data.nombre));
-    if (yaExiste) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ Ya existe un producto con el nombre ${data.nombre}`
-      });
-    }
-    const nuevoProd = {
-      id: "prod" + new Date().getTime(),
-      nombre: data.nombre,
-      descripcion: data.descripcion || "",
-      entidad: data.entidad || "",
-      tipo: data.tipo || ""
-    };
-    productos.push(nuevoProd);
+    // Si llega un solo producto, lo convertimos a array
+    let listaProductos = data.productos || [data];
+
+    listaProductos.forEach(p => {
+      const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(p.nombre));
+      if (yaExiste) {
+        resultados.push({ nombre: p.nombre, status: "error", mensaje: "⚠️ Ya existe este producto" });
+        return;
+      }
+
+      const nuevoProd = {
+        id: "prod" + new Date().getTime() + Math.floor(Math.random() * 1000),
+        nombre: p.nombre,
+        descripcion: p.descripcion || "",
+        entidad: p.entidad || "",
+        tipo: p.tipo || ""
+      };
+      productos.push(nuevoProd);
+      resultados.push({ nombre: p.nombre, status: "ok", mensaje: "Producto agregado", id: nuevoProd.id });
+
+      registrarLog("addProducto", p.usuario || "desconocido", { producto: nuevoProd });
+    });
+
     guardarJSON(JSON_PRODUCTOS, productos);
-    // ✅ Registrar log
-    registrarLog("addProducto", data.usuario || "desconocido", { producto: nuevoProd });
 
-    return respuestaJSON({ status: "ok", mensaje: "Producto agregado", productos });
-
+    return respuestaJSON({ status: "ok", resultados });
   } finally {
     lock.releaseLock();
   }
 }
+
+
+
 function deleteProducto(id) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -573,118 +734,71 @@ function deleteProducto(id) {
     lock.releaseLock();
   }
 }
+
+
+
+
 // Archivos
-function subirArchivoUniversal(e, isMultipart) {
+function subirArchivoProducto(e, isMultipart) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   try {
 
-    // 👀 Capturamos el payload que llegó
-    let debugPayload = {
-      parametros: e.parameter || null,
-      postData: e.postData ? e.postData.contents : null,
-      isMultipart
-    };
-
-
     let config = leerJSON(JSON_CONFIGURACION);
 
-    let archivoBlob = null;
-    let productosId = [];
-    let anio = "";
+    // 👀 Capturamos el payload que llegó
+    const camposEsperados = ["anio", "productosId"];
+    const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
 
-    if (isMultipart) {
-      archivoBlob = e.files.archivo;
-      anio = e.parameter.anio;
-      productosId = e.parameter.productosId
-        ? e.parameter.productosId.split(",")
-        : [];
-    } else {
-      const data = JSON.parse(e.postData.contents);
-      if (!data.archivo) {
-        return respuestaJSON({ success: false, message: "❌ No se envió archivo", debug: debugPayload,});
-      }
+    const archivoBlob = payload.archivoBlob;
+    const anio = payload.anio;
+    let productosId = payload.productosId || [];
 
-      archivoBlob = Utilities.newBlob(
-        Utilities.base64Decode(data.archivo.base64),
-        data.archivo.tipo || MimeType.BINARY,
-        data.archivo.nombre
-      );
-
-      anio = data.anio;
-      productosId = data.productosId || [];
-    }
+    const debugPayload = payload.debug;
 
     if (!archivoBlob || productosId.length === 0 || !anio) {
-      return respuestaJSON({ success: false, message: "❌ Faltan campos obligatorios", debug: debugPayload,});
+      return respuestaJSON({
+        success: false,
+        message: "❌ Faltan campos obligatorios",
+        debug: debugPayload,
+      });
     }
+
+    // Si viene como string separado por comas, convertir a array
+    if (typeof productosId === "string") {
+      productosId = productosId.split(",");
+    }
+
 
     // --- Validar extensión y tamaño ---
-    let extension = archivoBlob.getName().split(".").pop().toLowerCase();
-    let tamanoMB = archivoBlob.getBytes().length / (1024 * 1024);
-
-    if (!config.TIPOS_PERMITIDOS.includes(extension)) {
-      return respuestaJSON({ success: false, message: "❌ Tipo de archivo no permitido" });
+    const validacion = validarArchivo(archivoBlob, config);
+    if (!validacion.ok) {
+      return respuestaJSON({ success: false, message: validacion.mensaje });
     }
-    if (tamanoMB > config.TAMANO_MAX_MB) {
-      return respuestaJSON({ success: false, message: `❌ Tamaño máximo permitido: ${config.TAMANO_MAX_MB} MB` });
-    }
+    const extension = validacion.extension;
 
     // --- Guardar en Drive ---
-    let nombreBase = archivoBlob.getName().replace(/\.[^/.]+$/, "");
-    let nombreCamel = nombreBase
-      .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
-      .replace(/^(.)/, (_, chr) => chr.toLowerCase());
+    const usarExistente = isMultipart 
+        ? e.parameter.usarExistente === "true" 
+        : (JSON.parse(e.postData.contents).usarExistente === true);
 
-    let nuevoNombre = `${nombreCamel}.${extension}`;
-    const carpetaPrincipal = obtenerOCrearCarpeta(config.CARPETA_PRINCIPAL);
-    const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, anio);
+    const resultadoDrive = guardarArchivoEnDrive(config, archivoBlob, anio, null, usarExistente);
 
-    // 🚨 Verificar si el archivo ya existe en la carpeta del año
-    let existente = null;
-    let archivos = carpetaAnio.getFilesByName(nuevoNombre);
-    if (archivos.hasNext()) {
-      existente = archivos.next();
-    }
-
-    // ⚙️ Revisar si el frontend indicó usar el existente
-    let usarExistente = false;
-    if (isMultipart) {
-      usarExistente = e.parameter.usarExistente === "true";
-    } else {
-      try {
-        const dataParsed = JSON.parse(e.postData.contents);
-        usarExistente = dataParsed.usarExistente === true;
-      } catch (err) {
-        usarExistente = false;
-      }
-    }
-
-    // 🧠 Lógica principal de creación / uso
-    let file;
-    if (existente) {
-      // ⚠️ Si el archivo ya existe y el usuario aún no confirmó usarlo
-      if (!usarExistente) {
+    if (!resultadoDrive.ok) {
         return respuestaJSON({
-          success: true,
-          status: "exists",
-          message: "⚠️ Ya existe un archivo con este nombre para el año seleccionado. ¿Desea usar el existente?",
-          idArchivo: existente.getId(),
-          link: existente.getUrl(),
-          nombreArchivo: nuevoNombre,
-          productosAsociados: productosId,
-          debug: debugPayload
+            success: true,
+            status: resultadoDrive.status,
+            message: resultadoDrive.mensaje,
+            idArchivo: resultadoDrive.idArchivo,
+            link: resultadoDrive.link,
+            nombreArchivo: resultadoDrive.nombreArchivo,
+            productosAsociados: productosId,
+            debug: debugPayload
         });
-      }
-
-      // ✅ El usuario confirmó usar el existente
-      file = existente;
-    } else {
-      // 📂 Si no existe, se crea normalmente
-      file = carpetaAnio.createFile(archivoBlob);
-      file.setName(nuevoNombre);
     }
+
+    const file = resultadoDrive.file;
 
 
 
@@ -704,8 +818,8 @@ function subirArchivoUniversal(e, isMultipart) {
         entidad: prod.entidad || "", 
         tipo: prod.tipo || "", 
         anio,
-        nombreArchivo: nuevoNombre,
-        link: file.getUrl(),
+        nombreArchivo: resultadoDrive.nuevoNombre,
+        link: resultadoDrive.link,
         fecha: new Date().toISOString()
       };
         bddatos.push(registro);
@@ -729,6 +843,107 @@ function subirArchivoUniversal(e, isMultipart) {
       link: file.getUrl(),              // 👈 Enlace de Drive
       productosAsociados: productosId,
       debug: debugPayload, // 👈 siempre devolvemos lo que entró
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function subirArchivoFacturas(e, isMultipart) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+  try {
+
+    let config = leerJSON(JSON_CONFIGURACION);
+
+    // 👀 Capturamos el payload que llegó
+    const camposEsperados = ["anio", "entidad", "descripcion", "valor", "metodoPago"];
+    const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
+
+    const archivoBlob = payload.archivoBlob;
+    const anio = payload.anio;
+    const entidad = payload.entidad;
+    const descripcion = payload.descripcion;
+    const valor = payload.valor;
+    const metodoPago = payload.metodoPago;
+
+    const debugPayload = payload.debug;
+
+    if (!archivoBlob || !anio) {
+      return respuestaJSON({
+        success: false,
+        message: "❌ Faltan campos obligatorios (archivo o año)",
+        debug: debugPayload,
+      });
+    }
+
+
+    // --- Validar extensión y tamaño ---
+    const validacion = validarArchivo(archivoBlob, config);
+    if (!validacion.ok) {
+      return respuestaJSON({ success: false, message: validacion.mensaje });
+    }
+    const extension = validacion.extension;
+
+    // --- Guardar en Drive ---
+     const usarExistente = isMultipart 
+        ? e.parameter.usarExistente === "true" 
+        : (JSON.parse(e.postData.contents).usarExistente === true);
+
+    const resultadoDrive = guardarArchivoEnDrive(config, archivoBlob, anio, "facturas", usarExistente);
+
+    if (!resultadoDrive.ok) {
+        return respuestaJSON({
+            success: true,
+            status: resultadoDrive.status,
+            message: resultadoDrive.mensaje,
+            idArchivo: resultadoDrive.idArchivo,
+            link: resultadoDrive.link,
+            nombreArchivo: resultadoDrive.nombreArchivo,
+            debug: debugPayload
+        });
+    }
+
+    const file = resultadoDrive.file;
+
+
+    // --- Registrar en base de datos ---
+    let bddatos = leerJSON(JSON_BDD_FACTURAS);
+
+    const registro = {
+      registroId: "fac" + new Date().getTime(),
+      fileId: file.getId(),
+      anio,
+      entidad,
+      descripcion,
+      valor,
+      metodoPago,
+      nombreArchivo: resultadoDrive.nuevoNombre, // ✅ usar resultadoDrive
+      link: resultadoDrive.link,                 // ✅ usar resultadoDrive
+      fecha: new Date().toISOString(),
+    };
+
+    bddatos.push(registro);
+    guardarJSON(JSON_BDD_FACTURAS, bddatos);
+
+    // ✅ Registrar log
+    registrarLog("subirArchivoFacturas", Session.getActiveUser().getEmail(), {
+      archivo: archivoBlob.getName(),
+      anio,
+      entidad,
+      valor,
+      metodoPago,
+    });
+
+    return respuestaJSON({
+      success: true,
+      status: "ok",
+      message: "📂 Factura subida correctamente",
+      idArchivo: file.getId(),
+      link: file.getUrl(),
+      debug: debugPayload,
     });
 
   } finally {
