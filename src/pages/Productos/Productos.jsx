@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button, Toast, ToastContainer } from "react-bootstrap";
-import UploadModal from "../../components/productos/UploadModal/UploadModal";
+import UploadModal from "../../components/Productos/UploadModal/UploadModal";
 import { useToast } from "../../context/ToastContext";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
+
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
-import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
+
+// import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
+import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+
 import { useBackends } from "../../context/BackendsContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { confirmarAccion } from "../../utils/alerts.js";
@@ -91,6 +95,9 @@ export default function Productos() {
       replaceOnlyThis
     });
 
+    console.log("que tieneProducto", selectedProducto);
+
+
 
     if (aplicaVarios) {
       // 👉 solo abrir el modal, NO subir nada todavía
@@ -98,11 +105,11 @@ export default function Productos() {
       setShowSelectModal(true);
     } else {
       if (selectedProducto && selectedProducto.tieneArchivo) {
-        const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis);
+        const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis, selectedProducto.nombre);
         console.log("📥 Backend response (replaceArchivo):", r);
         showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
       } else {
-        const r = await subirArchivo([selectedProducto.id], anio, file);
+        const r = await subirArchivo([selectedProducto.id], anio, file, selectedProducto.nombre);
 
         if (r.existe) {
           // ⚠️ El backend dice que el archivo ya existe
@@ -291,12 +298,27 @@ export default function Productos() {
           onProductoAgregado={() => setShowAddModal(false)}
         />
 
-        <DeleteProductoModal
+        {/* <DeleteProductoModal
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}
           producto={selectedProducto}
           onDelete={deleteProducto}
-        />
+        /> */}
+
+      <ConfirmActionModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        title="Eliminar Producto"
+        message={
+          <>
+            ¿Seguro que deseas eliminar el producto{" "}
+            <strong>{selectedProducto?.nombre}</strong>?
+          </>
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={() => deleteProducto(selectedProducto.id)}
+      />
 
 
         <LoadingOverlay show={loading} />

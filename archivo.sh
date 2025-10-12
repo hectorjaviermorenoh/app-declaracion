@@ -9,7 +9,7 @@ git remote remove origin
 git remote add origin git@github.com:hectorjaviermorenoh/app-declaracion.git
 
 git add .
-git commit -m "modificacion Navbar ruta logo refrech y cambios en backend logs"
+git commit -m "deploy appDeclaracion"
 git push origin main
 
 npm run deploy

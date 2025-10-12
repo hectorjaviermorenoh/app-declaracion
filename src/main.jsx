@@ -4,6 +4,7 @@ import { HashRouter } from "react-router-dom";
 import { BackendsProvider } from "./context/BackendsContext";
 import { ProductosProvider } from "./context/ProductosContext";
 import { DatosTributariosProvider } from "./context/DatosTributariosContext";
+import { AdminProvider } from "./context/admin/AdminProvider";
 import { ToastProvider } from "./context/ToastContext";
 import App from "./App";
 
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <HashRouter>
             <ProductosProvider>
               <DatosTributariosProvider>
+                <AdminProvider>
                   <App />
+                </AdminProvider>
               </DatosTributariosProvider>
             </ProductosProvider>
           </HashRouter>

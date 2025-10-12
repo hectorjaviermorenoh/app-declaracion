@@ -209,6 +209,43 @@ function registrarLog(accion, usuario, detalle) {
 //   }
 // }
 
+// function getLogs() {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
+
+//   try {
+//     const logs = leerJSON(JSON_LOGS);
+
+//     // 🧩 Si el archivo está vacío o no hay logs
+//     if (!logs || logs.length === 0) {
+//       return respuestaJSON({
+//         status: "ok",
+//         mensaje: "No hay logs para mostrar",
+//         logs: []
+//       });
+//     }
+
+//     // ✅ Retorna los logs existentes
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: "Logs obtenidos correctamente",
+//       logs
+//     });
+
+//   } catch (error) {
+//     // 🚨 Si hubo un problema al leer el archivo
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "Error al obtener logs",
+//       detalle: error.message || "No se pudo leer el archivo de logs"
+//     });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+
 function getLogs() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
@@ -225,11 +262,13 @@ function getLogs() {
       });
     }
 
-    // ✅ Retorna los logs existentes
+    // ✅ Ordenar: el más reciente primero
+    const logsOrdenados = [...logs].reverse();
+
     return respuestaJSON({
       status: "ok",
       mensaje: "Logs obtenidos correctamente",
-      logs
+      logs: logsOrdenados
     });
 
   } catch (error) {
@@ -244,6 +283,53 @@ function getLogs() {
     lock.releaseLock();
   }
 }
+
+
+function limpiarLogsAntiguos() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Esperar hasta 30 segundos
+
+  try {
+    let logs = leerJSON(JSON_LOGS);
+
+    // Si hay 10 o menos, no hacemos nada
+    if (!logs || logs.length <= 10) {
+      return respuestaJSON({
+        status: "ok",
+        mensaje: "No se eliminaron logs. Hay 10 o menos registros.",
+        total: logs.length
+      });
+    }
+
+    // 🕒 Ordenar los logs del más reciente al más antiguo
+    logs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // 📦 Conservar los 10 más recientes
+    const logsConservados = logs.slice(0, 10);
+    const eliminados = logs.length - logsConservados.length;
+
+    // 💾 Guardar de nuevo
+    guardarJSON(JSON_LOGS, logsConservados);
+
+    // 📘 Registrar acción en logs (opcional)
+    registrarLog("limpiarLogsAntiguos", Session.getActiveUser().getEmail(), {
+      eliminados,
+      totalFinal: logsConservados.length
+    });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `🧹 ${eliminados} logs eliminados, se conservaron los 10 más recientes.`,
+      totalFinal: logsConservados.length
+    });
+
+  } catch (error) {
+    return manejarError(error, "limpiarLogsAntiguos", Session.getActiveUser().getEmail());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 
 
 
@@ -332,22 +418,6 @@ function normalizarTexto(texto) {
     .replace(/[\u0300-\u036f]/g, "") // quitar tildes y diacríticos
     .replace(/\s+/g, " ")          // múltiples espacios → uno
     .replace(/\./g, "");           // quitar puntos
-}
-function normalizarNombreArchivo(nombreOriginal) {
-  // Elimina la extensión del archivo
-  let nombreBase = nombreOriginal.replace(/\.[^/.]+$/, "");
-
-  // Convierte todo a minúsculas y reemplaza caracteres no alfanuméricos por espacios
-  nombreBase = nombreBase.toLowerCase().replace(/[^a-z0-9]+/gi, " ").trim();
-
-  // Divide en palabras y capitaliza cada una
-  let nombrePascal = nombreBase
-    .split(" ")
-    .filter(Boolean) // elimina espacios dobles
-    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-    .join("");
-
-  return nombrePascal;
 }
 function normalizarNombreArchivo(nombreOriginal) {
   // Elimina la extensión del archivo
@@ -559,7 +629,8 @@ function doPost(e) {
 
       case "setConfig":
         return setConfig(data);
-
+      case "limpiarLogsAntiguos":
+        return limpiarLogsAntiguos();
       case "addUsuario":
         return addUsuario(data);
 
@@ -844,12 +915,28 @@ function subirArchivoProducto(e, isMultipart) {
 
     guardarJSON(JSON_BDD_DATOS, bddatos);
 
-    // ✅ Registrar log
+
+    // ✅ Registrar log con nombres de productos
+    const productosAfectados = productosId.map(pid => {
+      const p = productos.find(x => x.id === pid);
+      return p ? `${p.nombre} (${p.entidad || "sin entidad"})` : pid;
+    });
+
     registrarLog("subirArchivo", Session.getActiveUser().getEmail(), {
       archivo: archivoBlob.getName(),
+      productos: productosAfectados,
       productosId,
-      anio
+      anio,
+      nombreArchivoFinal: resultadoDrive.nuevoNombre || file.getName(),
+      link: file.getUrl()
     });
+
+    // // ✅ Registrar log
+    // registrarLog("subirArchivo", Session.getActiveUser().getEmail(), {
+    //   archivo: archivoBlob.getName(),
+    //   productosId,
+    //   anio
+    // });
 
     return respuestaJSON({
       success: true,
@@ -1003,11 +1090,18 @@ function replaceArchivo(data) {
     const oldFileName = registroBase.nombreArchivo || "(desconocido)";
     let borradoOk = false;
 
-    // 3. Subir nuevo archivo
+    // 3. Subir nuevo archivo (nombre normalizado)
+    let nombreNormalizado = normalizarNombreArchivo(data.archivo.nombre);
+
+    const extensionMatch = data.archivo.nombre.match(/\.[^/.]+$/);
+    if (extensionMatch) {
+      nombreNormalizado += extensionMatch[0];
+    }
+
     const archivoBlob = Utilities.newBlob(
       Utilities.base64Decode(data.archivo.base64),
       data.archivo.tipo || MimeType.BINARY,
-      data.archivo.nombre
+      nombreNormalizado
     );
 
     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
@@ -1036,15 +1130,32 @@ function replaceArchivo(data) {
 
     guardarJSON(JSON_BDD_DATOS, bddatos);
 
-    // ✅ Registrar log
+    // ✅ Registrar log con nombres de productos afectados
+    const productosAfectados = registrosRelacionados.map(r => {
+      return r.nombreProducto 
+        ? `${r.nombreProducto} (${r.entidad || "sin entidad"})` 
+        : r.productoId;
+    });
+
     registrarLog("replaceArchivo", correo, {
       nuevoFileId: file.getId(),
-      nuevoNombre: data.archivo.nombre,
-      productosAfectados: registrosRelacionados.map(r => r.productoId),
+      nuevoNombre: nombreNormalizado,
+      productosAfectados,
       anio: data.anio,
       replaceOnlyThis: data.replaceOnlyThis === true,
-      archivoBorrado: borradoOk ? oldFileName : "no borrado"
+      archivoBorrado: borradoOk ? oldFileName : "no borrado",
+      linkNuevoArchivo: file.getUrl()
     });
+
+    // // ✅ Registrar log
+    // registrarLog("replaceArchivo", correo, {
+    //   nuevoFileId: file.getId(),
+    //   nuevoNombre: nombreNormalizado,
+    //   productosAfectados: registrosRelacionados.map(r => r.productoId),
+    //   anio: data.anio,
+    //   replaceOnlyThis: data.replaceOnlyThis === true,
+    //   archivoBorrado: borradoOk ? oldFileName : "no borrado"
+    // });
 
     // 6. Respuesta
     return respuestaJSON({
@@ -1084,7 +1195,8 @@ function getArchivosPorAnio(anio) {
     };
   });
 
-  return respuestaJSON({ status: "ok 808", anio, archivos: resultado });
+  return respuestaJSON({ status: "ok", anio, archivos: resultado });
+  
 }
 function getProductosPorArchivo(fileId) {
   const bddatos = leerJSON(JSON_BDD_DATOS);

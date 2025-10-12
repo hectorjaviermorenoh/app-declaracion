@@ -111,7 +111,7 @@ function AppNavbar() {
 
 
                 <NavDropdown title="Más" id="nav-dropdown">
-                  <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/logs">Logs</NavDropdown.Item>
+                  <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin/logs">Logs</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/archivos">Archivos</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => { setShowReinitModal(true); setShow(false); }} >Reinicializar Proyecto</NavDropdown.Item>
                   <NavDropdown.Divider />
