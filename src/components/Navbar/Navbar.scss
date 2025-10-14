@@ -102,7 +102,7 @@ $hover-bg: #f1f1f1;
 .backend-circle-Brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  // gap: 0.5rem;
 }
 
 
@@ -149,5 +149,41 @@ $hover-bg: #f1f1f1;
 @media (max-width: 768px) {
   .dato-item {
     grid-template-columns: 1fr;
+  }
+}
+
+
+.grupNavTex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  min-width: 0; // necesario para text-overflow
+  // margin-top: 0.4rem;
+  padding: 0.5rem 0.5rem 0px 0.5rem;
+
+
+  .app-brand {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #0d6efd;
+    text-decoration: none;
+    margin-bottom: 0.1rem;
+    white-space: nowrap;
+  }
+
+  .navbar-brand {
+    padding: 0;
+    margin: 0;
+  }
+
+  .backend-alias {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+    max-width: 110px; // 👈 limita el ancho para truncar
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

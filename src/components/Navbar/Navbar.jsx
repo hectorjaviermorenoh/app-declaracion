@@ -73,16 +73,24 @@ function AppNavbar() {
                 {activeBackend.alias.slice(0, 2).toUpperCase()}
               </div>
             )}
-            <Navbar.Brand as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
+            {/* <div className="grupNavTex">
+              <Navbar.Brand as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
+              <h6>{activeBackend.alias}</h6>
+            </div> */}
+
+            <div className="grupNavTex text-center">
+              <Navbar.Brand className="app-brand" as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
+              {activeBackend?.alias && (
+                <h6 className="backend-alias mb-0" title={activeBackend.alias}>
+                  {activeBackend.alias}
+                </h6>
+              )}
+            </div>
           </div>
 
           <div className="contCamp">
             <div className="d-flex align-items-center">
-              <Bell
-                size={22}
-                className="me-3 cursor-pointer"
-                onClick={handleToggle}
-              />
+              <Bell size={22} className="me-3 cursor-pointer" onClick={handleToggle}/>
             </div>
             <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
           </div>
