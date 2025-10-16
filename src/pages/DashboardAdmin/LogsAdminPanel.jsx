@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Button, Table } from "react-bootstrap";
-import { useLogsAdmin } from "../../context/Admin/LogsAdminContext";
-import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
-import "./LogsAdminPage.scss";
 
-export default function LogsAdminPage() {
+import React, { useState, useEffect } from "react";
+import { Button, Table, Spinner } from "react-bootstrap";
+
+import { useLogsAdmin } from "../../context/admin/LogsAdminContext";
+import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import "./Styles/LogsAdminPanel.scss";
+
+export function LogsAdminPanel() {
+
   const { logs, fetchLogs, clearLogs, loading } = useLogsAdmin();
   const [showClearModal, setShowClearModal] = useState(false);
 
@@ -106,4 +109,7 @@ export default function LogsAdminPage() {
       />
     </div>
   );
+
+
+
 }

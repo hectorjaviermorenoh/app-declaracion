@@ -60,7 +60,7 @@ function AppNavbar() {
 
   return (
     <>
-      <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3">
+      <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3 sticky-top">
         <Container fluid>
 
           <div className="backend-circle-Brand">
@@ -73,10 +73,6 @@ function AppNavbar() {
                 {activeBackend.alias.slice(0, 2).toUpperCase()}
               </div>
             )}
-            {/* <div className="grupNavTex">
-              <Navbar.Brand as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
-              <h6>{activeBackend.alias}</h6>
-            </div> */}
 
             <div className="grupNavTex text-center">
               <Navbar.Brand className="app-brand" as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
@@ -119,8 +115,8 @@ function AppNavbar() {
 
 
                 <NavDropdown title="Más" id="nav-dropdown">
-                  <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin/logs">Logs</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/archivos">Archivos</NavDropdown.Item>
+                  <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => { setShowReinitModal(true); setShow(false); }} >Reinicializar Proyecto</NavDropdown.Item>
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>

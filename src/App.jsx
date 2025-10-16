@@ -2,22 +2,11 @@ import React from 'react'
 import { Container } from 'react-bootstrap'
 import { Routes, Route } from 'react-router-dom'
 import AppNavbar from './components/Navbar/Navbar'
-
-
 import Productos from "./pages/Productos/Productos";
 import DatosTributarios from "./pages/DatosTributarios/DatosTributarios";
 import ArchivosPorAnio from "./pages/ArchivosPorAnio/ArchivosPorAnio";
-import LogsAdminPage from "./pages/LogsAdminPage/LogsAdminPage";
+import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
-
-function Config() {
-  return (
-    <>
-    <h1>Configuración</h1>
-    <h2>prueba de javier</h2>
-    </>
-  )
-}
 
 function App() {
   return (
@@ -29,7 +18,7 @@ function App() {
           <Route path="/config" element={<Config />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
           <Route path="/registros" element={<ArchivosPorAnio />} />
-          <Route path="/admin/logs" element={<LogsAdminPage />} />
+          <Route path="/admin" element={<DashboardAdmin />} />
         </Routes>
       </Container>
     </>

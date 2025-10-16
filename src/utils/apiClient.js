@@ -1,30 +1,3 @@
-// src/utils/apiClient.js
-// export async function apiGet(backendUrl, accion, params = {}) {
-//   if (!backendUrl) throw new Error("Backend no configurado");
-//   const query = new URLSearchParams({ accion, ...params });
-//   const resp = await fetch(`${backendUrl}?${query.toString()}`);
-//   return await resp.json();
-// }
-
-// export async function apiPost(backendUrl, accion, body = {}) {
-//   if (!backendUrl) throw new Error("Backend no configurado");
-//   const payload = { accion, ...body };
-//   const resp = await fetch(backendUrl, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify(payload),
-//   });
-//   return await resp.json();
-// }
-
-
-
-/**
- * apiClient.js
- * Cliente centralizado para llamadas a backend (GET y POST)
- * con manejo de errores y validaciones básicas.
- */
-
 
 // 🧠 Configuración opcional
 const ENABLE_LOGS = true; // muestra errores en consola si true

@@ -87,15 +87,13 @@ export default function Productos() {
     setAnioSeleccionado(anio);
     setArchivo(file);
 
-    console.log("📤 UploadConfirm payload:", {
-      aplicaVarios,
-      productoOrigen: selectedProducto?.id,
-      anio,
-      file: file?.name,
-      replaceOnlyThis
-    });
-
-    console.log("que tieneProducto", selectedProducto);
+    // console.log("📤 UploadConfirm payload:", {
+    //   aplicaVarios,
+    //   productoOrigen: selectedProducto?.id,
+    //   anio,
+    //   file: file?.name,
+    //   replaceOnlyThis
+    // });
 
 
 
