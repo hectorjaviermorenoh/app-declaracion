@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Productos />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
-          <Route path="/registros" element={<ArchivosPorAnio />} />
+          <Route path="/contador" element={<ArchivosPorAnio />} />
           <Route path="/admin" element={<DashboardAdmin />} />
         </Routes>
       </Container>

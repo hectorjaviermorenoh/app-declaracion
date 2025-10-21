@@ -109,13 +109,11 @@ function AppNavbar() {
 
                 <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Adicionar Producto</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/");}}>Productos</Nav.Link>
-                <Nav.Link onClick={() => {setShow(false); navigate("/registros");}}>Contador</Nav.Link>
-                <Nav.Link onClick={() => {setShow(false); navigate("/config");}}>Configuración</Nav.Link>
-                <Nav.Link onClick={() => {setShow(false); navigate("/usuarios");}}>Usuarios</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
+
 
 
                 <NavDropdown title="Más" id="nav-dropdown">
-                  <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/archivos">Archivos</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                   <NavDropdown.Item onClick={() => { setShowReinitModal(true); setShow(false); }} >Reinicializar Proyecto</NavDropdown.Item>
                   <NavDropdown.Divider />
