@@ -14,7 +14,7 @@ function App() {
       <AppNavbar />
       <Container className="mt-4">
         <Routes>
-          <Route path="/" element={<Productos />} />
+          <Route path="/productos" element={<Productos />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
           <Route path="/contador" element={<ArchivosPorAnio />} />
           <Route path="/admin" element={<DashboardAdmin />} />

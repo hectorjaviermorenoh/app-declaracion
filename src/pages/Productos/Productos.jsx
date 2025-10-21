@@ -16,7 +16,7 @@ import { confirmarAccion } from "../../utils/alerts.js";
 import "./Productos.scss";
 
 export default function Productos() {
-  // const { activeBackend } = useBackends();
+
   const { activeBackend, loading: backendsLoading } = useBackends();
   const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo } = useProductos();
 
@@ -86,15 +86,6 @@ export default function Productos() {
     setShowUploadModal(false);
     setAnioSeleccionado(anio);
     setArchivo(file);
-
-    // console.log("📤 UploadConfirm payload:", {
-    //   aplicaVarios,
-    //   productoOrigen: selectedProducto?.id,
-    //   anio,
-    //   file: file?.name,
-    //   replaceOnlyThis
-    // });
-
 
 
     if (aplicaVarios) {
@@ -295,13 +286,6 @@ export default function Productos() {
           onHide={() => setShowAddModal(false)}
           onProductoAgregado={() => setShowAddModal(false)}
         />
-
-        {/* <DeleteProductoModal
-          show={showDeleteModal}
-          onHide={() => setShowDeleteModal(false)}
-          producto={selectedProducto}
-          onDelete={deleteProducto}
-        /> */}
 
       <ConfirmActionModal
         show={showDeleteModal}
