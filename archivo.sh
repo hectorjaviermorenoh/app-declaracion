@@ -9,10 +9,10 @@ git remote remove origin
 git remote add origin git@github.com:hectorjaviermorenoh/app-declaracion.git
 
 git add .
-git commit -m "modificacion app y navbar Todo funcionando Ok"
-git push origin main
+git commit -m "modificacion y eliminacion varios Todo funcionando Ok"
+git push origin Auth
 
-npm run deploy
+# npm run deploy
 
 
 

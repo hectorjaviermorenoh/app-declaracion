@@ -108,7 +108,7 @@ function AppNavbar() {
               >
 
                 <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Adicionar Producto</Nav.Link>
-                <Nav.Link onClick={() => {setShow(false); navigate("/");}}>Productos</Nav.Link>
+                <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>Productos</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
 
 
