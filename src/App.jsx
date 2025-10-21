@@ -15,7 +15,6 @@ function App() {
       <Container className="mt-4">
         <Routes>
           <Route path="/" element={<Productos />} />
-          <Route path="/config" element={<Config />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
           <Route path="/registros" element={<ArchivosPorAnio />} />
           <Route path="/admin" element={<DashboardAdmin />} />

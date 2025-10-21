@@ -8,7 +8,6 @@ const JSON_PRODUCTOS = "productos.json";
 const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
-const JSON_ROLES = "roles.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
 
 /******************************
@@ -30,6 +29,7 @@ const DATOS_TRIBUTARIOS_INICIALES = [
   { id: "codigoDireccionSeccional", label: "Código Dirección Seccional", valor: "", orden: 6 },
   { id: "codigoActividadEconomica", label: "Cód. Actividad económica", valor: "", orden: 7 }
 ];
+
 
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
@@ -61,31 +61,10 @@ function inicializarSistema() {
     // 6. Crear JSON de bddatos si no existe
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_FACTURAS, []);
 
-
-    // 7. Crear JSON de roles si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, "roles.json", [
-      {
-        rol: "administrador",
-        permisos: [
-          "getConfig", "setConfig", "addUsuario", "deleteUsuario",
-          "addProducto", "deleteProducto", "getUsuarios",
-          "subirArchivo", "replaceArchivo", "getLogs", "limpiarLogsAntiguos", "getUsuarioActual", "getArchivosPorAnio", "getDatosTributarios"
-        ]
-      },
-      {
-        rol: "contador",
-        permisos: ["getConfig", "subirArchivo", "replaceArchivo"]
-      },
-      {
-        rol: "declarante",
-        permisos: ["subirArchivo"]
-      }
-    ]);
-
-    // 8. Crear JSON de logs si no existe
+    // 7. Crear JSON de logs si no existe
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_LOGS, []);
 
-    // 9. Crear datos tributarios con valores iniciales
+    // 8. Crear datos tributarios con valores iniciales
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
 
     Logger.log("✅ Sistema inicializado correctamente");
@@ -216,6 +195,56 @@ function registrarLog(accion, usuario, detalle) {
     lock.releaseLock();
   }
 }
+// function getLogs() {
+
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // hasta 30s esperando
+
+//   try {
+//     return respuestaJSON(leerJSON(JSON_LOGS));
+//   } catch {
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+// function getLogs() {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
+
+//   try {
+//     const logs = leerJSON(JSON_LOGS);
+
+//     // 🧩 Si el archivo está vacío o no hay logs
+//     if (!logs || logs.length === 0) {
+//       return respuestaJSON({
+//         status: "ok",
+//         mensaje: "No hay logs para mostrar",
+//         logs: []
+//       });
+//     }
+
+//     // ✅ Retorna los logs existentes
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: "Logs obtenidos correctamente",
+//       logs
+//     });
+
+//   } catch (error) {
+//     // 🚨 Si hubo un problema al leer el archivo
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "Error al obtener logs",
+//       detalle: error.message || "No se pudo leer el archivo de logs"
+//     });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 
 function getLogs() {
   const lock = LockService.getScriptLock();
@@ -300,6 +329,9 @@ function limpiarLogsAntiguos() {
     lock.releaseLock();
   }
 }
+
+
+
 
 /******************************
  * FUNCIONES AUXILIARES
@@ -407,7 +439,7 @@ function verificarArchivoDuplicado(carpetaDestino, nombreArchivo) {
   const archivos = carpetaDestino.getFilesByName(nombreArchivo);
   return archivos.hasNext() ? archivos.next() : null;
 }
-function validarTipoYTamanoArchivoPermitido(archivoBlob, config) {
+function validarArchivo(archivoBlob, config) {
   let extension = archivoBlob.getName().split(".").pop().toLowerCase();
   let tamanoMB = archivoBlob.getBytes().length / (1024 * 1024);
 
@@ -493,103 +525,6 @@ function obtenerPayloadArchivo(e, isMultipart, camposEsperados) {
   return payload;
 }
 
-/******************************
- * 🔒 FUNCIONES DE SEGURIDAD
- ******************************/
-
-// Obtiene correo del usuario activo
-function getUsuarioActual() {
-  const correo = Session.getActiveUser().getEmail();
-  const usuarios = leerJSON(JSON_USUARIOS);
-  const usuario = usuarios.find(u => u.correo === correo);
-  return respuestaJSON({
-    status: "ok funcion",
-    correo: correo,
-    usuarios: usuarios,
-    usuario: usuario || { correo, rol: "no_registrado" }
-  });
-  
-}
-
-// function getUsuarioActual() {
-//   return respuestaJSON({
-//     status: "ok funciona"
-//   });
-// }
-
-// Verifica si un correo tiene permisos para ejecutar una acción
-/**
- * 🔐 Verifica si un usuario tiene permiso para ejecutar una acción.
- * Incluye manejo de anónimos y estructura de permisos por rol.
- */
-function tienePermiso(correo, accion) {
-  // --- 1️⃣ Acciones que siempre son públicas (no requieren autenticación)
-  const accionesPublicas = ["ping", "getConfig", "getUsuarioActual"];
-
-  if (accionesPublicas.includes(accion)) {
-    return true;
-  }
-
-  // --- 2️⃣ Si no hay correo (usuario anónimo o petición externa)
-  if (!correo || correo === "" || correo === "anonimo@sinlogin") {
-    // Puedes permitir o negar completamente
-    // return false; // si no quieres que nadie anónimo acceda
-    const accionesAnonimas = ["getProductos"]; // ejemplo: consulta básica
-    return accionesAnonimas.includes(accion);
-  }
-
-  // --- 3️⃣ Leer usuarios registrados
-  const usuarios = leerJSON(JSON_USUARIOS);
-  const usuario = usuarios.find(u => u.correo === correo);
-
-  if (!usuario) {
-    registrarLog(`⛔ Usuario no registrado intento: ${correo} (${accion})`);
-    return false;
-  }
-
-  // --- 4️⃣ Cargar roles y permisos
-  const permisosPorRol = leerJSON(JSON_ROLES); // { admin: ["getUsuarios","crearUsuario"], editor: ["subirArchivo"], ... }
-  const rol = usuario.rol;
-
-  // --- 5️⃣ Validar si su rol tiene la acción
-  const tieneAcceso = permisosPorRol[rol]?.includes(accion) || false;
-
-  if (!tieneAcceso) {
-    registrarLog(`⛔ ${correo} (${rol}) sin permiso para '${accion}'`);
-  }
-
-  return tieneAcceso;
-}
-
-// Wrapper de validación antes de ejecutar acciones críticas
-function validarPermiso(accion) {
-  const correo = getUsuarioActual();
-  const autorizado = tienePermiso(correo, accion);
-
-  if (!autorizado) {
-    throw new Error(`⛔ El usuario ${correo} no tiene permiso para ejecutar: ${accion}`);
-  }
-  return correo;
-}
-
-function getPermisosUsuarioActual() {
-  const correo = Session.getActiveUser().getEmail() || "anonimo@sinlogin";
-  const usuarios = leerJSON(JSON_USUARIOS);
-  const roles = leerJSON(JSON_ROLES);
-
-  const usuario = usuarios.find(u => u.correo === correo);
-  const rol = usuario ? usuario.rol : "sin_rol";
-  const permisos = roles.find(r => r.rol === rol)?.permisos || [];
-
-  return respuestaJSON({
-    status: "ok",
-    correo,
-    rol,
-    permisos
-  });
-}
-
-
 
 /******************************
  * MÉTODO DOGET
@@ -597,16 +532,6 @@ function getPermisosUsuarioActual() {
 function doGet(e) {
   try {
     const accion = e.parameter.accion;
-
-    let correoEjecutor = Session.getActiveUser().getEmail() || "anonimo@sinlogin";
-
-    // 🔐 Validar permisos antes de ejecutar
-    if (!tienePermiso(correoEjecutor, accion)) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⛔ Acceso denegado: ${correoEjecutor} no tiene permiso para ejecutar '${accion}'`
-      });
-    }
 
     switch (accion) {
       case "ping":
@@ -636,12 +561,15 @@ function doGet(e) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
         }
         return getArchivosPorAnio(anio);
-      case "getPermisosUsuarioActual":
-        return getPermisosUsuarioActual()
-      case "getUsuarioActual":
-        return getUsuarioActual();
-        // return respuestaJSON({status: "ok"})
-          
+
+      // --- 📌 Nuevo endpoint ProductosPorArchivo ---
+      case "getProductosPorArchivo":
+        const archivoId = e.parameter.archivoId;
+        if (!archivoId) {
+          return respuestaJSON({ status: "error", mensaje: "Debe enviar archivoId" });
+        }
+        return getProductosPorArchivo(archivoId);
+
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
     }
@@ -681,16 +609,6 @@ function doPost(e) {
       });
     }
 
-
-    // 🔐 Validación de permisos antes de ejecutar cualquier acción
-    const correoEjecutor = Session.getActiveUser().getEmail() || "anonimo@sinlogin";
-    if (!tienePermiso(correoEjecutor, accion)) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⛔ Acceso denegado: ${correoEjecutor} no tiene permiso para ejecutar '${accion}'`
-      });
-    }
-
     switch (accion) {
       case "inicializarForzado":
         const correo = data.correoAdmin;
@@ -726,7 +644,7 @@ function doPost(e) {
         return deleteProducto(data.id);
 
       case "replaceArchivo":
-        return replaceArchivo(e, isMultipart);
+        return replaceArchivo(data);
 
       case "inicializarSistema":
         return inicializarSistemaSeguro(data);
@@ -905,6 +823,8 @@ function deleteProducto(id) {
     lock.releaseLock();
   }
 }
+
+
 // Archivos
 function subirArchivoProducto(e, isMultipart) {
   const lock = LockService.getScriptLock();
@@ -939,7 +859,7 @@ function subirArchivoProducto(e, isMultipart) {
 
 
     // --- Validar extensión y tamaño ---
-    const validacion = validarTipoYTamanoArchivoPermitido(archivoBlob, config);
+    const validacion = validarArchivo(archivoBlob, config);
     if (!validacion.ok) {
       return respuestaJSON({ success: false, message: validacion.mensaje });
     }
@@ -1032,6 +952,7 @@ function subirArchivoProducto(e, isMultipart) {
     lock.releaseLock();
   }
 }
+
 function subirArchivoFacturas(e, isMultipart) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -1063,7 +984,7 @@ function subirArchivoFacturas(e, isMultipart) {
 
 
     // --- Validar extensión y tamaño ---
-    const validacion = validarTipoYTamanoArchivoPermitido(archivoBlob, config);
+    const validacion = validarArchivo(archivoBlob, config);
     if (!validacion.ok) {
       return respuestaJSON({ success: false, message: validacion.mensaje });
     }
@@ -1132,129 +1053,123 @@ function subirArchivoFacturas(e, isMultipart) {
     lock.releaseLock();
   }
 }
-function replaceArchivo(e, isMultipart) {
+
+function replaceArchivo(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
-    // 1️⃣ Leer configuración
-    const config = leerJSON(JSON_CONFIGURACION);
-
-    // 2️⃣ Extraer payload con la función auxiliar estándar
-    const camposEsperados = ["productoId", "anio", "correo", "replaceOnlyThis"];
-    const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
-
-    const archivoBlob = payload.archivoBlob;
-    const productoId = payload.productoId;
-    const anio = payload.anio;
-    const correo = Session.getActiveUser().getEmail() || payload.correo || "";
-    const replaceOnlyThis = payload.replaceOnlyThis === true || payload.replaceOnlyThis === "true";
-
-    // 3️⃣ Validar permisos
+    // Validar que sea administrador
+    let correo = Session.getActiveUser().getEmail() || data.correo || "";
     if (!esAdmin(correo)) {
       return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado", correo });
     }
 
-    // 4️⃣ Validar archivo (tipo y tamaño)
-    const validacion = validarTipoYTamanoArchivoPermitido(archivoBlob, config);
-    if (!validacion.ok) {
-      return respuestaJSON({ status: "error", mensaje: validacion.mensaje });
-    }
-
-    // 5️⃣ Buscar registros en base de datos
     let bddatos = leerJSON(JSON_BDD_DATOS);
-    const registroBase = bddatos.find(r => r.productoId === productoId && r.anio === anio);
+
+    // 1. Buscar el registro base
+    let registroBase = bddatos.find(r => r.productoId === data.productoId && r.anio === data.anio);
     if (!registroBase) {
       return respuestaJSON({ status: "error", mensaje: "❌ No existe archivo para ese producto y año" });
     }
 
-    // Determinar registros a modificar
-    const registrosRelacionados = replaceOnlyThis
-      ? [registroBase]
-      : bddatos.filter(r => r.fileId === registroBase.fileId && r.anio === anio);
+    // 2. Determinar registros a modificar
+    let registrosRelacionados = [];
+    if (data.replaceOnlyThis === true) {
+      registrosRelacionados = [registroBase];
+    } else {
+      registrosRelacionados = bddatos.filter(r => r.fileId === registroBase.fileId && r.anio === data.anio);
+    }
 
     if (registrosRelacionados.length === 0) {
       return respuestaJSON({ status: "error", mensaje: "⚠️ No se encontraron registros relacionados" });
     }
 
-    // --- Datos de archivo anterior ---
+    // --- Datos de archivo viejo ---
     const oldFileId = registroBase.fileId;
     const oldFileName = registroBase.nombreArchivo || "(desconocido)";
     let borradoOk = false;
 
-    // 6️⃣ Guardar nuevo archivo en Drive
-    const resultadoDrive = guardarArchivoEnDrive(
-      config,
-      archivoBlob,
-      anio,
-      null,  // sin subcarpeta
-      false  // no reemplazar, siempre crear nuevo
-    );
+    // 3. Subir nuevo archivo (nombre normalizado)
+    let nombreNormalizado = normalizarNombreArchivo(data.archivo.nombre);
 
-    if (!resultadoDrive.ok) {
-      return respuestaJSON({
-        status: resultadoDrive.status,
-        mensaje: resultadoDrive.mensaje,
-        link: resultadoDrive.link || null,
-        nombreArchivo: resultadoDrive.nombreArchivo
-      });
+    const extensionMatch = data.archivo.nombre.match(/\.[^/.]+$/);
+    if (extensionMatch) {
+      nombreNormalizado += extensionMatch[0];
     }
 
-    const file = resultadoDrive.file;
+    const archivoBlob = Utilities.newBlob(
+      Utilities.base64Decode(data.archivo.base64),
+      data.archivo.tipo || MimeType.BINARY,
+      nombreNormalizado
+    );
 
-    // 7️⃣ Actualizar registros afectados
+    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, data.anio);
+    let file = carpetaAnio.createFile(archivoBlob);
+
+    // 4. Actualizar registros seleccionados
     registrosRelacionados.forEach(r => {
       r.fileId = file.getId();
-      r.nombreArchivo = resultadoDrive.nuevoNombre || file.getName();
-      r.link = resultadoDrive.link || file.getUrl();
+      r.nombreArchivo = file.getName();
+      r.link = file.getUrl();
       r.fecha = new Date().toISOString();
     });
 
-    // 8️⃣ Borrar archivo anterior (si corresponde)
-    if (!replaceOnlyThis && oldFileId) {
+    // 5. Borrar archivo viejo solo si es global y nadie más lo usa
+    if (data.replaceOnlyThis !== true) {
       try {
-        DriveApp.getFileById(oldFileId).setTrashed(true);
-        borradoOk = true;
-      } catch (err) {
-        Logger.log("⚠️ No se pudo borrar archivo anterior: " + err.message);
+        if (oldFileId) {
+          DriveApp.getFileById(oldFileId).setTrashed(true);
+          borradoOk = true;
+        }
+      } catch (e) {
+        Logger.log("⚠️ No se pudo borrar archivo anterior: " + e.message);
       }
     }
 
     guardarJSON(JSON_BDD_DATOS, bddatos);
 
-    // 9️⃣ Registrar log con nombres de productos
-    const productosAfectados = registrosRelacionados.map(r =>
-      r.nombreProducto ? `${r.nombreProducto} (${r.entidad || "sin entidad"})` : r.productoId
-    );
+    // ✅ Registrar log con nombres de productos afectados
+    const productosAfectados = registrosRelacionados.map(r => {
+      return r.nombreProducto 
+        ? `${r.nombreProducto} (${r.entidad || "sin entidad"})` 
+        : r.productoId;
+    });
 
     registrarLog("replaceArchivo", correo, {
       nuevoFileId: file.getId(),
-      nuevoNombre: resultadoDrive.nuevoNombre,
+      nuevoNombre: nombreNormalizado,
       productosAfectados,
-      anio,
-      replaceOnlyThis,
+      anio: data.anio,
+      replaceOnlyThis: data.replaceOnlyThis === true,
       archivoBorrado: borradoOk ? oldFileName : "no borrado",
       linkNuevoArchivo: file.getUrl()
     });
 
-    // 🔟 Respuesta final
+    // // ✅ Registrar log
+    // registrarLog("replaceArchivo", correo, {
+    //   nuevoFileId: file.getId(),
+    //   nuevoNombre: nombreNormalizado,
+    //   productosAfectados: registrosRelacionados.map(r => r.productoId),
+    //   anio: data.anio,
+    //   replaceOnlyThis: data.replaceOnlyThis === true,
+    //   archivoBorrado: borradoOk ? oldFileName : "no borrado"
+    // });
+
+    // 6. Respuesta
     return respuestaJSON({
       status: "ok",
       mensaje: `Archivo reemplazado en ${registrosRelacionados.length} producto(s). ${borradoOk ? "📂 Archivo viejo borrado: " + oldFileName : "⚠️ Archivo anterior no fue borrado"}`,
       archivoId: file.getId(),
       registros: registrosRelacionados
-     });
-
-  } catch (err) {
-    return respuestaJSON({
-      status: "error",
-      mensaje: "Error al reemplazar archivo",
-      detalle: err.message
     });
+
   } finally {
     lock.releaseLock();
   }
 }
+
 function getArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
