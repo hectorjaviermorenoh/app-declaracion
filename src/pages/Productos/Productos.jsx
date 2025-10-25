@@ -5,7 +5,8 @@ import { useToast } from "../../context/ToastContext";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
-import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
+// import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
+import AddProductoModal from "../../components/Modals/AddProductoModal/AddProductoModal";
 
 // import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
@@ -18,7 +19,7 @@ import "./Productos.scss";
 export default function Productos() {
 
   const { activeBackend, loading: backendsLoading } = useBackends();
-  const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo } = useProductos();
+  const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo, deleteProducto  } = useProductos();
 
   const { showToast } = useToast();
 
@@ -119,7 +120,7 @@ export default function Productos() {
           }
         } else {
           // ✅ flujo normal: subida o error estándar
-          console.log("📥 Backend response (subirArchivo uno):", r);
+          console.log("📥 Backend response (subirArchivo 122):", r);
           showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
         }
 
@@ -144,43 +145,6 @@ export default function Productos() {
       showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
     }
   };
-
-  const deleteProducto = async (productoId) => {
-    if (!activeBackend ) return;
-
-    setShowDeleteModal(false); // 👈 cerrar modal siempre
-
-    try {
-      const payload = {
-        accion: "deleteProducto",
-        id: productoId,
-      };
-
-      const resp = await fetch(activeBackend.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-
-      const data = await resp.json();
-      console.log("🗑️ Respuesta deleteProducto:", data);
-
-      if (data.status === "ok") {
-        showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
-        await refreshProductos();   // 👈 refrescar productos
-      } else {
-        showToast(`❌ Error al eliminar: ${(data.mensaje || "sin detalle")}`, "success", 3000, "Productos");
-      }
-    } catch (err) {
-      console.error("❌ Error eliminando producto:", err);
-      showToast("❌ Error eliminando producto", "success", 3000, "Productos");
-    } finally {
-      setShowDeleteModal(false); // 👈 cerrar modal siempre
-    }
-  };
-
-
 
   return (
     <>
@@ -300,6 +264,7 @@ export default function Productos() {
         confirmLabel="Eliminar"
         confirmVariant="danger"
         onConfirm={() => deleteProducto(selectedProducto.id)}
+
       />
 
 

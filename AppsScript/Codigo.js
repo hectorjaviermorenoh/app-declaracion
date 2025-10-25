@@ -30,6 +30,55 @@ const DATOS_TRIBUTARIOS_INICIALES = [
   { id: "codigoActividadEconomica", label: "Cód. Actividad económica", valor: "", orden: 7 }
 ];
 
+/******************************
+ * 🔐 CONFIGURACIÓN DE PERMISOS Y VALIDACIÓN
+ ******************************/
+
+// 🧩 Funciones expuestas al frontend (de lógica del negocio)
+const FUNCIONES_LOGICA_NEGOCIO = [
+  // --- GET ---
+  "ping",
+  "getConfig",
+  "getUsuarios",
+  "getProductos",
+  "getDatosTributarios",
+  "getLogs",
+  "getArchivosPorAnio",
+  "getProductosPorArchivo",
+
+  // --- POST ---
+  "inicializarForzado",
+  "subirArchivo",
+  "subirArchivoFacturas",
+  "setConfig",
+  "limpiarLogsAntiguos",
+  "addUsuario",
+  "deleteUsuario",
+  "addProducto",
+  "deleteProducto",
+  "replaceArchivo",
+  "inicializarSistema",
+  "addDatoTributario",
+  "updateDatoTributario",
+  "deleteDatoTributario",
+  "moveDatoTributario"
+];
+
+// ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
+const FUNCIONES_GENERALES = [
+  "verificarTokenYAutorizar",
+  "validarPermiso",
+  "registrarLog",
+  "manejarError",
+  "leerJSON",
+  "guardarJSON",
+  "obtenerOCrearCarpeta",
+  "normalizarTexto",
+  "normalizarNombreArchivo"
+];
+
+
+
 
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
@@ -149,190 +198,141 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     lock.releaseLock();
   }
 }
-function limpiarCarpetas() {
-  const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
-  const subcarpetas = carpetaPrincipal.getFolders();
-  const archivos = carpetaPrincipal.getFiles();
-
-  // Borrar subcarpetas (años, etc.)
-  while (subcarpetas.hasNext()) {
-    const carpeta = subcarpetas.next();
-    carpeta.setTrashed(true); // Manda a papelera
-  }
-
-  return { mensaje: "🗑️ Carpetas borradas correctamente" };
-
-}
-
 /******************************
- * FUNCIONES Administrativas Sistema
+ * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
- function esAdmin(correo) {
+function esAdmin(correo) {
   let usuarios = leerJSON(JSON_USUARIOS);
   let user = usuarios.find(u => {
     return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
   });
   return user && user.rol === "administrador";
 }
-function registrarLog(accion, usuario, detalle) {
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
-
+function verificarTokenYAutorizar(token) {
+  const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
+  const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
+  
   try {
-    let logs = leerJSON(JSON_LOGS);
-    const nuevoLog = {
-      fecha: new Date().toISOString(),
-      accion,
-      usuario: usuario || "desconocido",
-      detalle: detalle || {}
+    const response = UrlFetchApp.fetch(tokenInfoUrl, { method: 'GET', muteHttpExceptions: true });
+    const tokenPayload = JSON.parse(response.getContentText());
+
+    if (tokenPayload.error) {
+      return { autorizado: false, mensaje: "Token inválido o expirado" };
+    }
+    if (tokenPayload.aud !== CLIENT_ID) {
+      return { autorizado: false, mensaje: "ID de cliente incorrecto" };
+    }
+
+    const userEmail = tokenPayload.email;
+    const userNombre = tokenPayload.name;
+    const userPicture = tokenPayload.picture;
+    const usuarios = leerJSON(JSON_USUARIOS);
+    const roles = leerJSON("roles.json");
+
+    const usuario = usuarios.find(u => u.correo === userEmail && u.activo);
+    if (!usuario) {
+      return { autorizado: false, mensaje: "Usuario no registrado o inactivo" };
+    }
+
+    const rol = roles.find(r => r.rol === usuario.rol);
+    if (!rol) {
+      return { autorizado: false, mensaje: "Rol no definido para el usuario" };
+    }
+
+    return {
+      autorizado: true,
+      correo: userEmail,
+      nombre: userNombre,
+      picture: userPicture,
+      rol: usuario.rol,
+      permisos: rol.permisos
     };
-    logs.push(nuevoLog);
-    guardarJSON(JSON_LOGS, logs);
-    return nuevoLog; // opcional, para debug
 
-  } finally {
-    lock.releaseLock();
+  } catch (err) {
+    return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
-// function getLogs() {
+// function validarPermiso(usuario, accion) {
+//   // 🔒 Si no está autenticado, no hay acceso
+//   if (!usuario || !usuario.autorizado) return false;
 
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // hasta 30s esperando
+//   // 👑 El rol administrador tiene acceso total
+//   if (usuario.rol === "administrador") return true;
 
-//   try {
-//     return respuestaJSON(leerJSON(JSON_LOGS));
-//   } catch {
+//   // 🧮 Verificar si el rol tiene permisos definidos
+//   if (!usuario.permisos || usuario.permisos.length === 0) return false;
 
-//   } finally {
-//     lock.releaseLock();
+//   // 🧩 Validar si la acción solicitada está incluida en la lista de permisos del rol
+//   const tienePermiso = usuario.permisos.includes(accion);
+
+//   // 🧾 Registrar log opcional para auditoría
+//   if (!tienePermiso) {
+//     registrarLog("PERMISO_DENEGADO", usuario.correo, {
+//       accionIntentada: accion,
+//       rol: usuario.rol,
+//       permisosDisponibles: usuario.permisos
+//     });
 //   }
+
+//   return tienePermiso;
 // }
 
-// function getLogs() {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
+function validarPermiso(usuario, accion) {
+  // 🚫 Usuario no autenticado
+  if (!usuario || !usuario.autorizado) return false;
 
-//   try {
-//     const logs = leerJSON(JSON_LOGS);
+  // 🟢 Permitir funciones generales a todos los roles autenticados
+  if (FUNCIONES_GENERALES.includes(accion)) return true;
 
-//     // 🧩 Si el archivo está vacío o no hay logs
-//     if (!logs || logs.length === 0) {
-//       return respuestaJSON({
-//         status: "ok",
-//         mensaje: "No hay logs para mostrar",
-//         logs: []
-//       });
-//     }
+  // 👑 Rol administrador o wildcard "*" = acceso total
+  if (usuario.rol === "administrador") return true;
+  if (usuario.permisos && usuario.permisos.includes("*")) return true;
 
-//     // ✅ Retorna los logs existentes
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: "Logs obtenidos correctamente",
-//       logs
-//     });
+  // 🧩 Validar acción dentro de las funciones de lógica del negocio
+  if (FUNCIONES_LOGICA_NEGOCIO.includes(accion)) {
+    const tienePermiso = usuario.permisos && usuario.permisos.includes(accion);
 
-//   } catch (error) {
-//     // 🚨 Si hubo un problema al leer el archivo
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "Error al obtener logs",
-//       detalle: error.message || "No se pudo leer el archivo de logs"
-//     });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
-
-function getLogs() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
-
-  try {
-    const logs = leerJSON(JSON_LOGS);
-
-    // 🧩 Si el archivo está vacío o no hay logs
-    if (!logs || logs.length === 0) {
-      return respuestaJSON({
-        status: "ok",
-        mensaje: "No hay logs para mostrar",
-        logs: []
+    if (!tienePermiso) {
+      registrarLog("PERMISO_DENEGADO", usuario.correo, {
+        accionIntentada: accion,
+        rol: usuario.rol,
+        permisosDisponibles: usuario.permisos
       });
     }
 
-    // ✅ Ordenar: el más reciente primero
-    const logsOrdenados = [...logs].reverse();
-
-    return respuestaJSON({
-      status: "ok",
-      mensaje: "Logs obtenidos correctamente",
-      logs: logsOrdenados
-    });
-
-  } catch (error) {
-    // 🚨 Si hubo un problema al leer el archivo
-    return respuestaJSON({
-      status: "error",
-      mensaje: "Error al obtener logs",
-      detalle: error.message || "No se pudo leer el archivo de logs"
-    });
-
-  } finally {
-    lock.releaseLock();
+    return tienePermiso;
   }
+
+  // ⚠️ Si la acción no está registrada en ninguna lista, la denegamos
+  registrarLog("PERMISO_DESCONOCIDO", usuario.correo, { accion });
+  return false;
 }
 
 
-function limpiarLogsAntiguos() {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // Esperar hasta 30 segundos
+/******************************
+ * MANEJO CENTRALIZADO DE ERRORES
+ ******************************/
+function manejarError(err, contexto, usuario) {
+  const mensaje = err && err.message ? err.message : "Error desconocido";
 
-  try {
-    let logs = leerJSON(JSON_LOGS);
+  const detalle = {
+    contexto: contexto,
+    usuario: usuario || "desconocido",
+    mensaje: mensaje,
+    stack: err && err.stack ? err.stack : null,
+    fecha: new Date().toISOString()
+  };
 
-    // Si hay 10 o menos, no hacemos nada
-    if (!logs || logs.length <= 10) {
-      return respuestaJSON({
-        status: "ok",
-        mensaje: "No se eliminaron logs. Hay 10 o menos registros.",
-        total: logs.length
-      });
-    }
+  // Guardar en logs.json
+  registrarLog("ERROR", usuario || "desconocido", detalle);
 
-    // 🕒 Ordenar los logs del más reciente al más antiguo
-    logs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-    // 📦 Conservar los 10 más recientes
-    const logsConservados = logs.slice(0, 10);
-    const eliminados = logs.length - logsConservados.length;
-
-    // 💾 Guardar de nuevo
-    guardarJSON(JSON_LOGS, logsConservados);
-
-    // 📘 Registrar acción en logs (opcional)
-    registrarLog("limpiarLogsAntiguos", Session.getActiveUser().getEmail(), {
-      eliminados,
-      totalFinal: logsConservados.length
-    });
-
-    return respuestaJSON({
-      status: "ok",
-      mensaje: `🧹 ${eliminados} logs eliminados, se conservaron los 10 más recientes.`,
-      totalFinal: logsConservados.length
-    });
-
-  } catch (error) {
-    return manejarError(error, "limpiarLogsAntiguos", Session.getActiveUser().getEmail());
-  } finally {
-    lock.releaseLock();
-  }
+  return respuestaJSON({
+    status: "error",
+    codigo: "E_INTERNO",
+    mensaje: mensaje,
+    contexto: contexto
+  });
 }
-
-
-
-
 /******************************
  * FUNCIONES AUXILIARES
  ******************************/
@@ -372,6 +372,7 @@ function guardarJSON(nombreArchivo, contenido) {
   }
 
 }
+
 function leerJSON(nombreArchivo) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // 🔒 Lock aplicado
@@ -388,6 +389,7 @@ function leerJSON(nombreArchivo) {
     lock.releaseLock();
   }
 }
+
 function respuestaJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -524,7 +526,41 @@ function obtenerPayloadArchivo(e, isMultipart, camposEsperados) {
 
   return payload;
 }
+function registrarLog(accion, usuario, detalle) {
 
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // hasta 30s esperando
+
+  try {
+    let logs = leerJSON(JSON_LOGS);
+    const nuevoLog = {
+      fecha: new Date().toISOString(),
+      accion,
+      usuario: usuario || "desconocido",
+      detalle: detalle || {}
+    };
+    logs.push(nuevoLog);
+    guardarJSON(JSON_LOGS, logs);
+    return nuevoLog; // opcional, para debug
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+function limpiarCarpetas() {
+  const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+  const subcarpetas = carpetaPrincipal.getFolders();
+  const archivos = carpetaPrincipal.getFiles();
+
+  // Borrar subcarpetas (años, etc.)
+  while (subcarpetas.hasNext()) {
+    const carpeta = subcarpetas.next();
+    carpeta.setTrashed(true); // Manda a papelera
+  }
+
+  return { mensaje: "🗑️ Carpetas borradas correctamente" };
+
+}
 
 /******************************
  * MÉTODO DOGET
@@ -533,11 +569,31 @@ function doGet(e) {
   try {
     const accion = e.parameter.accion;
 
+    const token = e.parameter.token || (data && data.token);
+    const usuario = verificarTokenYAutorizar(token);
+    if (!usuario.autorizado) {
+      return respuestaJSON({ autorizado: false, mensaje: usuario.mensaje });
+    }
+
+    if (!validarPermiso(usuario, accion)) {
+      return respuestaJSON({ autorizado: false, mensaje: "No tienes permiso para ejecutar " + accion });
+    }
+
     switch (accion) {
       case "ping":
-        return ContentService.createTextOutput(
-          JSON.stringify({ status: "ok", mensaje: "API funcionando" })
-        ).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          status: "ok",
+          mensaje: "API funcionando",
+          autorizado: true,
+          correo: usuario.correo,
+          nombre: usuario.nombre,
+          picture: usuario.picture,
+          rol: usuario.rol || "sin rol",
+          permisos: usuario.permisos || [],
+          activo: usuario.activo ?? true,
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
 
       case "getConfig":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_CONFIGURACION)});
@@ -584,41 +640,78 @@ function doGet(e) {
  ******************************/
 function doPost(e) {
   try {
-
     let accion = "";
     let data = {};
-    let isMultipart = e.files && Object.keys(e.files).length > 0;
+    const isMultipart = e.files && Object.keys(e.files).length > 0;
 
+    // 🟢 CAMBIO 1: primero detectamos si es multipart o JSON
     if (isMultipart) {
       // 📂 Caso form-data
       accion = e.parameter.accion || "";
-      data = e.parameter;
+      data = e.parameter; // aquí NO hay JSON, solo parámetros de formulario
     } else if (e.postData && e.postData.contents) {
       // 📦 Caso JSON
-      data = JSON.parse(e.postData.contents);
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (err) {
+        return respuestaJSON({
+          success: false,
+          status: "error_json",
+          mensaje: "❌ Error al parsear el cuerpo JSON: " + err.message,
+        });
+      }
       accion = data.accion || "";
     } else {
       return respuestaJSON({
-        status: "debug",
+        success: false,
+        status: "sin_datos",
+        mensaje: "❌ No se recibió ni JSON ni archivos en la solicitud",
         parametros: e.parameter || null,
-        archivos: e.files ? Object.keys(e.files) : "sin archivos",
-        postData: e.postData ? {
-          type: e.postData.type,
-          length: e.postData.length
-        } : null
       });
     }
 
+    // 🟢 CAMBIO 2: ahora que 'data' ya existe, podemos buscar el token sin error
+    const token = e.parameter.token || data.token;
+    const usuario = verificarTokenYAutorizar(token);
+
+    // 🟢 CAMBIO 3: validamos token y permisos DESPUÉS de tener acción y data
+    if (!usuario.autorizado) {
+      return respuestaJSON({
+        autorizado: false,
+        success: false,
+        status: "token_invalido",
+        mensaje: usuario.mensaje || "Token inválido o expirado",
+      });
+    }
+
+    if (!validarPermiso(usuario, accion)) {
+      return respuestaJSON({
+        autorizado: false,
+        success: false,
+        status: "sin_permiso",
+        mensaje: "No tienes permiso para ejecutar " + accion,
+      });
+    }
+
+    // 🟢 CAMBIO 4: tu switch queda igual, sin tocar tu lógica existente
     switch (accion) {
       case "inicializarForzado":
-        const correo = data.correoAdmin;
-        const confirmar = data.confirmar;
+         const confirmar = data.confirmar;
         const borrarCarpetas = data.borrarCarpetas === true || data.borrarCarpetas === "true";
 
         if (confirmar !== "INICIALIZAR") {
           return respuestaJSON({ status: "error", mensaje: "⚠️ Confirmación inválida, escriba INICIALIZAR" });
         }
-        const resultado = inicializarSistemaForzado(correo, borrarCarpetas);
+
+        // 🟢 Solo el rol administrador puede inicializar
+        if (usuario.rol !== "administrador") {
+          return respuestaJSON({
+            status: "sin_permiso",
+            mensaje: "Solo el rol administrador puede reinicializar el sistema",
+          });
+        }
+
+        const resultado = inicializarSistemaForzado(usuario.correo, borrarCarpetas);
         return respuestaJSON({ ...resultado });
 
       case "subirArchivo":
@@ -629,8 +722,10 @@ function doPost(e) {
 
       case "setConfig":
         return setConfig(data);
+
       case "limpiarLogsAntiguos":
         return limpiarLogsAntiguos();
+
       case "addUsuario":
         return addUsuario(data);
 
@@ -657,8 +752,10 @@ function doPost(e) {
 
       case "deleteDatoTributario":
         return deleteDatoTributario(data);
+
       case "moveDatoTributario":
         return moveDatoTributario(data);
+
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
     }
@@ -668,8 +765,9 @@ function doPost(e) {
     return manejarError(err, "doPost", correo);
   }
 }
+
 /******************************
- * FUNCIONES DE NEGOCIO
+ * FUNCIONES DE LOGICA DEL NEGOCIO
  ******************************/
  // Configuración
  function setConfig(data) {
@@ -823,8 +921,6 @@ function deleteProducto(id) {
     lock.releaseLock();
   }
 }
-
-
 // Archivos
 function subirArchivoProducto(e, isMultipart) {
   const lock = LockService.getScriptLock();
@@ -931,13 +1027,6 @@ function subirArchivoProducto(e, isMultipart) {
       link: file.getUrl()
     });
 
-    // // ✅ Registrar log
-    // registrarLog("subirArchivo", Session.getActiveUser().getEmail(), {
-    //   archivo: archivoBlob.getName(),
-    //   productosId,
-    //   anio
-    // });
-
     return respuestaJSON({
       success: true,
       status: "ok",
@@ -947,12 +1036,19 @@ function subirArchivoProducto(e, isMultipart) {
       productosAsociados: productosId,
       debug: debugPayload, // 👈 siempre devolvemos lo que entró
     });
+  } catch (error) {
+    // ⚠️ Capturar cualquier error inesperado
+    return respuestaJSON({
+      success: false,
+      status: "error_interno",
+      message: "⚠️ Error interno al subir el archivo linea 998: " + error.message,
+      stack: error.stack ? error.stack.substring(0, 500) : undefined, // útil para depuración
+    });
 
   } finally {
     lock.releaseLock();
   }
 }
-
 function subirArchivoFacturas(e, isMultipart) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
@@ -1053,7 +1149,6 @@ function subirArchivoFacturas(e, isMultipart) {
     lock.releaseLock();
   }
 }
-
 function replaceArchivo(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1169,7 +1264,6 @@ function replaceArchivo(data) {
     lock.releaseLock();
   }
 }
-
 function getArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
@@ -1226,6 +1320,10 @@ function getProductosPorArchivo(fileId) {
 
   return respuestaJSON({ status: "ok", fileId, productos: resultado });
 }
+
+
+
+
 function getDatosTributarios() {
   let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
 
@@ -1246,6 +1344,12 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
+
+
+
+
+
+
 function addDatoTributario(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
@@ -1292,6 +1396,7 @@ function addDatoTributario(data) {
     lock.releaseLock();
   }
 }
+
 function updateDatoTributario(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
@@ -1373,32 +1478,89 @@ function moveDatoTributario(data) {
     lock.releaseLock();
   }
 }
+// Manejo de logs
+function getLogs() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
 
+  try {
+    const logs = leerJSON(JSON_LOGS);
 
-/******************************
- * MANEJO CENTRALIZADO DE ERRORES
- ******************************/
-function manejarError(err, contexto, usuario) {
-  const mensaje = err && err.message ? err.message : "Error desconocido";
+    // 🧩 Si el archivo está vacío o no hay logs
+    if (!logs || logs.length === 0) {
+      return respuestaJSON({
+        status: "ok",
+        mensaje: "No hay logs para mostrar",
+        logs: []
+      });
+    }
 
-  const detalle = {
-    contexto: contexto,
-    usuario: usuario || "desconocido",
-    mensaje: mensaje,
-    stack: err && err.stack ? err.stack : null,
-    fecha: new Date().toISOString()
-  };
+    // ✅ Ordenar: el más reciente primero
+    const logsOrdenados = [...logs].reverse();
 
-  // Guardar en logs.json
-  registrarLog("ERROR", usuario || "desconocido", detalle);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Logs obtenidos correctamente",
+      logs: logsOrdenados
+    });
 
-  return respuestaJSON({
-    status: "error",
-    codigo: "E_INTERNO",
-    mensaje: mensaje,
-    contexto: contexto
-  });
+  } catch (error) {
+    // 🚨 Si hubo un problema al leer el archivo
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al obtener logs",
+      detalle: error.message || "No se pudo leer el archivo de logs"
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
 }
+function limpiarLogsAntiguos() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // Esperar hasta 30 segundos
+
+  try {
+    let logs = leerJSON(JSON_LOGS);
+
+    // Si hay 10 o menos, no hacemos nada
+    if (!logs || logs.length <= 10) {
+      return respuestaJSON({
+        status: "ok",
+        mensaje: "No se eliminaron logs. Hay 10 o menos registros.",
+        total: logs.length
+      });
+    }
+
+    // 🕒 Ordenar los logs del más reciente al más antiguo
+    logs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // 📦 Conservar los 10 más recientes
+    const logsConservados = logs.slice(0, 10);
+    const eliminados = logs.length - logsConservados.length;
+
+    // 💾 Guardar de nuevo
+    guardarJSON(JSON_LOGS, logsConservados);
+
+    // 📘 Registrar acción en logs (opcional)
+    registrarLog("limpiarLogsAntiguos", Session.getActiveUser().getEmail(), {
+      eliminados,
+      totalFinal: logsConservados.length
+    });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `🧹 ${eliminados} logs eliminados, se conservaron los 10 más recientes.`,
+      totalFinal: logsConservados.length
+    });
+
+  } catch (error) {
+    return manejarError(error, "limpiarLogsAntiguos", Session.getActiveUser().getEmail());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 
 
 

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useToast } from "../context/ToastContext";
 import { useBackends } from "../context/BackendsContext";
 import { apiGet, apiPost } from "../utils/apiClient.js";
+
 
 
 const ProductosContext = createContext(null);
@@ -13,6 +15,7 @@ const anioAnterior = new Date().getFullYear() - 1;
 export function ProductosProvider({ children }) {
 
   const { activeBackend, loading } = useBackends(); // 👈 obtenemos backend activo
+  const { showToast } = useToast();
   const backendUrl = activeBackend?.url || null;
   const [productos, setProductos] = useState([]);
   const [loadingProductos, setLoadingProductos] = useState(false);
@@ -81,6 +84,60 @@ export function ProductosProvider({ children }) {
       reader.onload = () => resolve(reader.result.split(",")[1]);
       reader.onerror = (error) => reject(error);
     });
+
+  const addProducto = useCallback(async ({ nombre, descripcion, entidad, tipo }) => {
+    if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
+
+    setLoadingProductos(true);
+    try {
+      const data = await apiPost(
+        backendUrl,
+        "addProducto",
+        { nombre, descripcion, entidad, tipo },
+      );
+
+      if (data.status === "ok") {
+        await refreshProductos();
+        return { ok: true, mensaje: "✅ Producto agregado con éxito", data };
+      }
+
+      return { ok: false, mensaje: data.mensaje || "Error al agregar producto", data };
+    } catch (e) {
+      console.error("❌ addProducto:", e.message);
+      return { ok: false, mensaje: "Error al agregar producto" };
+    } finally {
+      setLoadingProductos(false);
+    }
+  }, [backendUrl, refreshProductos]);
+
+  const deleteProducto = useCallback(async (productoId) => {
+    if (!backendUrl) return { ok: false, mensaje: "⚠️ Configure URL del backend" };
+
+    setLoadingProductos(true);
+    try {
+      const data = await apiPost(backendUrl, "deleteProducto", { id: productoId });
+
+      // if (data.status === "ok") {
+      //   await refreshProductos();
+      //   return { ok: true, mensaje: "✅ Producto eliminado correctamente", data };
+      // }
+
+      if (data.status === "ok") {
+        showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
+        await refreshProductos();   // 👈 refrescar productos
+      } else {
+        showToast(`❌ Error al eliminar: ${(data.mensaje || "sin detalle")}`, "success", 3000, "Productos");
+      }
+
+      return { ok: false, mensaje: data.mensaje || "❌ Error al eliminar producto", data };
+    } catch (e) {
+      showToast("❌ Error eliminando producto", "success", 3000, "Productos");
+      console.error("❌ deleteProducto:", e.message);
+      return { ok: false, mensaje: "❌ Error al eliminar producto" };
+    } finally {
+      setLoadingProductos(false);
+    }
+  }, [backendUrl, refreshProductos, showToast]);
 
 
   const subirArchivo = useCallback(async (productosId, anio, file, usarExistente = false, nombreProducto = "") => {
@@ -171,6 +228,8 @@ export function ProductosProvider({ children }) {
         subirArchivo,
         replaceArchivo,
         fetchArchivosPorAnio,
+        addProducto,
+        deleteProducto,
         loading: loading || loadingProductos
       }}
     >
