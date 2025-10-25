@@ -5,17 +5,17 @@ import "./DatosTributarios.scss";
 
 export default function DatosTributarios() {
   // const { datos, fetchDatos, addDato, updateDato, deleteDato, loading } = useDatosTributarios();
-  const { datos, fetchDatos, addDato, updateDato, deleteDato, moveDato, loading } = useDatosTributarios();
+  const { datos, getDatos, addDato, updateDato, deleteDato, moveDato, loading } = useDatosTributarios();
 
   const [nuevo, setNuevo] = useState({ label: "", valor: "" });
   const [editando, setEditando] = useState(null);
   const [editValores, setEditValores] = useState({ label: "", valor: "" });
 
-  const fetchRef = useRef(fetchDatos);
+  const fetchRef = useRef(getDatos);
 
   useEffect(() => {
-    fetchRef.current = fetchDatos;
-  }, [fetchDatos]);
+    fetchRef.current = getDatos;
+  }, [getDatos]);
 
   useEffect(() => {
     fetchRef.current();

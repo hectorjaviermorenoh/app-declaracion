@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import { Modal, Form, Button, Toast, ToastContainer, Spinner } from "react-bootstrap";
 
-import { useBackends } from "../../context/BackendsContext.jsx";
-import { useProductos } from "../../context/ProductosContext.jsx";
+import { useProductos } from "../../../context/ProductosContext";
 
-import LoadingOverlay from "../LoadingOverlay/LoadingOverlay.jsx";
+import LoadingOverlay from "../../../components/LoadingOverlay/LoadingOverlay";
 import "./AddProductoModal.scss";
 
-function AddProductoModal({ show, onHide, onProductoAgregado }) {
-  const { activeBackend } = useBackends();
-  const { refreshProductos } = useProductos();
+function AddProductoModal({ show, onHide}) {
+
+  const { addProducto } = useProductos();
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -23,70 +22,29 @@ function AddProductoModal({ show, onHide, onProductoAgregado }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!activeBackend) {
-      setToastVariant("danger");
-      setToastMsg("⚠️ No hay URL configurada para el backend.");
-      setShowToast(true);
-      return;
-    }
 
     setLoading(true);
-
     try {
-      const response = await fetch(`${activeBackend.url}/producto`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accion: "addProducto",
-          nombre,
-          descripcion,
-          entidad,
-          tipo,
-        }),
-      });
+      const producto = { nombre, descripcion, entidad, tipo };
+      const response = await addProducto(producto);
 
       if (!response.ok) throw new Error("Error al guardar producto");
 
-      const data = await response.json();
-
-      // setToastVariant("success");
-      // setToastMsg("✅ Producto agregado con éxito");
-      // setShowToast(true);
-
-      // notificar al padre que hay un producto nuevo
-      // if (onProductoAgregado) onProductoAgregado(data);
-      // await refreshProductos();
-
       // limpiar
-      // setNombre("");
-      // setDescripcion("");
-      // setEntidad("");
-      // setTipo("");
-
-      // cerrar modal
-      // onHide();
-
-      if (data.status === "ok") {+
-        setToastVariant("success");
-        setToastMsg("✅ Producto agregado con éxito");
-        setShowToast(true);
-
-        if (onProductoAgregado) onProductoAgregado(data);
-        await refreshProductos();
-
-        // limpiar
+      if (response.ok) {
         setNombre("");
         setDescripcion("");
         setEntidad("");
         setTipo("");
 
+        setToastVariant(response.ok ? "success" : "danger");
+        setToastMsg(response.mensaje);
+        setShowToast(true);
+
         // cerrar modal
         onHide();
-      } else {
-        setToastVariant("danger");
-        setToastMsg(`❌ ${data.mensaje || "Error al guardar el producto"}`);
-        setShowToast(true);
       }
+
 
     } catch (error) {
       setToastVariant("danger");

@@ -1,11 +1,13 @@
 // Variables base (puedes mover a variables globales si prefieres)
 $primary-color: #0d6efd; // azul bootstrap
-$text-color: #333;
+// $text-color: #333;
+$text-color: #00253D;
 $hover-bg: #f1f1f1;
 
 .navbar {
   background-color: #fff;
   border-bottom: 1px solid #ddd;
+  height: 4.5rem !important;
 
   .navbar-brand {
     font-weight: 600;
@@ -27,8 +29,13 @@ $hover-bg: #f1f1f1;
 
     .nav-link {
       color: $text-color !important;
+      font-family: 'Roboto', sans-serif !important;
       font-size: 1rem;
       padding: 0.75rem 1rem;
+      font-weight: 400;
+      line-height: 1.5rem;
+
+
 
       &:hover {
         background-color: $hover-bg;

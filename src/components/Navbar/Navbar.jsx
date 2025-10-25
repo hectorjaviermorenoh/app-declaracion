@@ -1,21 +1,25 @@
 import React, { useState} from "react";
-import { Navbar, Nav, Container, NavDropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
+import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
-import AddProductoModal from "../AddProductoModal/AddProductoModal";
+import AddProductoModal from "../Modals/AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
+import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import { useBackends } from "../../context/BackendsContext.jsx";
-import { Bell } from "react-bootstrap-icons";
+import { useAuth } from "../../context/AuthContext";
+import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
+// import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Navbar.scss";
 
 function AppNavbar() {
 
   const { backends, activeBackend, addBackend, deleteBackend, setActiveBackend } = useBackends();
-  const { fetchDatos } = useDatosTributarios(); // 👈 accede al refresco
+  const { getDatos } = useDatosTributarios(); // 👈 accede al refresco
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+  const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
 
   const { showToast } = useToast();
 
@@ -26,21 +30,20 @@ function AppNavbar() {
   const [newUrl, setNewUrl] = useState("");
   const [aliasToDelete, setAliasToDelete] = useState(null);
 
+  const { user, logout } = useAuth();
 
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
-
   const [showAddForm, setShowAddForm] = useState(false);
-
-  const [loading, setLoading] = useState(false);
+  const [loadingOverlay, setLoadingOverlay] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-
   const handleClose = () => setShow(false);
+
 
     // ---------------- Funciones ----------------
   const handleDeleteBackend = (alias) => {
@@ -52,7 +55,7 @@ function AppNavbar() {
   const handleToggle = () => {
     if (location.pathname === "/datos-tributarios") {
       // Refrescar datos directamente
-      fetchDatos();
+      getDatos();
     } else {
       navigate("/datos-tributarios");
     }
@@ -60,9 +63,8 @@ function AppNavbar() {
 
   return (
     <>
-      <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3 sticky-top">
+      <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3 sticky-top navbar-nav-principal">
         <Container fluid>
-
           <div className="backend-circle-Brand">
             {activeBackend && (
               <div
@@ -75,22 +77,22 @@ function AppNavbar() {
             )}
 
             <div className="grupNavTex text-center">
-              <Navbar.Brand className="app-brand" as={Link} to="/" onClick={() => { refreshProductos();}}>DeclaraciónApp</Navbar.Brand>
+              <Navbar.Brand className="app-brand" as={Link} to="/">DeclaraciónApp</Navbar.Brand>
               {activeBackend?.alias && (
                 <h6 className="backend-alias mb-0" title={activeBackend.alias}>
+
                   {activeBackend.alias}
+                  {/* {user.nombre || user.correo} */}
                 </h6>
               )}
             </div>
           </div>
-
           <div className="contCamp">
             <div className="d-flex align-items-center">
               <Bell size={22} className="me-3 cursor-pointer" onClick={handleToggle}/>
             </div>
             <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
           </div>
-
           <Navbar.Offcanvas
             show={show}
             onHide={handleClose}
@@ -106,12 +108,9 @@ function AppNavbar() {
               <Nav
                 className="justify-content-end flex-grow-1 pe-3"
               >
-
                 <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Adicionar Producto</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>Productos</Nav.Link>
                 <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
-
-
 
                 <NavDropdown title="Más" id="nav-dropdown">
                   <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
@@ -121,13 +120,59 @@ function AppNavbar() {
                 </NavDropdown>
 
                 {/* Botón de 3 puntos verticales */}
-                <Nav.Link
+                {/* <Nav.Link
                   onClick={() => setShowModal(true)}
                   title="Configurar Backend"
                   aria-label="Configurar Backend"
                 >
                   ⋮
-                </Nav.Link>
+                </Nav.Link> */}
+
+                {user && (
+                  <div className="d-flex align-items-center ms-3">
+                    <Dropdown align="end">
+                      <Dropdown.Toggle
+                        as="div"
+                        id="userDropdown"
+                        className="cursor-pointer"
+                        style={{ display: "flex", alignItems: "center" }}
+                      >
+                        <img
+                          src={user.picture || "https://via.placeholder.com/32"}
+                          alt={user.nombre || user.correo || "Usuario"}
+                          width={34}
+                          height={34}
+                          className="rounded-circle border border-light shadow-sm"
+                        />
+                      </Dropdown.Toggle>
+
+                      <Dropdown.Menu
+                        className="p-3 shadow-sm text-center"
+                        style={{ minWidth: "220px" }}
+                      >
+                        <img
+                          src={user.picture || "https://via.placeholder.com/64"}
+                          alt={user.nombre || "Usuario"}
+                          className="rounded-circle mb-2"
+                          width={64}
+                          height={64}
+                        />
+                        <div className="fw-bold">{user.nombre || "Usuario desconocido"}</div>
+                        <div className="text-muted small mb-2">{user.correo}</div>
+                        <Dropdown.Divider />
+                        <Dropdown.Item
+                          onClick={() => {
+                            logout();
+                            navigate("/");
+                          }}
+                          className="text-danger text-center fw-semibold d-flex align-items-center justify-content-center gap-1"
+                        >
+                          <BoxArrowRight size={16} /> Cerrar sesión
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </div>
+                )}
 
               </Nav>
             </Offcanvas.Body>
@@ -167,40 +212,18 @@ function AppNavbar() {
         onHide={() => setShowReinitModal(false)}
         onConfirm={async (confirmText, borrarCarpetas) => {
           if (confirmText !== "INICIALIZAR") return;
-
-          // 👇 Cierra el modal ANTES de arrancar el loading
           setShowReinitModal(false);
-          setLoading(true);
-
+          setLoadingOverlay(true);
           try {
-            const resp = await fetch(activeBackend?.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                accion: "inicializarForzado",
-                correoAdmin: "hectorjaviermorenoh@gmail.com",
-                confirmar: confirmText,
-                borrarCarpetas,
-              }),
-            });
-
-            const data = await resp.json();
-            console.log("⚡ Reinicialización:", data);
-
-            if (data.status === "ok") {
-              refreshProductos();
-              showToast("✅ Proyecto reinicializado correctamente", "success", 3000, "Navbar");
-            } else {
-              showToast("❌ Error: " + (data.mensaje || "No se pudo reinicializar"), "danger", 4000, "Navbar");
-            }
-
-          } catch (err) {
-            console.error("❌ Error reinicializando:", err);
-            showToast(`❌ Error reinicializando: ${err}`, "danger", 4000, "Navbar");
+            const resp = await reinicializarSistemaForzado(confirmText, borrarCarpetas);
+            showToast(resp.mensaje, resp.ok ? "success" : "danger", 3000, "Navbar");
+            refreshProductos();
           } finally {
-            setLoading(false);
+            setLoadingOverlay(false);
           }
         }}
+
+
       />
 
       {/* Modal gestión de Backends */}
@@ -224,7 +247,7 @@ function AppNavbar() {
                       Usar
                     </Button>{" "}
                     <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
-                      Eliminar1
+                      Eliminar
                     </Button>
 
                   </div>
@@ -288,7 +311,7 @@ function AppNavbar() {
         </Modal.Body>
       </Modal>
 
-      <LoadingOverlay show={loading} />
+      <LoadingOverlay show={loadingOverlay} />
     </>
   );
 }

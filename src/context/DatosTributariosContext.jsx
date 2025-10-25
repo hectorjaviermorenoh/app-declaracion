@@ -1,180 +1,138 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "./BackendsContext";
+import { apiGet, apiPost } from "../utils/apiClient.js";
 import { useToast } from "../context/ToastContext";
 
-// Crear contexto
+// 🧠 Contexto global
 const DatosTributariosContext = createContext(null);
 
 export function DatosTributariosProvider({ children }) {
   const { activeBackend } = useBackends();
+  const backendUrl = activeBackend?.url || null;
   const [datos, setDatos] = useState([]);
-
-  const [loading, setLoading] = useState(false); // 🔹 nuevo estado global de loading
-
+  const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
+  // 🟢 Cargar todos los datos tributarios
+  const getDatos = useCallback(async () => {
+    if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
 
-  // 🔹 Cargar datos tributarios
-  const fetchDatos = useCallback(async () => {
-    if (!activeBackend?.url) return;
     setLoading(true);
-
     try {
-      const resp = await fetch(`${activeBackend.url}?accion=getDatosTributarios`);
-      const data = await resp.json();
+      const data = await apiGet(backendUrl, "getDatosTributarios");
+      console.log("datosTributarios 23", data)
       if (data.status === "ok") {
         setDatos(data.data || []);
-      } else {
-        console.error("⚠️ Error obteniendo datos tributarios:", data);
+        return { ok: true, mensaje: "Datos cargados correctamente" };
       }
+      return { ok: false, mensaje: data.mensaje || "Error al obtener datos" };
     } catch (err) {
-      console.error("❌ fetchDatos error:", err);
+      console.error("❌ getDatos error:", err);
+      return { ok: false, mensaje: "Error al obtener datos" };
     } finally {
       setLoading(false);
     }
-  }, [activeBackend]);
+  }, [backendUrl]);
 
-
+  // 🔄 Carga inicial o cambio de backend
   useEffect(() => {
-    fetchDatos();
-  }, [fetchDatos]);
+    if (backendUrl) getDatos();
+  }, [backendUrl, getDatos]);
 
-  // 🔹 Adicionar
-  const addDato = async ({ label, valor }) => {
-    if (!activeBackend?.url) return;
-    setLoading(true);
-    console.log("label", label)
-    try {
+  // 🧩 Helper para ejecutar CRUD con refresco automático
+  const runWithRefresh = useCallback(
+    async (fn, successMsg, errorMsg, tipo = "info") => {
+      setLoading(true);
+      try {
+        const data = await fn();
+        const ok = data?.status === "ok";
+
+        if (ok) {
+          // Refresca lista y muestra notificación
+          await Promise.all([getDatos()]);
+          showToast(successMsg, "success", 3000, "DatosTributarios");
+        } else {
+          showToast(data?.mensaje || errorMsg, "danger", 4000, "DatosTributarios");
+        }
+
+        return { ok, mensaje: data?.mensaje, data };
+      } catch (err) {
+        console.error(`❌ ${tipo} error:`, err);
+        showToast(errorMsg, "danger", 4000, "DatosTributarios");
+        return { ok: false, mensaje: errorMsg };
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getDatos, showToast]
+  );
+
+  // ➕ Crear dato
+  const addDato = useCallback(
+    ({ label, valor }) => {
       const payload = {
-        accion: "addDatoTributario",
-        id: label.toLowerCase().replace(/\s+/g, "_"), // id auto-generado simple
+        id: `${label.toLowerCase().replace(/\s+/g, "_")}_${Date.now()}`,
         label,
         valor,
       };
+      return runWithRefresh(
+        () => apiPost(backendUrl, "addDatoTributario", payload),
+        "✅ Guardado correctamente",
+        "❌ Error al guardar",
+        "addDato"
+      );
+    },
+    [backendUrl, runWithRefresh]
+  );
 
-      const resp = await fetch(activeBackend.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await resp.json();
-      if (data.status === "ok") {
-        await fetchDatos();
-        showToast("✅ Guardados correctamente", "success", 3000, "DatosTributarios");
-      } else {
-        showToast("❌ Error al guardar", "danger", 4000, "DatosTributarios");
-      }
-      return data;
-    } catch (err) {
-      console.error("❌ addDato error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 Actualizar
-  const updateDato = async (id, { valor, label, orden }) => {
-    if (!activeBackend?.url) return;
-    setLoading(true);
-    try {
-      const payload = {
-        accion: "updateDatoTributario",
-        id,
-        valor,
-      };
+  // ✏️ Actualizar
+  const updateDato = useCallback(
+    (id, { valor, label, orden }) => {
+      const payload = { id, valor };
       if (label) payload.label = label;
       if (orden !== undefined) payload.orden = orden;
 
-      const resp = await fetch(activeBackend.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      return runWithRefresh(
+        () => apiPost(backendUrl, "updateDatoTributario", payload),
+        "✅ Actualizado correctamente",
+        "❌ Error al actualizar",
+        "updateDato"
+      );
+    },
+    [backendUrl, runWithRefresh]
+  );
 
-      const data = await resp.json();
+  // 🗑️ Eliminar
+  const deleteDato = useCallback(
+    (id) =>
+      runWithRefresh(
+        () => apiPost(backendUrl, "deleteDatoTributario", { id }),
+        "✅ Eliminado correctamente",
+        "❌ Error al eliminar",
+        "deleteDato"
+      ),
+    [backendUrl, runWithRefresh]
+  );
 
-      if (data.status === "ok") {
-        await fetchDatos();
-        showToast("✅ Actualizado correctamente", "success", 3000, "DatosTributarios");
-      } else {
-        showToast("❌ Error al modificar", "danger", 4000, "DatosTributarios");
-      }
-      return data;
-    } catch (err) {
-      console.error("❌ updateDato error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ↕️ Mover (subir/bajar)
+  const moveDato = useCallback(
+    (id, direction) =>
+      runWithRefresh(
+        () => apiPost(backendUrl, "moveDatoTributario", { id, direction }),
+        "↕️ Orden cambiado",
+        "❌ Error al mover",
+        "moveDato"
+      ),
+    [backendUrl, runWithRefresh]
+  );
 
-  // 🔹 Eliminar
-  const deleteDato = async (id) => {
-    if (!activeBackend?.url) return;
-    setLoading(true);
-    try {
-      const payload = {
-        accion: "deleteDatoTributario",
-        id,
-      };
-
-      const resp = await fetch(activeBackend.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await resp.json();
-      if (data.status === "ok") {
-        await fetchDatos();
-        showToast("✅ Eliminado correctamente", "success", 3000, "DatosTributarios");
-      } else {
-        showToast("❌ Error al Eliminar", "danger", 4000, "DatosTributarios");
-      }
-      return data;
-    } catch (err) {
-      console.error("❌ deleteDato error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 Mover (subir/bajar)
-  const moveDato = async (id, direction) => {
-    if (!activeBackend?.url) return;
-    setLoading(true);
-    try {
-      const payload = {
-        accion: "moveDatoTributario",
-        id,
-        direction,
-      };
-
-      const resp = await fetch(activeBackend.url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await resp.json();
-      if (data.status === "ok") {
-        await fetchDatos(); // recargar en orden actualizado
-        showToast("↕️ Orden cambiado", "info", 2500, "DatosTributarios");
-      } else {
-        showToast("❌ Error al mover", "danger", 4000, "DatosTributarios");
-      }
-      return data;
-    } catch (err) {
-      console.error("❌ moveDato error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
+  // 🎯 Exportar valores
   return (
     <DatosTributariosContext.Provider
       value={{
         datos,
         loading,
-        fetchDatos,
+        getDatos,
         addDato,
         updateDato,
         deleteDato,
@@ -186,7 +144,7 @@ export function DatosTributariosProvider({ children }) {
   );
 }
 
-// Hook para usar el contexto
+// 🪝 Hook personalizado
 export function useDatosTributarios() {
   const ctx = useContext(DatosTributariosContext);
   if (!ctx) throw new Error("useDatosTributarios debe usarse dentro de <DatosTributariosProvider>");
