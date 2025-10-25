@@ -10,7 +10,7 @@ git remote add origin git@github.com:hectorjaviermorenoh/app-declaracion.git
 
 git add .
 git commit -m "2410251058pm modificacion y eliminacion varios Todo funcionando Ok "
-git push origin Auth
+git push -f origin Auth
 
 # npm run deploy
 
