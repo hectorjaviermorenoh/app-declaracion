@@ -120,13 +120,13 @@ function AppNavbar() {
                 </NavDropdown>
 
                 {/* Botón de 3 puntos verticales */}
-                {/* <Nav.Link
+                <Nav.Link
                   onClick={() => setShowModal(true)}
                   title="Configurar Backend"
                   aria-label="Configurar Backend"
                 >
                   ⋮
-                </Nav.Link> */}
+                </Nav.Link>
 
                 {user && (
                   <div className="d-flex align-items-center ms-3">
