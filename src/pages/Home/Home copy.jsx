@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -14,9 +14,6 @@ export default function Home() {
   const { login, authenticated, loading } = useAuth();
   const navigate = useNavigate();
 
-  // 💡 Nuevo estado para rastrear el inicio del proceso de login
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
   // 🔁 Redirige si ya hay sesión activa
   useEffect(() => {
     if (!loading && authenticated) {
@@ -26,7 +23,7 @@ export default function Home() {
 
   // 🚀 Inicializar el botón de Google
   useEffect(() => {
-    if (loading || authenticated || isLoggingIn) return; // 👈 evita inicializar el botón si ya hay sesión o aún carga
+    if (loading || authenticated) return; // 👈 evita inicializar el botón si ya hay sesión o aún carga
     if (typeof window.google === "undefined") return;
 
     window.google.accounts.id.initialize({
@@ -34,7 +31,6 @@ export default function Home() {
         "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com",
       callback: (response) => {
         const token = response.credential;
-        setIsLoggingIn(true); // 👈 Activar estado de carga al recibir el token
         login(token);
       },
     });
@@ -51,8 +47,7 @@ export default function Home() {
     );
 
     // Opcional: mostrar automáticamente One Tap
-    // window.google.accounts.id.prompt();
-
+    window.google.accounts.id.prompt();
   }, [login, loading, authenticated]);
 
   // ⏳ Mientras carga AuthContext, muestra spinner en lugar del botón
@@ -70,35 +65,7 @@ export default function Home() {
   // Si ya está autenticado, no renderizar nada (navegación automática se encarga)
   if (authenticated) return null;
 
-
-  // ⏳ Mientras carga AuthContext (verificación inicial), muestra spinner
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="text-center">
-          <div className="spinner-border text-primary mb-3" role="status" />
-          <p className="text-secondary">Verificando sesión...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 🔒 Muestra un spinner si el token ya fue recibido y el login está en curso
-  if (isLoggingIn && !authenticated) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="text-center">
-          <div className="spinner-border text-success mb-3" role="status" />
-          <p className="text-success">Iniciando sesión, un momento...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si ya está autenticado, no renderizar nada (navegación automática se encarga)
-  if (authenticated) return null;
-
-  // 👇 Solo se muestra si no hay sesión, ya se verificó y no está en proceso de login
+  // 👇 Solo se muestra si no hay sesión y ya se verificó
   return (
     <div className="container d-flex flex-column justify-content-center align-items-center vh-100">
       <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
@@ -112,4 +79,3 @@ export default function Home() {
     </div>
   );
 }
-
