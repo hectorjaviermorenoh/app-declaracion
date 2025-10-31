@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { useBackends } from "../BackendsContext";
 import { apiGet, apiPost } from "../../utils/apiClient.js";
-import { useToast } from "../ToastContext"; // opcional si quieres notificaciones
+import { useToast } from "../ToastContext";
 
 // Crear el contexto
 const LogsAdminContext = createContext(null);
@@ -13,6 +13,7 @@ export function LogsAdminProvider({ children }) {
   const backendUrl = activeBackend?.url || null;
 
   const { showToast } = useToast();
+  
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 

@@ -1,49 +1,152 @@
-// src/context/admin/RolesAdminContext.jsx
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useBackends } from "../BackendsContext";
+import { apiGet, apiPost } from "../../utils/apiClient.js";
+import { useToast } from "../ToastContext";
 
-// 1️⃣ Crear el contexto
-const RolesAdminContext = createContext(null);
+const RolesAdminContext = createContext();
 
-// 2️⃣ Provider
-export function RolesAdminProvider({ children }) {
+export const RolesAdminProvider = ({ children }) => {
+  const { activeBackend } = useBackends();
+  const backendUrl = activeBackend?.url || null;
+  const { showToast } = useToast();
+
   const [roles, setRoles] = useState([]);
+  const [funcionesDisponibles, setFuncionesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Función para obtener roles (placeholder)
-  const fetchRoles = async () => {
-    console.log("fetchRoles() aún no implementado");
+  /*******************************
+   * 📘 Obtener funciones del backend
+   *******************************/
+  const getFunciones = useCallback(async () => {
+    if (!backendUrl) return;
+    try {
+      // const res = await apiGet(`${backendUrl}?accion=getFuncionesLogicaNegocio`);
+      const res = await apiGet(backendUrl, "getFuncionesLogicaNegocio");
+      if (res.status === "ok") {
+        setFuncionesDisponibles(res.datos || []);
+      } else {
+        showToast("error", res.mensaje || "Error al obtener funciones");
+      }
+    } catch (err) {
+      showToast("error", "Error al cargar funciones del backend");
+      console.error("❌ getFunciones error:", err);
+    }
+  }, [backendUrl, showToast]);
+
+  const getDatos = useCallback(async () => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      // const res = await apiGet(`${backendUrl}?accion=getRoles`);
+      const res = await apiGet(backendUrl, "getRoles");
+
+      if (res.status === "ok") {
+        setRoles(res.data || []);
+        showToast("📜 Roles cargados correctamente", "info", 2000, "RolesAdmin");
+      } else {
+        showToast("error", res.mensaje || "Error al obtener roles");
+      }
+    } catch (err) {
+      console.error("❌ getRoles error:", err);
+      showToast("error", "Error al obtener roles");
+    } finally {
+      setLoading(false);
+    }
+  }, [backendUrl, showToast]);
+
+
+
+
+  const addDato = async (nuevoRol, permisosSeleccionados) => {
+    if (!backendUrl) return;
+    if (!nuevoRol) return showToast("error", "Debe ingresar un nombre para el rol");
+
+    try {
+      const payload = {
+        accion: "addRol",
+        rol: nuevoRol,
+        permisos: permisosSeleccionados || [],
+      };
+      const res = await apiPost(backendUrl, "addRol", payload)
+      if (res.status === "ok") {
+        showToast("success", "Rol creado correctamente");
+        setRoles(res.datos || []);
+
+      } else {
+        showToast("error", res.mensaje || "Error al crear el rol");
+      }
+    } catch (err) {
+      console.error("❌ addRol error:", err);
+      showToast("error", "Error al crear rol");
+    }
   };
 
-  // 🔹 Función para agregar un rol (placeholder)
-  const addRole = async (roleData) => {
-    console.log("addRole() aún no implementado", roleData);
+
+  const updateDato = async (rol, permisosActualizados) => {
+    if (!backendUrl) return;
+
+    try {
+      const payload = {
+        rol,
+        permisos: permisosActualizados,
+      };
+      const res = await apiPost(backendUrl, "updateRol", payload)
+      if (res.status === "ok") {
+        showToast("success", "Permisos actualizados correctamente");
+        setRoles(res.datos || []);
+      } else {
+        showToast("error", res.mensaje || "Error al actualizar el rol");
+      }
+    } catch (err) {
+      console.error("❌ updateRol error:", err);
+      showToast("error", "Error al actualizar el rol");
+    }
   };
 
-  // 🔹 Función para eliminar un rol (placeholder)
-  const deleteRole = async (roleId) => {
-    console.log("deleteRole() aún no implementado", roleId);
+  const deleteDato = async (rol) => {
+    if (!backendUrl) return;
+
+    if (rol === "administrador") {
+      return showToast("No se puede eliminar el rol administrador", "warning", 4000, "RolesContext");
+    }
+
+    try {
+      const payload = { rol };
+      const res = await apiPost(backendUrl, "deleteRol", payload)
+      if (res.status === "ok") {
+        showToast("Rol eliminado Correctamente", "success", 4000, "RolesContext");
+        setRoles(res.datos || []);
+      } else {
+        showToast(res.mensaje || "Error al eliminar el rol", "warning", 4000, "RolesContext");
+      }
+    } catch (err) {
+      console.error("❌ deleteRol error:", err);
+      showToast("error", "Error al eliminar el rol");
+    }
   };
+
+  /*******************************
+   * 🔄 Cargar funciones al inicio
+   *******************************/
+  useEffect(() => {
+    getFunciones();
+  }, [getFunciones]);
 
   return (
     <RolesAdminContext.Provider
       value={{
         roles,
+        funcionesDisponibles,
         loading,
-        fetchRoles,
-        addRole,
-        deleteRole,
+        getDatos,
+        addDato,
+        updateDato,
+        deleteDato,
       }}
     >
       {children}
     </RolesAdminContext.Provider>
   );
-}
+};
 
-// 3️⃣ Hook personalizado
-export function useRolesAdmin() {
-  const ctx = useContext(RolesAdminContext);
-  if (!ctx) {
-    throw new Error("useRolesAdmin debe usarse dentro de <RolesAdminProvider>");
-  }
-  return ctx;
-}
+export const useRolesAdmin = () => useContext(RolesAdminContext);

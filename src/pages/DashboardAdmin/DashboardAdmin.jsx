@@ -1,10 +1,11 @@
 import React from "react";
 import { Tabs, Tab, Container, Row, Col } from "react-bootstrap";
 import { UsuariosAdminPanel } from "./UsuariosAdminPanel";
-import { RolesAdminPanel } from "./RolesAdminPanel";
-import { LogsAdminPanel } from "./LogsAdminPanel";
+import RolesAdminPanel from "./RolesAdminPanel";
+import { LogsAdminPanel }  from "./LogsAdminPanel";
 import { ConfigAdminPanel } from "./ConfigAdminPanel";
 import { AdminProvider } from "../../context/admin/AdminProvider";
+
 
 export function DashboardAdmin() {
   return (

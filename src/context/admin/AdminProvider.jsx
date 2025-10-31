@@ -6,7 +6,6 @@ import { ConfigAdminProvider } from "./ConfigAdminContext";
 import { RolesAdminProvider } from "./RolesAdminContext";
 
 
-
 export function AdminProvider({ children }) {
   return (
     <LogsAdminProvider>

@@ -13,7 +13,7 @@ export function DatosTributariosProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
-  // 🟢 Cargar todos los datos tributarios
+  // 🟢 Cargar todos los datos tributarios 579 230 1327 const roles = leerJSON(JSON_ROLES);
   const getDatos = useCallback(async () => {
     if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
 

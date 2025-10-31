@@ -3,11 +3,11 @@ import { Button, Table, Spinner } from "react-bootstrap";
 import { useUsuariosAdmin } from "../../context/admin/UsuariosAdminContext";
 
 export function UsuariosAdminPanel() {
-  const { usuarios, loading, fetchUsuarios, addUsuario, deleteUsuario } = useUsuariosAdmin();
+  const { usuarios, loading, getUsuarios, addUsuario, deleteUsuario } = useUsuariosAdmin();
 
   useEffect(() => {
-    fetchUsuarios();
-  }, [fetchUsuarios]);
+    getUsuarios();
+  }, [getUsuarios]);
 
   if (loading) return <Spinner animation="border" variant="primary" />;
 

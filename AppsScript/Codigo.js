@@ -4,6 +4,7 @@
 const CARPETA_PRINCIPAL = "declaracion";
 const JSON_CONFIGURACION = "configuracion.json";
 const JSON_USUARIOS = "usuarios.json";
+const JSON_ROLES = "roles.json";
 const JSON_PRODUCTOS = "productos.json";
 const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
@@ -39,6 +40,8 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   // --- GET ---
   "ping",
   "getConfig",
+  "getFuncionesLogicaNegocio",
+  "getRoles",
   "getUsuarios",
   "getProductos",
   "getDatosTributarios",
@@ -52,6 +55,9 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "subirArchivoFacturas",
   "setConfig",
   "limpiarLogsAntiguos",
+  "addRol",
+  "updateRol",
+  "deleteRol",
   "addUsuario",
   "deleteUsuario",
   "addProducto",
@@ -227,7 +233,7 @@ function verificarTokenYAutorizar(token) {
     const userNombre = tokenPayload.name;
     const userPicture = tokenPayload.picture;
     const usuarios = leerJSON(JSON_USUARIOS);
-    const roles = leerJSON("roles.json");
+    const roles = leerJSON(JSON_ROLES);
 
     const usuario = usuarios.find(u => u.correo === userEmail && u.activo);
     if (!usuario) {
@@ -252,31 +258,6 @@ function verificarTokenYAutorizar(token) {
     return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
-// function validarPermiso(usuario, accion) {
-//   // 🔒 Si no está autenticado, no hay acceso
-//   if (!usuario || !usuario.autorizado) return false;
-
-//   // 👑 El rol administrador tiene acceso total
-//   if (usuario.rol === "administrador") return true;
-
-//   // 🧮 Verificar si el rol tiene permisos definidos
-//   if (!usuario.permisos || usuario.permisos.length === 0) return false;
-
-//   // 🧩 Validar si la acción solicitada está incluida en la lista de permisos del rol
-//   const tienePermiso = usuario.permisos.includes(accion);
-
-//   // 🧾 Registrar log opcional para auditoría
-//   if (!tienePermiso) {
-//     registrarLog("PERMISO_DENEGADO", usuario.correo, {
-//       accionIntentada: accion,
-//       rol: usuario.rol,
-//       permisosDisponibles: usuario.permisos
-//     });
-//   }
-
-//   return tienePermiso;
-// }
-
 function validarPermiso(usuario, accion) {
   // 🚫 Usuario no autenticado
   if (!usuario || !usuario.autorizado) return false;
@@ -372,7 +353,6 @@ function guardarJSON(nombreArchivo, contenido) {
   }
 
 }
-
 function leerJSON(nombreArchivo) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // 🔒 Lock aplicado
@@ -389,7 +369,6 @@ function leerJSON(nombreArchivo) {
     lock.releaseLock();
   }
 }
-
 function respuestaJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -597,10 +576,12 @@ function doGet(e) {
 
       case "getConfig":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_CONFIGURACION)});
-
+      case "getFuncionesLogicaNegocio":
+        return getFuncionesLogicaNegocio();
       case "getUsuarios":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_USUARIOS)});
-
+      case "getRoles":
+        return getRoles();
       case "getProductos":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
 
@@ -726,6 +707,16 @@ function doPost(e) {
       case "limpiarLogsAntiguos":
         return limpiarLogsAntiguos();
 
+
+
+      case "addRol":
+        return addRol(data, usuario);
+      case "updateRol":
+        return updateRol(data, usuario);
+      case "deleteRol":
+        return deleteRol(data, usuario);
+
+
       case "addUsuario":
         return addUsuario(data);
 
@@ -765,7 +756,6 @@ function doPost(e) {
     return manejarError(err, "doPost", correo);
   }
 }
-
 /******************************
  * FUNCIONES DE LOGICA DEL NEGOCIO
  ******************************/
@@ -789,6 +779,203 @@ function doPost(e) {
     lock.releaseLock();
   }
 }
+function getFuncionesLogicaNegocio() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Funciones de lógica de negocio obtenidas correctamente",
+      datos: FUNCIONES_LOGICA_NEGOCIO,
+    });
+  } catch (err) {
+    manejarError(err, "getFuncionesLogicaNegocio");
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al obtener funciones de lógica de negocio",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+/******************************
+ * 🔧 CRUD DE ROLES (versión final, integrada con doPost y token)
+ ******************************/
+
+function getRoles() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const roles = leerJSON(JSON_ROLES) || [];
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Roles obtenidos correctamente",
+      data: roles,
+    });
+  } catch (err) {
+    manejarError(err, "getRoles");
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al obtener roles backend 829",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function addRol(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const roles = leerJSON(JSON_ROLES) || [];
+    const nuevoRol = normalizarTexto(data?.rol || "").trim();
+    const permisosIniciales = Array.isArray(data?.permisos)
+      ? data.permisos
+      : [];
+    const correoUsuario = usuario?.correo || "sistema";
+
+    if (!nuevoRol)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "El nombre del rol es obligatorio",
+      });
+
+    // Validar duplicado
+    if (roles.some((r) => r.rol.toLowerCase() === nuevoRol.toLowerCase()))
+      return respuestaJSON({
+        status: "error",
+        mensaje: "Ya existe un rol con ese nombre",
+      });
+
+    // Crear nuevo rol con permisos iniciales
+    const nuevo = { rol: nuevoRol, permisos: permisosIniciales };
+    roles.push(nuevo);
+    guardarJSON(JSON_ROLES, roles);
+
+    registrarLog("addRol", correoUsuario, `Rol creado: ${nuevoRol}`);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Rol creado correctamente",
+      datos: roles,
+    });
+  } catch (err) {
+    manejarError(err, "addRol", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al crear rol backend 871",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function updateRol(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const roles = leerJSON(JSON_ROLES) || [];
+    const { rol, permisos } = data;
+    const correoUsuario = usuario?.correo || "sistema";
+
+    if (!rol)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "El nombre del rol es obligatorio",
+      });
+
+    const index = roles.findIndex((r) => r.rol === rol);
+    if (index === -1)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "Rol no encontrado",
+      });
+
+    // El rol administrador conserva permisos totales
+    if (rol === "administrador") {
+      roles[index].permisos = ["*"];
+    } else {
+      roles[index].permisos = Array.isArray(permisos) ? permisos : [];
+    }
+
+    guardarJSON(JSON_ROLES, roles);
+    registrarLog("updateRol", correoUsuario, `Permisos actualizados para el rol: ${rol}`);
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Permisos actualizados correctamente",
+      datos: roles,
+    });
+  } catch (err) {
+    manejarError(err, "updateRol", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al actualizar rol",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function deleteRol(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const { rol } = data;
+    const correoUsuario = usuario?.correo || "sistema";
+
+    if (!rol)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "El nombre del rol es obligatorio",
+      });
+
+    if (rol === "administrador")
+      return respuestaJSON({
+        status: "error",
+        mensaje: "No se puede eliminar el rol administrador",
+      });
+
+    const roles = leerJSON(JSON_ROLES) || [];
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+
+    // Verificar si el rol está asignado a algún usuario
+    const enUso = usuarios.some((u) => u.rol === rol);
+    if (enUso)
+      return respuestaJSON({
+        status: "error",
+        mensaje: `No se puede eliminar el rol "${rol}" porque tiene usuarios asignados.`,
+      });
+
+    const nuevosRoles = roles.filter((r) => r.rol !== rol);
+    guardarJSON(JSON_ROLES, nuevosRoles);
+
+    registrarLog("deleteRol", correoUsuario, `Rol eliminado: ${rol}`);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `Rol "${rol}" eliminado correctamente`,
+      datos: nuevosRoles,
+    });
+  } catch (err) {
+    manejarError(err, "deleteRol", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al eliminar rol",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
 // Usuarios
 function addUsuario(data) {
   const lock = LockService.getScriptLock();
@@ -1320,10 +1507,6 @@ function getProductosPorArchivo(fileId) {
 
   return respuestaJSON({ status: "ok", fileId, productos: resultado });
 }
-
-
-
-
 function getDatosTributarios() {
   let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
 
@@ -1344,12 +1527,6 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-
-
-
-
-
-
 function addDatoTributario(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
@@ -1362,8 +1539,6 @@ function addDatoTributario(data) {
       normalizarTexto(d.label) === normalizarTexto(data.label) ||
       (normalizarTexto(d.label) === normalizarTexto(data.label) && normalizarTexto(d.valor) === normalizarTexto(data.valor))
     );
-
-
 
     if (yaExiste) {
       return respuestaJSON({
@@ -1396,7 +1571,6 @@ function addDatoTributario(data) {
     lock.releaseLock();
   }
 }
-
 function updateDatoTributario(data) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando

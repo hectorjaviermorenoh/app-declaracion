@@ -117,11 +117,6 @@ export function ProductosProvider({ children }) {
     try {
       const data = await apiPost(backendUrl, "deleteProducto", { id: productoId });
 
-      // if (data.status === "ok") {
-      //   await refreshProductos();
-      //   return { ok: true, mensaje: "✅ Producto eliminado correctamente", data };
-      // }
-
       if (data.status === "ok") {
         showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
         await refreshProductos();   // 👈 refrescar productos

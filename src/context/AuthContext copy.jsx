@@ -9,8 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { useBackends } from "./BackendsContext";
 import { jwtDecode } from "jwt-decode";
 
-import { useToast } from "../context/ToastContext";
-
 // 📦 Clave para persistir sesión
 const STORAGE_KEY = "auth_session";
 
@@ -25,8 +23,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-
-  const { showToast } = useToast();
 
   // 🧠 Cargar token desde localStorage una sola vez al montar
   useEffect(() => {
@@ -61,19 +57,11 @@ export function AuthProvider({ children }) {
 
 
   // 🚀 Iniciar sesión
-  const login = async (idToken, onComplete = () => {}) => {
-
-    const handleFail = (mensaje, tipo = "danger") => {
-      showToast(mensaje, tipo, 4000, "Autenticación");
-      logout();
-      onComplete();
-    };
-
+  const login = async (idToken) => {
     if (!activeBackend?.url) {
-      handleFail("⚠️ No hay backend activo. No se puede autenticar.", "warning");
+      console.warn("No hay backend activo. No se puede autenticar.");
       return;
     }
-
 
     try {
       // 🔍 Decodificar token localmente
@@ -81,7 +69,8 @@ export function AuthProvider({ children }) {
 
       // ⏰ Verificar si el token expiró
       if (decoded.exp * 1000 < Date.now()) {
-        handleFail("⚠️ Token expirado localmente. Inicia sesión nuevamente.", "warning");
+        console.warn("⚠️ Token expirado localmente, cerrando sesión...");
+        logout();
         return;
       }
       const userLocal = {
@@ -96,31 +85,25 @@ export function AuthProvider({ children }) {
       const data = await resp.json();
 
       if (data && (data.status === "ok" || data.autorizado)) {
-
         const userFull = {
           ...userLocal,
           rol: data.rol || "sin rol",
           permisos: data.permisos || [],
         };
 
-        showToast(`👋 Bienvenido ${userFull.nombre}`, "success", 3000, "Autenticación");
-
         setAuthToken(idToken);
         setUser(userFull);
         setAuthenticated(true);
         persistSession(idToken, userFull);
 
-        onComplete(); // 👈 Llamar después del éxito, antes de la navegación
         navigate("/productos"); // ✅ Redirigir inmediatamente tras login
       } else {
         console.error("❌ Token no autorizado:", data.mensaje);
-        showToast(data.mensaje || "❌ Token no autorizado", "danger", 4000, "Autenticación");
         logout();
-        onComplete(); // 👈 Llamar después de logout
       }
     } catch (err) {
       console.error("Error verificando token:", err);
-      handleFail("❌ Error verificando token con el backend");
+      logout();
     }
   };
 
@@ -135,10 +118,7 @@ export function AuthProvider({ children }) {
     if (window.location.pathname !== "/") {
       navigate("/", { replace: true }); // replace evita volver atrás con el navegador
     }
-
-    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación");
-
-  }, [navigate, showToast ]);
+  }, [navigate]);
 
   // 🔄 Verificar token manualmente (opcional, útil al recargar)
   const verifyToken = useCallback(async () => {
@@ -155,19 +135,15 @@ export function AuthProvider({ children }) {
         setAuthenticated(true);
         return true;
       } else {
-        if (authenticated) {
-          showToast("⚠️ Tu sesión ha expirado. Inicia sesión nuevamente.", "warning", 4000, "Autenticación");
-        }
         logout();
         return false;
       }
     } catch (err) {
       console.log("auth184", err.message);
-      showToast("⚠️ Token inválido o expirado. Debes iniciar sesión nuevamente.", "warning", 4000, "Autenticación");
       logout();
       return false;
     }
-  }, [authToken, activeBackend, logout, showToast]);
+  }, [authToken, activeBackend, logout]);
 
   // 🧠 Verificar token automáticamente al cargar (una vez)
   useEffect(() => {
@@ -206,7 +182,7 @@ export function AuthProvider({ children }) {
       try {
         const decoded = jwtDecode(authToken);
         if (decoded.exp * 1000 < Date.now()) {
-          showToast("⚠️ Token expirado localmente. Cerrando sesión...", "warning", 4000, "Autenticación");
+          console.warn("⚠️ Token expirado localmente. Cerrando sesión...");
           logout();
         }
       } catch (err) {
@@ -219,6 +195,7 @@ export function AuthProvider({ children }) {
     checkExpiration(); // ejecutar una vez al inicio
     return () => clearInterval(interval);
   }, [authToken, logout]);
+
 
   const value = {
     authToken,

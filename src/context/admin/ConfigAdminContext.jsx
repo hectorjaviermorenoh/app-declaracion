@@ -2,12 +2,17 @@
 import React, { createContext, useContext, useCallback, useState } from "react";
 import { useBackends } from "../BackendsContext";
 import { apiPost } from "../../utils/apiClient";
+import { useToast } from "../ToastContext";
 
 const ConfigAdminContext = createContext(null);
 
 export function ConfigAdminProvider({ children }) {
+
   const { activeBackend } = useBackends();
   const backendUrl = activeBackend?.url || null;
+
+  const { showToast } = useToast();
+
   const [loading, setLoading] = useState(false);
 
   const reinicializarSistemaForzado = useCallback(async (confirmar, borrarCarpetas) => {

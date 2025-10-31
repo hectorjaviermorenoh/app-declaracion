@@ -34,8 +34,12 @@ export default function Home() {
         "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com",
       callback: (response) => {
         const token = response.credential;
-        setIsLoggingIn(true); // 👈 Activar estado de carga al recibir el token
-        login(token);
+        setIsLoggingIn(true); // 👈 Activa el spinner
+
+        // 💡 Pasar una función de limpieza que se ejecutará al terminar el login
+        login(token, () => {
+          setIsLoggingIn(false); // 👈 Desactiva el spinner SIEMPRE que login() finalice
+        });
       },
     });
 
@@ -51,7 +55,7 @@ export default function Home() {
     );
 
     // Opcional: mostrar automáticamente One Tap
-    // window.google.accounts.id.prompt();
+    window.google.accounts.id.prompt();
 
   }, [login, loading, authenticated]);
 
