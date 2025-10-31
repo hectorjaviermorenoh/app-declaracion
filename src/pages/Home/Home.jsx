@@ -20,7 +20,8 @@ export default function Home() {
   // 🔁 Redirige si ya hay sesión activa
   useEffect(() => {
     if (!loading && authenticated) {
-      navigate("/productos");
+      // navigate("/productos");
+      navigate("/admin");
     }
   }, [authenticated, loading, navigate]);
 

@@ -20,16 +20,15 @@ export const RolesAdminProvider = ({ children }) => {
   const getFunciones = useCallback(async () => {
     if (!backendUrl) return;
     try {
-      // const res = await apiGet(`${backendUrl}?accion=getFuncionesLogicaNegocio`);
       const res = await apiGet(backendUrl, "getFuncionesLogicaNegocio");
       if (res.status === "ok") {
         setFuncionesDisponibles(res.datos || []);
       } else {
-        showToast("error", res.mensaje || "Error al obtener funciones");
+        showToast(res.mensaje || "❌ Error al obtener funciones", "warning", 4000, "RolesAdmin");
       }
     } catch (err) {
-      showToast("error", "Error al cargar funciones del backend");
-      console.error("❌ getFunciones error:", err);
+      console.error("❌ Error al Cargar Funciones", err);
+      showToast("❌ Error al Cargar Funciones", "danger", 4000, "RolesAdmin");
     }
   }, [backendUrl, showToast]);
 
@@ -37,18 +36,16 @@ export const RolesAdminProvider = ({ children }) => {
     if (!backendUrl) return;
     setLoading(true);
     try {
-      // const res = await apiGet(`${backendUrl}?accion=getRoles`);
       const res = await apiGet(backendUrl, "getRoles");
-
       if (res.status === "ok") {
         setRoles(res.data || []);
         showToast("📜 Roles cargados correctamente", "info", 2000, "RolesAdmin");
       } else {
-        showToast("error", res.mensaje || "Error al obtener roles");
+        showToast(res.mensaje || "❌ Error al Cargar roles", "warning", 4000, "RolesAdmin");
       }
     } catch (err) {
       console.error("❌ getRoles error:", err);
-      showToast("error", "Error al obtener roles");
+      showToast("❌ Error al Cargar roles", "danger", 4000, "RolesAdmin");
     } finally {
       setLoading(false);
     }
@@ -59,31 +56,33 @@ export const RolesAdminProvider = ({ children }) => {
 
   const addDato = async (nuevoRol, permisosSeleccionados) => {
     if (!backendUrl) return;
-    if (!nuevoRol) return showToast("error", "Debe ingresar un nombre para el rol");
-
+    if (!nuevoRol) return showToast("⚠️ Debe ingresar un nombre para el rol", "warning", 4000, "AdminRoles");
+    setLoading(true);
     try {
       const payload = {
-        accion: "addRol",
+        // accion: "addRol",
         rol: nuevoRol,
         permisos: permisosSeleccionados || [],
       };
       const res = await apiPost(backendUrl, "addRol", payload)
       if (res.status === "ok") {
-        showToast("success", "Rol creado correctamente");
+        showToast("👋 Rol creado correctamente", "success", 2000, "RolesAdmin");
         setRoles(res.datos || []);
-
       } else {
-        showToast("error", res.mensaje || "Error al crear el rol");
+        showToast(res.mensaje || "❌ Error al crear el rol", "warning", 4000, "RolesAdmin");
       }
     } catch (err) {
       console.error("❌ addRol error:", err);
-      showToast("error", "Error al crear rol");
+      showToast("❌ Error al crear el rol", "danger", 4000, "RolesAdmin");
+    } finally {
+    setLoading(false);
     }
   };
 
 
   const updateDato = async (rol, permisosActualizados) => {
     if (!backendUrl) return;
+    setLoading(true);
 
     try {
       const payload = {
@@ -92,36 +91,43 @@ export const RolesAdminProvider = ({ children }) => {
       };
       const res = await apiPost(backendUrl, "updateRol", payload)
       if (res.status === "ok") {
-        showToast("success", "Permisos actualizados correctamente");
+        showToast("👋 Rol actualizado correctamente", "success", 2000, "RolesAdmin");
         setRoles(res.datos || []);
       } else {
-        showToast("error", res.mensaje || "Error al actualizar el rol");
+        showToast(res.mensaje || "❌ Error al actualizar el rol", "warning", 4000, "RolesAdmin");
       }
     } catch (err) {
       console.error("❌ updateRol error:", err);
-      showToast("error", "Error al actualizar el rol");
+      showToast("❌ Error al actualizar el rol", "danger", 4000, "RolesAdmin");
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteDato = async (rol) => {
     if (!backendUrl) return;
+    setLoading(true);
 
     if (rol === "administrador") {
-      return showToast("No se puede eliminar el rol administrador", "warning", 4000, "RolesContext");
+      return showToast("⚠️ No se puede eliminar el rol administrador", "warning", 4000, "RolesAdmin");
     }
 
     try {
       const payload = { rol };
       const res = await apiPost(backendUrl, "deleteRol", payload)
       if (res.status === "ok") {
-        showToast("Rol eliminado Correctamente", "success", 4000, "RolesContext");
+        showToast("👋 Rol eliminado Correctamente", "success", 4000, "RolesAdmin");
         setRoles(res.datos || []);
       } else {
-        showToast(res.mensaje || "Error al eliminar el rol", "warning", 4000, "RolesContext");
+        console.log("❌ Error al eliminar el rol", res.mensaje);
+        showToast(res.mensaje || "❌ Error al eliminar el rol", "warning", 4000, "RolesAdmin");
       }
     } catch (err) {
-      console.error("❌ deleteRol error:", err);
-      showToast("error", "Error al eliminar el rol");
+      console.error("❌ deleteRol HJM error:", err);
+      showToast(`❌ Error al eliminar el rol: ${err?.message || err.toString()}`, "danger", 8000, "RolesAdmin"
+  );
+    } finally {
+      setLoading(false);
     }
   };
 

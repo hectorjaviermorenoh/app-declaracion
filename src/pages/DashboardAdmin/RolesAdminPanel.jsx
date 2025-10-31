@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRolesAdmin } from "../../context/admin/RolesAdminContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
+import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 
 const RolesAdminPanel = () => {
   const {
@@ -207,7 +208,10 @@ const RolesAdminPanel = () => {
             💾 Guardar
           </Button>
         </Modal.Footer>
+        <LoadingOverlay show={loading} />
       </Modal>
+
+
     </div>
   );
 };
