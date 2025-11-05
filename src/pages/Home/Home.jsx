@@ -20,8 +20,8 @@ export default function Home() {
   // 🔁 Redirige si ya hay sesión activa
   useEffect(() => {
     if (!loading && authenticated) {
-      // navigate("/productos");
-      navigate("/admin");
+      navigate("/productos");
+      // navigate("/admin");
     }
   }, [authenticated, loading, navigate]);
 
@@ -55,10 +55,10 @@ export default function Home() {
       }
     );
 
-    // Opcional: mostrar automáticamente One Tap
-    window.google.accounts.id.prompt();
+    // Opcional: mostrar automáticamente One Tap ****************************************
+    // window.google.accounts.id.prompt();
 
-  }, [login, loading, authenticated]);
+  }, [login, loading, authenticated, isLoggingIn]);
 
   // ⏳ Mientras carga AuthContext, muestra spinner en lugar del botón
   if (loading) {

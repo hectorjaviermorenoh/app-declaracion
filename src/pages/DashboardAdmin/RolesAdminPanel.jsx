@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useRolesAdmin } from "../../context/admin/RolesAdminContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
+import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+
 
 const RolesAdminPanel = () => {
   const {
@@ -18,6 +20,10 @@ const RolesAdminPanel = () => {
   const [nuevoRol, setNuevoRol] = useState("");
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
   const [rolEditando, setRolEditando] = useState(null);
+
+  const [selectedRol, setSelectedRol] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
 
   /******************************
    * 🔄 Cargar roles al abrir
@@ -54,14 +60,6 @@ const RolesAdminPanel = () => {
     setShowModal(true);
   };
 
-  /******************************
-   * 🗑️ Eliminar rol
-   ******************************/
-  const handleEliminarRol = async (rol) => {
-    if (window.confirm(`¿Eliminar el rol "${rol}"?`)) {
-      await deleteDato(rol);
-    }
-  };
 
   /******************************
    * ✅ Manejo de checkboxes
@@ -133,7 +131,10 @@ const RolesAdminPanel = () => {
                     <Button
                       size="sm"
                       variant="outline-danger"
-                      onClick={() => handleEliminarRol(rol.rol)}
+                      onClick={() => {
+                        setSelectedRol(rol.rol);
+                        setShowDeleteModal(true);
+                      }}
                     >
                       🗑️ Eliminar
                     </Button>
@@ -201,15 +202,42 @@ const RolesAdminPanel = () => {
           </div>
         </Modal.Body>
         <Modal.Footer>
+
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancelar
           </Button>
+
           <Button variant="success" onClick={handleGuardarRol}>
-            💾 Guardar
+               {loading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  {" "}Guardando...
+                </>
+              ) : (
+                "💾 Guardar"
+              )}
           </Button>
+
         </Modal.Footer>
+
         <LoadingOverlay show={loading} />
       </Modal>
+
+      <ConfirmActionModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        title="Eliminar Rol"
+        message={
+          <>
+            ¿Seguro que deseas eliminar el rol{" "}
+            <strong>{selectedRol}</strong>?
+          </>
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={() => deleteDato(selectedRol)}
+
+      />
 
 
     </div>

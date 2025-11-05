@@ -111,8 +111,8 @@ export function AuthProvider({ children }) {
         persistSession(idToken, userFull);
 
         onComplete(); // 👈 Llamar después del éxito, antes de la navegación
-        // navigate("/productos"); // ✅ Redirigir inmediatamente tras login
-        navigate("/admin"); // ✅ Redirigir inmediatamente tras login
+        navigate("/productos"); // ✅ Redirigir inmediatamente tras login
+        // navigate("/admin"); // ✅ Redirigir inmediatamente tras login
       } else {
         console.error("❌ Token no autorizado:", data.mensaje);
         showToast(data.mensaje || "❌ Token no autorizado", "danger", 4000, "Autenticación");

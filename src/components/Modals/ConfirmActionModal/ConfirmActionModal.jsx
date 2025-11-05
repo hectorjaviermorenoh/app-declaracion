@@ -58,11 +58,8 @@ export default function ConfirmActionModal({
           <Button variant="secondary" onClick={onHide}>
             Cancelar
           </Button>
-          <Button
-            variant={confirmVariant}
-            onClick={handleConfirm}
-            disabled={!confirmado || loading}
-          >
+
+          <Button variant={confirmVariant} onClick={handleConfirm} disabled={!confirmado || loading}>
                {loading ? (
                 <>
                   <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
@@ -71,8 +68,6 @@ export default function ConfirmActionModal({
               ) : (
                 confirmLabel
               )}
-
-
 
           </Button>
         </Modal.Footer>

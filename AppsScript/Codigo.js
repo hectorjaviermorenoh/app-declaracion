@@ -59,11 +59,11 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "updateRol",
   "deleteRol",
   "addUsuario",
+  "updateUsuario",
   "deleteUsuario",
   "addProducto",
   "deleteProducto",
   "replaceArchivo",
-  "inicializarSistema",
   "addDatoTributario",
   "updateDatoTributario",
   "deleteDatoTributario",
@@ -80,7 +80,9 @@ const FUNCIONES_GENERALES = [
   "guardarJSON",
   "obtenerOCrearCarpeta",
   "normalizarTexto",
-  "normalizarNombreArchivo"
+  "normalizarNombreArchivo",
+  "toggleUsuarioActivo",
+  "inicializarSistema",
 ];
 
 
@@ -579,7 +581,7 @@ function doGet(e) {
       case "getFuncionesLogicaNegocio":
         return getFuncionesLogicaNegocio();
       case "getUsuarios":
-        return respuestaJSON({status: "ok", data: leerJSON(JSON_USUARIOS)});
+        return getUsuarios();
       case "getRoles":
         return getRoles();
       case "getProductos":
@@ -718,10 +720,16 @@ function doPost(e) {
 
 
       case "addUsuario":
-        return addUsuario(data);
+        return addUsuario(data, usuario);
+
+      case "toggleUsuarioActivo":
+        return toggleUsuarioActivo(data, usuario);
+
+      case "updateUsuario":
+        return updateUsuario(data, usuario);
 
       case "deleteUsuario":
-        return deleteUsuario(data, data.correoEjecutor);
+        return deleteUsuario(data, usuario);
 
       case "addProducto":
         return addProducto(data);
@@ -784,16 +792,26 @@ function getFuncionesLogicaNegocio() {
   lock.waitLock(30000);
 
   try {
+
+    if (!FUNCIONES_LOGICA_NEGOCIO || !Array.isArray(FUNCIONES_LOGICA_NEGOCIO)) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ No se encontraron funciones de lógica de negocio definidas.",
+        datos: [],
+      });
+    }
+
     return respuestaJSON({
       status: "ok",
-      mensaje: "Funciones de lógica de negocio obtenidas correctamente",
+      mensaje: "📘 Funciones de lógica de negocio obtenidas correctamente.",
       datos: FUNCIONES_LOGICA_NEGOCIO,
     });
+
   } catch (err) {
     manejarError(err, "getFuncionesLogicaNegocio");
     return respuestaJSON({
       status: "error",
-      mensaje: "Error al obtener funciones de lógica de negocio",
+      mensaje: "❌ Error interno al obtener las funciones de lógica de negocio.",
       detalle: err,
     });
   } finally {
@@ -812,16 +830,25 @@ function getRoles() {
 
   try {
     const roles = leerJSON(JSON_ROLES) || [];
+
+    if (!roles.length) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ No se encontraron roles registrados en el sistema.",
+        data: [],
+      });
+    }
+
     return respuestaJSON({
       status: "ok",
-      mensaje: "Roles obtenidos correctamente",
+      mensaje: "📘 Roles obtenidos correctamente.",
       data: roles,
     });
   } catch (err) {
     manejarError(err, "getRoles");
     return respuestaJSON({
       status: "error",
-      mensaje: "Error al obtener roles backend 829",
+      mensaje: "❌ Error interno al obtener los roles. Intenta nuevamente o contacta al administrador.",
       detalle: err,
     });
   } finally {
@@ -843,14 +870,14 @@ function addRol(data, usuario) {
     if (!nuevoRol)
       return respuestaJSON({
         status: "error",
-        mensaje: "El nombre del rol es obligatorio",
+        mensaje: "⚠️ El nombre del rol es obligatorio.",
       });
 
     // Validar duplicado
     if (roles.some((r) => r.rol.toLowerCase() === nuevoRol.toLowerCase()))
       return respuestaJSON({
         status: "error",
-        mensaje: "Ya existe un rol con ese nombre",
+        mensaje: `⚠️ Ya existe un rol con el nombre "${nuevoRol}".`,
       });
 
     // Crear nuevo rol con permisos iniciales
@@ -859,16 +886,17 @@ function addRol(data, usuario) {
     guardarJSON(JSON_ROLES, roles);
 
     registrarLog("addRol", correoUsuario, `Rol creado: ${nuevoRol}`);
+
     return respuestaJSON({
       status: "ok",
-      mensaje: "Rol creado correctamente",
+      mensaje: `✅ Rol "${nuevoRol}" creado correctamente.`,
       datos: roles,
     });
   } catch (err) {
     manejarError(err, "addRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
-      mensaje: "Error al crear rol backend 871",
+      mensaje: "❌ Error interno al crear el rol. Intenta nuevamente o contacta al administrador.",
       detalle: err,
     });
   } finally {
@@ -887,14 +915,14 @@ function updateRol(data, usuario) {
     if (!rol)
       return respuestaJSON({
         status: "error",
-        mensaje: "El nombre del rol es obligatorio",
+        mensaje: "⚠️ El nombre del rol es obligatorio.",
       });
 
     const index = roles.findIndex((r) => r.rol === rol);
     if (index === -1)
       return respuestaJSON({
         status: "error",
-        mensaje: "Rol no encontrado",
+        mensaje: `⚠️ El rol "${rol}" no existe en el sistema.`,
       });
 
     // El rol administrador conserva permisos totales
@@ -905,18 +933,19 @@ function updateRol(data, usuario) {
     }
 
     guardarJSON(JSON_ROLES, roles);
+
     registrarLog("updateRol", correoUsuario, `Permisos actualizados para el rol: ${rol}`);
 
     return respuestaJSON({
       status: "ok",
-      mensaje: "Permisos actualizados correctamente",
+      mensaje: `✅ Permisos actualizados correctamente para el rol "${rol}".`,
       datos: roles,
     });
   } catch (err) {
     manejarError(err, "updateRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
-      mensaje: "Error al actualizar rol",
+      mensaje: "❌ Error interno al actualizar el rol. Intenta nuevamente o contacta al administrador.",
       detalle: err,
     });
   } finally {
@@ -940,7 +969,7 @@ function deleteRol(data, usuario) {
     if (rol === "administrador")
       return respuestaJSON({
         status: "error",
-        mensaje: "No se puede eliminar el rol administrador",
+        mensaje: "⚠️ No se puede eliminar el rol administrador.",
       });
 
     const roles = leerJSON(JSON_ROLES) || [];
@@ -951,7 +980,7 @@ function deleteRol(data, usuario) {
     if (enUso)
       return respuestaJSON({
         status: "error",
-        mensaje: `No se puede eliminar el rol "${rol}" porque tiene usuarios asignados.`,
+        mensaje: `⚠️ No se puede eliminar el rol "${rol}" porque tiene usuarios asignados.`,
       });
 
     const nuevosRoles = roles.filter((r) => r.rol !== rol);
@@ -960,14 +989,14 @@ function deleteRol(data, usuario) {
     registrarLog("deleteRol", correoUsuario, `Rol eliminado: ${rol}`);
     return respuestaJSON({
       status: "ok",
-      mensaje: `Rol "${rol}" eliminado correctamente`,
+      mensaje: `🗑️ Rol "${rol}" eliminado correctamente.`,
       datos: nuevosRoles,
     });
   } catch (err) {
     manejarError(err, "deleteRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
-      mensaje: "Error al eliminar rol",
+      mensaje: "❌ Ocurrió un error interno al intentar eliminar el rol. Intenta nuevamente o contacta al administrador",
       detalle: err,
     });
   } finally {
@@ -977,76 +1006,286 @@ function deleteRol(data, usuario) {
 
 
 // Usuarios
-function addUsuario(data) {
+
+function getUsuarios() {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+  lock.waitLock(30000);
 
   try {
-    let usuarios = leerJSON(JSON_USUARIOS);
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
 
-    const yaExiste = usuarios.some(u => normalizarTexto(u.correo) === normalizarTexto(data.usuario.correo));
-    if (yaExiste) {
+    if (!usuarios.length) {
       return respuestaJSON({
         status: "error",
-        mensaje: `⚠️ Ya existe un usuario con el correo ${data.usuario.correo}`
+        mensaje: "⚠️ No se encontraron usuarios registrados.",
+        datos: [],
       });
     }
 
-
-    usuarios.push(data.usuario);
-    guardarJSON(JSON_USUARIOS, usuarios);
-
-    // ✅ Registrar log
-    registrarLog("addUsuario", Session.getActiveUser().getEmail(), {
-      UsuarioAgregado: data.usuario || data
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "📋 Usuarios obtenidos correctamente.",
+      datos: usuarios,
     });
-    return respuestaJSON({ status: "ok", mensaje: "Usuario agregado", usuarios });
-
+  } catch (err) {
+    manejarError(err, "getUsuarios");
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al obtener la lista de usuarios.",
+      detalle: err,
+    });
   } finally {
     lock.releaseLock();
   }
 }
-function deleteUsuario(data, correoEjecutor) {
+
+// function addUsuario(data) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+//   try {
+//     let usuarios = leerJSON(JSON_USUARIOS);
+
+//     const yaExiste = usuarios.some(u => normalizarTexto(u.correo) === normalizarTexto(data.usuario.correo));
+//     if (yaExiste) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ Ya existe un usuario con el correo ${data.usuario.correo}`
+//       });
+//     }
+
+
+//     usuarios.push(data.usuario);
+//     guardarJSON(JSON_USUARIOS, usuarios);
+
+//     // ✅ Registrar log
+//     registrarLog("addUsuario", Session.getActiveUser().getEmail(), {
+//       UsuarioAgregado: data.usuario || data
+//     });
+//     return respuestaJSON({ status: "ok", mensaje: "Usuario agregado", usuarios });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+function addUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+  lock.waitLock(30000);
 
   try {
-    // Validar admin
-    if (!esAdmin(correoEjecutor)) {
-      return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado" });
-    }
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+    const { correo, nombre, rol } = data;
+    const correoEjecutor = usuario?.correo || "sistema";
 
-    let usuarios = leerJSON(JSON_USUARIOS);
-    const idx = usuarios.findIndex(u => u.correo === data.correo);
+    if (!correo || !nombre || !rol)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ Todos los campos son obligatorios (correo, nombre, rol).",
+      });
 
-    if (idx === -1) {
-      return respuestaJSON({ status: "error", mensaje: "❌ Usuario no encontrado" });
-    }
+    if (usuarios.some((u) => u.correo.toLowerCase() === correo.toLowerCase()))
+      return respuestaJSON({
+        status: "error",
+        mensaje: `⚠️ Ya existe un usuario con el correo "${correo}".`,
+      });
 
-    // Evitar que un admin se borre a sí mismo
-    if (usuarios[idx].correo === correoEjecutor) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario administrador" });
-    }
+    const nuevoUsuario = {
+      correo,
+      nombre,
+      rol,
+      activo: true,
+    };
 
-    const eliminado = usuarios[idx];
-    usuarios.splice(idx, 1);
-
+    usuarios.push(nuevoUsuario);
     guardarJSON(JSON_USUARIOS, usuarios);
 
-    // ✅ Registrar log
-    registrarLog("deleteUsuario", correoEjecutor, { usuarioEliminado: eliminado.correo });
+    registrarLog("addUsuario", correoEjecutor, `Usuario creado: ${correo}`);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `✅ Usuario "${correo}" creado correctamente.`,
+      datos: usuarios,
+    });
+  } catch (err) {
+    manejarError(err, "addUsuario", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al crear el usuario.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateUsuario(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+    const { correo, nombre, rol } = data;
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const index = usuarios.findIndex((u) => u.correo === correo);
+    if (index === -1)
+      return respuestaJSON({
+        status: "error",
+        mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
+      });
+
+    usuarios[index].nombre = nombre || usuarios[index].nombre;
+    usuarios[index].rol = rol || usuarios[index].rol;
+
+    guardarJSON(JSON_USUARIOS, usuarios);
+    registrarLog("updateUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
 
     return respuestaJSON({
       status: "ok",
-      mensaje: `✅ Usuario ${eliminado.correo} eliminado correctamente`,
-      usuarioEliminado: eliminado
+      mensaje: `✅ Usuario "${correo}" actualizado correctamente.`,
+      datos: usuarios,
     });
-
+  } catch (err) {
+    manejarError(err, "updateUsuario", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al actualizar usuario.",
+      detalle: err,
+    });
   } finally {
     lock.releaseLock();
   }
-
 }
+
+function toggleUsuarioActivo(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+    const { correo, activo } = data;
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const index = usuarios.findIndex((u) => u.correo === correo);
+    if (index === -1)
+      return respuestaJSON({
+        status: "error",
+        mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
+      });
+
+    usuarios[index].activo = Boolean(activo);
+    guardarJSON(JSON_USUARIOS, usuarios);
+
+    registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} correctamente.`,
+      datos: usuarios,
+    });
+  } catch (err) {
+    manejarError(err, "toggleUsuarioActivo", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al cambiar el estado del usuario.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function deleteUsuario(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+    const { correo } = data;
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    if (!correo)
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ Debe especificar el correo del usuario a eliminar.",
+      });
+
+    const usuarioAEliminar = usuarios.find((u) => u.correo === correo);
+    if (!usuarioAEliminar)
+      return respuestaJSON({
+        status: "error",
+        mensaje: `⚠️ No se encontró el usuario "${correo}".`,
+      });
+
+    if (usuarioAEliminar.rol === "administrador")
+      return respuestaJSON({
+        status: "error",
+        mensaje: "🚫 No se puede eliminar un usuario con rol administrador.",
+      });
+
+    const nuevosUsuarios = usuarios.filter((u) => u.correo !== correo);
+    guardarJSON(JSON_USUARIOS, nuevosUsuarios);
+
+    registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `🗑️ Usuario "${correo}" eliminado correctamente.`,
+      datos: nuevosUsuarios,
+    });
+  } catch (err) {
+    manejarError(err, "deleteUsuario", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al eliminar usuario.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+
+// function deleteUsuario(data, correoEjecutor) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+//   try {
+//     // Validar admin
+//     if (!esAdmin(correoEjecutor)) {
+//       return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado" });
+//     }
+
+//     let usuarios = leerJSON(JSON_USUARIOS);
+//     const idx = usuarios.findIndex(u => u.correo === data.correo);
+
+//     if (idx === -1) {
+//       return respuestaJSON({ status: "error", mensaje: "❌ Usuario no encontrado" });
+//     }
+
+//     // Evitar que un admin se borre a sí mismo
+//     if (usuarios[idx].correo === correoEjecutor) {
+//       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario administrador" });
+//     }
+
+//     const eliminado = usuarios[idx];
+//     usuarios.splice(idx, 1);
+
+//     guardarJSON(JSON_USUARIOS, usuarios);
+
+//     // ✅ Registrar log
+//     registrarLog("deleteUsuario", correoEjecutor, { usuarioEliminado: eliminado.correo });
+
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: `✅ Usuario ${eliminado.correo} eliminado correctamente`,
+//       usuarioEliminado: eliminado
+//     });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+
+// }
 // Productos
 function addProducto(data) {
   const lock = LockService.getScriptLock();

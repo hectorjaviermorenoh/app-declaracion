@@ -1,146 +1,185 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "../BackendsContext";
-import { apiGet, apiPost } from "../../utils/apiClient";
+import { apiGet, apiPost } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
 
-// Crear el contexto
-const UsuariosAdminContext = createContext(null);
+const UsuariosAdminContext = createContext();
 
-// Provider principal
-export function UsuariosAdminProvider({ children }) {
-
+export const UsuariosAdminProvider = ({ children }) => {
   const { activeBackend } = useBackends();
   const backendUrl = activeBackend?.url || null;
-
   const { showToast } = useToast();
 
   const [usuarios, setUsuarios] = useState([]);
+  const [rolesDisponibles, setRolesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 GET: Obtener lista de usuarios
-  const getUsuarios = useCallback(async () => {
-    if (!backendUrl?.url) {
-      console.warn("⚠️ No hay backend activo configurado.");
-      return [];
-    }
-
-    setLoading(true);
+  /*******************************
+   * 📘 Obtener roles disponibles
+   *******************************/
+  const getRoles = useCallback(async () => {
+    if (!backendUrl) return;
     try {
-      const data = await apiGet(backendUrl.url, "getUsuarios");
-      if (data.status === "ok") {
-        setUsuarios(data.data || []);
-        showToast("👥 Usuarios cargados correctamente", "info", 2000, "UsuariosAdmin");
-        return data.data;
+      const response = await apiGet(backendUrl, "getRoles");
+      if (response.status === "ok") {
+        setRolesDisponibles(response.data || []);
       } else {
-        showToast("❌ Error obteniendo usuarios", "danger", 4000, "UsuariosAdmin");
-        return [];
+        showToast(response.mensaje || "⚠️ No se pudieron cargar los roles.", "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
-      console.error("❌ fetchUsuarios error:", err);
-      showToast("⚠️ Error al cargar usuarios", "danger", 4000, "UsuariosAdmin");
-      return [];
+      console.error("❌ Error al cargar roles:", err);
+      showToast("❌ Error de conexión al obtener roles.", "danger", 4000, "UsuariosAdmin");
+    }
+  }, [backendUrl, showToast]);
+
+  /*******************************
+   * 📋 Obtener lista de usuarios
+   *******************************/
+  const getDatos = useCallback(async () => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      const response = await apiGet(backendUrl, "getUsuarios");
+      if (response.status === "ok") {
+        setUsuarios(response.datos || []);
+        showToast(response.mensaje || "📜 Usuarios cargados correctamente.", "info", 2000, "UsuariosAdmin");
+      } else {
+        showToast(response.mensaje || "⚠️ No se pudieron cargar los usuarios.", "warning", 4000, "UsuariosAdmin");
+      }
+    } catch (err) {
+      console.error("❌ getUsuarios error:", err);
+      showToast("❌ Error de conexión al cargar usuarios.", "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }
   }, [backendUrl, showToast]);
 
-  // 🔹 POST: Agregar usuario
-  const addUsuario = useCallback(async (usuario) => {
-    if (!backendUrl?.url) return;
+  /*******************************
+   * ➕ Crear nuevo usuario
+   *******************************/
+  const addDato = async (nuevoUsuario) => {
+    if (!backendUrl) return;
+    if (!nuevoUsuario?.correo || !nuevoUsuario?.nombre || !nuevoUsuario?.rol) {
+      return showToast("⚠️ Todos los campos son obligatorios (correo, nombre, rol).", "warning", 4000, "UsuariosAdmin");
+    }
+
     setLoading(true);
     try {
-      const payload = { accion: "addUsuario", usuario };
-      const data = await apiPost(backendUrl.url, "addUsuario", payload);
+      const payload = {
+        correo: nuevoUsuario.correo,
+        nombre: nuevoUsuario.nombre,
+        rol: nuevoUsuario.rol,
+      };
 
-      if (data.status === "ok") {
-        showToast("✅ Usuario agregado correctamente", "success", 3000, "UsuariosAdmin");
-        await getUsuarios();
-        return true;
+      const response = await apiPost(backendUrl, "addUsuario", payload);
+      if (response.status === "ok") {
+        setUsuarios(response.datos || []);
+        showToast(response.mensaje || "✅ Usuario creado correctamente.", "success", 2000, "UsuariosAdmin");
       } else {
-        showToast(data.mensaje || "⚠️ No se pudo agregar usuario", "warning", 4000, "UsuariosAdmin");
-        return false;
+        showToast(response.mensaje || "⚠️ No se pudo crear el usuario.", "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
       console.error("❌ addUsuario error:", err);
-      showToast("⚠️ Error agregando usuario", "danger", 4000, "UsuariosAdmin");
-      return false;
+      showToast("❌ Error de conexión al crear usuario.", "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, getUsuarios, showToast]);
+  };
 
-  // 🔹 POST: Eliminar usuario
-  const deleteUsuario = useCallback(async (correo, correoEjecutor) => {
-    if (!backendUrl?.url) return;
+  /*******************************
+   * ✏️ Actualizar usuario
+   *******************************/
+  const updateDato = async (correo, datosActualizados) => {
+    if (!backendUrl) return;
     setLoading(true);
     try {
-      const payload = { accion: "deleteUsuario", correo, correoEjecutor };
-      const data = await apiPost(backendUrl.url, "deleteUsuario", payload);
+      const payload = { correo, ...datosActualizados };
+      const response = await apiPost(backendUrl, "updateUsuario", payload);
 
-      if (data.status === "ok") {
-        showToast(`🗑️ Usuario ${correo} eliminado`, "success", 3000, "UsuariosAdmin");
-        await fetchUsuarios();
-        return true;
+      if (response.status === "ok") {
+        setUsuarios(response.datos || []);
+        showToast(response.mensaje || `✅ Usuario "${correo}" actualizado correctamente.`, "success", 2000, "UsuariosAdmin");
       } else {
-        showToast(data.mensaje || "⚠️ No se pudo eliminar usuario", "warning", 4000, "UsuariosAdmin");
-        return false;
+        showToast(response.mensaje || `⚠️ No se pudo actualizar el usuario "${correo}".`, "warning", 4000, "UsuariosAdmin");
+      }
+    } catch (err) {
+      console.error("❌ updateUsuario error:", err);
+      showToast(`❌ Error de conexión al actualizar usuario "${correo}".`, "danger", 4000, "UsuariosAdmin");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /*******************************
+   * 🔄 Activar / Desactivar usuario
+   *******************************/
+  const toggleActivo = async (correo, activo) => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      const payload = { correo, activo };
+      const response = await apiPost(backendUrl, "toggleUsuarioActivo", payload);
+      if (response.status === "ok") {
+        setUsuarios(response.datos || []);
+        showToast(response.mensaje || `🔁 Estado de "${correo}" actualizado.`, "success", 2000, "UsuariosAdmin");
+      } else {
+        showToast(response.mensaje || `⚠️ No se pudo cambiar el estado de "${correo}".`, "warning", 4000, "UsuariosAdmin");
+      }
+    } catch (err) {
+      console.error("❌ toggleUsuarioActivo error:", err);
+      showToast(`❌ Error al cambiar el estado de "${correo}".`, "danger", 4000, "UsuariosAdmin");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /*******************************
+   * 🗑️ Eliminar usuario
+   *******************************/
+  const deleteDato = async (correo) => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      const payload = { correo };
+      const response = await apiPost(backendUrl, "deleteUsuario", payload);
+      if (response.status === "ok") {
+        setUsuarios(response.datos || []);
+        showToast(response.mensaje || `🗑️ Usuario "${correo}" eliminado correctamente.`, "success", 3000, "UsuariosAdmin");
+      } else {
+        showToast(response.mensaje || `⚠️ No se pudo eliminar el usuario "${correo}".`, "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
       console.error("❌ deleteUsuario error:", err);
-      showToast("⚠️ Error eliminando usuario", "danger", 4000, "UsuariosAdmin");
-      return false;
+      showToast(`❌ Error al eliminar el usuario "${correo}".`, "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, getUsuarios, showToast]);
+  };
 
-  // 🔹 POST: Actualizar usuario
-  const updateUsuario = useCallback(async (correo, correoEjecutor) => {
-    if (!backendUrl?.url) return;
-    setLoading(true);
-    try {
-      const payload = { accion: "deleteUsuario", correo, correoEjecutor };
-      const data = await apiPost(backendUrl.url, "deleteUsuario", payload);
+  /*******************************
+   * 🔄 Cargar datos iniciales
+   *******************************/
+  useEffect(() => {
+    getRoles();
+    getDatos();
+  }, [getRoles, getDatos]);
 
-      if (data.status === "ok") {
-        showToast(`🗑️ Usuario ${correo} eliminado`, "success", 3000, "UsuariosAdmin");
-        await fetchUsuarios();
-        return true;
-      } else {
-        showToast(data.mensaje || "⚠️ No se pudo eliminar usuario", "warning", 4000, "UsuariosAdmin");
-        return false;
-      }
-    } catch (err) {
-      console.error("❌ deleteUsuario error:", err);
-      showToast("⚠️ Error eliminando usuario", "danger", 4000, "UsuariosAdmin");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [backendUrl, getUsuarios, showToast]);
-
-  // Valor expuesto
   return (
     <UsuariosAdminContext.Provider
       value={{
         usuarios,
+        rolesDisponibles,
         loading,
-        getUsuarios,
-        addUsuario,
-        deleteUsuario,
-        updateUsuario
+        getDatos,
+        addDato,
+        updateDato,
+        toggleActivo,
+        deleteDato,
       }}
     >
       {children}
     </UsuariosAdminContext.Provider>
   );
-}
+};
 
-// Hook personalizado
-export function useUsuariosAdmin() {
-  const ctx = useContext(UsuariosAdminContext);
-  if (!ctx) {
-    throw new Error("useUsuariosAdmin debe usarse dentro de <UsuariosAdminProvider>");
-  }
-  return ctx;
-}
+export const useUsuariosAdmin = () => useContext(UsuariosAdminContext);
