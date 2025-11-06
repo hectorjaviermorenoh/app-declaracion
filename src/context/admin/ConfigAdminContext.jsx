@@ -1,55 +1,81 @@
-// src/context/admin/ConfigAdminContext.jsx
-import React, { createContext, useContext, useCallback, useState } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useBackends } from "../BackendsContext";
-import { apiPost } from "../../utils/apiClient";
+import { apiGet, apiPost } from "../../utils/apiClient";
 import { useToast } from "../ToastContext";
 
-const ConfigAdminContext = createContext(null);
+const ConfigAdminContext = createContext();
 
-export function ConfigAdminProvider({ children }) {
-
+export const ConfigAdminProvider = ({ children }) => {
   const { activeBackend } = useBackends();
   const backendUrl = activeBackend?.url || null;
-
   const { showToast } = useToast();
 
+  const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const reinicializarSistemaForzado = useCallback(async (confirmar, borrarCarpetas) => {
-    if (!backendUrl) return { ok: false, mensaje: "⚠️ Configure URL del backend" };
-
+  /*******************************
+   * ⚙️ Obtener configuración
+   *******************************/
+  const getConfig = useCallback(async () => {
+    if (!backendUrl) return;
     setLoading(true);
     try {
-      const data = await apiPost(backendUrl, "inicializarForzado", {
-        confirmar,
-        borrarCarpetas,
-      });
-
-      if (data.status === "ok") {
-        return { ok: true, mensaje: "✅ Sistema reinicializado correctamente", data };
+      const response = await apiGet(backendUrl, "getConfig");
+      if (response.status === "ok") {
+        setConfig(response.datos || response.data || {});
+        showToast(response.mensaje || "⚙️ Configuración cargada correctamente", "info", 2000, "ConfigAdmin");
+      } else {
+        showToast(response.mensaje || "⚠️ Error al obtener configuración", "warning", 4000, "ConfigAdmin");
       }
-
-      return { ok: false, mensaje: data.mensaje || "❌ Error al reinicializar sistema", data };
-    } catch (e) {
-      console.error("❌ reinicializarSistemaForzado:", e.message);
-      return { ok: false, mensaje: "❌ Error al reinicializar sistema" };
+    } catch (err) {
+      console.error("❌ getConfig error:", err);
+      showToast("❌ Error al obtener configuración del servidor", "danger", 4000, "ConfigAdmin");
     } finally {
       setLoading(false);
     }
-  }, [backendUrl]);
+  }, [backendUrl, showToast]);
+
+  /*******************************
+   * 💾 Actualizar configuración
+   *******************************/
+  const updateConfig = async (nuevaConfig) => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      const response = await apiPost(backendUrl, "updateConfig", nuevaConfig);
+      if (response.status === "ok") {
+        setConfig(response.datos || nuevaConfig);
+        showToast(response.mensaje || "✅ Configuración actualizada correctamente", "success", 2000, "ConfigAdmin");
+      } else {
+        showToast(response.mensaje || "⚠️ No se pudo actualizar la configuración", "warning", 4000, "ConfigAdmin");
+      }
+    } catch (err) {
+      console.error("❌ updateConfig error:", err);
+      showToast("❌ Error de conexión con el servidor al actualizar configuración", "danger", 4000, "ConfigAdmin");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /*******************************
+   * 🚀 Cargar al inicio
+   *******************************/
+  useEffect(() => {
+    getConfig();
+  }, [getConfig]);
 
   return (
     <ConfigAdminContext.Provider
       value={{
-        reinicializarSistemaForzado,
+        config,
         loading,
+        getConfig,
+        updateConfig,
       }}
     >
       {children}
     </ConfigAdminContext.Provider>
   );
-}
+};
 
-export function useConfigAdmin() {
-  return useContext(ConfigAdminContext);
-}
+export const useConfigAdmin = () => useContext(ConfigAdminContext);

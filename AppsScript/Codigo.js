@@ -16,7 +16,6 @@ const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
  ******************************/
 const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
-  PERMITIR_DESCARGA: false,
   TAMANO_MAX_MB: 10,
   TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt", "xlsx"]
 };
@@ -577,7 +576,7 @@ function doGet(e) {
       ).setMimeType(ContentService.MimeType.JSON);
 
       case "getConfig":
-        return respuestaJSON({status: "ok", data: leerJSON(JSON_CONFIGURACION)});
+        return getConfig();
       case "getFuncionesLogicaNegocio":
         return getFuncionesLogicaNegocio();
       case "getUsuarios":
@@ -703,8 +702,10 @@ function doPost(e) {
       case "subirArchivoFacturas":
         return subirArchivoFacturas(e, isMultipart);
 
-      case "setConfig":
-        return setConfig(data);
+      case "updateConfig":
+        return updateConfig(data, usuario);
+
+
 
       case "limpiarLogsAntiguos":
         return limpiarLogsAntiguos();
@@ -767,26 +768,7 @@ function doPost(e) {
 /******************************
  * FUNCIONES DE LOGICA DEL NEGOCIO
  ******************************/
- // Configuración
- function setConfig(data) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
-  try {
-    let config = leerJSON(JSON_CONFIGURACION);
-    Object.assign(config, data.config);
-    guardarJSON(JSON_CONFIGURACION, config);
-
-    // ✅ Registrar log
-    registrarLog("setConfig", Session.getActiveUser().getEmail(), {
-      configuracionActualizada: data.config || data
-    });
-    return respuestaJSON({ status: "ok", mensaje: "Configuración actualizada", nuevaConfig: config });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
 function getFuncionesLogicaNegocio() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -818,6 +800,98 @@ function getFuncionesLogicaNegocio() {
     lock.releaseLock();
   }
 }
+
+
+
+
+/******************************
+ * 🔧 CRUD DE CONFIGURACIÓN (versión final)
+ ******************************/
+
+ // Configuración
+//  function setConfig(data) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+//   try {
+//     let config = leerJSON(JSON_CONFIGURACION);
+//     Object.assign(config, data.config);
+//     guardarJSON(JSON_CONFIGURACION, config);
+
+//     // ✅ Registrar log
+//     registrarLog("setConfig", Session.getActiveUser().getEmail(), {
+//       configuracionActualizada: data.config || data
+//     });
+//     return respuestaJSON({ status: "ok", mensaje: "Configuración actualizada", nuevaConfig: config });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+function getConfig() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const config = leerJSON(JSON_CONFIGURACION);
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "⚙️ Configuración obtenida correctamente.",
+      datos: config,
+    });
+  } catch (err) {
+    manejarError(err, "getConfig");
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al obtener la configuración.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function updateConfig(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const configActual = leerJSON(JSON_CONFIGURACION) || {};
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const nuevaConfig = {
+      ...configActual,
+      TAMANO_MAX_MB: data.TAMANO_MAX_MB ?? configActual.TAMANO_MAX_MB,
+      TIPOS_PERMITIDOS: Array.isArray(data.TIPOS_PERMITIDOS)
+        ? data.TIPOS_PERMITIDOS
+        : configActual.TIPOS_PERMITIDOS,
+    };
+
+    guardarJSON(JSON_CONFIGURACION, nuevaConfig);
+    registrarLog("updateConfig", correoEjecutor, {
+      mensaje: "Configuración actualizada",
+      nuevaConfig,
+    });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "✅ Configuración actualizada correctamente.",
+      datos: nuevaConfig,
+    });
+  } catch (err) {
+    manejarError(err, "updateConfig", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al actualizar la configuración.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
 
 
 /******************************
@@ -1039,35 +1113,6 @@ function getUsuarios() {
   }
 }
 
-// function addUsuario(data) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
-
-//   try {
-//     let usuarios = leerJSON(JSON_USUARIOS);
-
-//     const yaExiste = usuarios.some(u => normalizarTexto(u.correo) === normalizarTexto(data.usuario.correo));
-//     if (yaExiste) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ Ya existe un usuario con el correo ${data.usuario.correo}`
-//       });
-//     }
-
-
-//     usuarios.push(data.usuario);
-//     guardarJSON(JSON_USUARIOS, usuarios);
-
-//     // ✅ Registrar log
-//     registrarLog("addUsuario", Session.getActiveUser().getEmail(), {
-//       UsuarioAgregado: data.usuario || data
-//     });
-//     return respuestaJSON({ status: "ok", mensaje: "Usuario agregado", usuarios });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
 
 function addUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
@@ -1202,6 +1247,10 @@ function deleteUsuario(data, usuario) {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
     const { correo } = data;
     const correoEjecutor = usuario?.correo || "sistema";
+
+    if (correo === correoEjecutor) {
+      return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario" });
+    }
 
     if (!correo)
       return respuestaJSON({

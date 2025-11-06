@@ -11,8 +11,9 @@ export const UsuariosAdminProvider = ({ children }) => {
   const { showToast } = useToast();
 
   const [usuarios, setUsuarios] = useState([]);
-  const [rolesDisponibles, setRolesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  const [rolesDisponibles, setRolesDisponibles] = useState([]);
 
   /*******************************
    * 📘 Obtener roles disponibles

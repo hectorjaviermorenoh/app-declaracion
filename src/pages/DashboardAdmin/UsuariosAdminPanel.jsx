@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useUsuariosAdmin } from "../../context/admin/UsuariosAdminContext";
+import { useAuth } from "../../context/AuthContext";
+
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
@@ -16,6 +18,8 @@ const UsuariosAdminPanel = () => {
     loading,
   } = useUsuariosAdmin();
 
+  const { user } = useAuth();
+
   const [showModal, setShowModal] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [nuevoUsuario, setNuevoUsuario] = useState({
@@ -26,6 +30,8 @@ const UsuariosAdminPanel = () => {
 
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
 
   /******************************
    * 🔄 Cargar usuarios al abrir
@@ -128,7 +134,8 @@ const UsuariosAdminPanel = () => {
                   >
                     ✏️ Editar
                   </Button>
-                  <Button
+
+                  {/* <Button
                     size="sm"
                     variant="outline-danger"
                     onClick={() => {
@@ -137,7 +144,27 @@ const UsuariosAdminPanel = () => {
                     }}
                   >
                     🗑️ Eliminar
+                  </Button> */}
+
+                  <Button
+                    size="sm"
+                    variant="outline-danger"
+                    disabled={user?.correo === u.correo}
+                    title={
+                      user?.correo === u.correo
+                        ? "No puedes eliminar tu propio usuario activo"
+                        : "Eliminar usuario"
+                    }
+                    onClick={() => {
+                      if (user?.correo === u.correo) return; // 🚫 Previene abrir el modal
+                      setSelectedUsuario(u);
+                      setShowDeleteModal(true);
+                    }}
+                  >
+                    🗑️ Eliminar
                   </Button>
+
+
                 </td>
               </tr>
             ))}

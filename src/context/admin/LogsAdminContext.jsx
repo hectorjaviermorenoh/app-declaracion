@@ -11,60 +11,60 @@ export function LogsAdminProvider({ children }) {
 
   const { activeBackend } = useBackends(); // 👈 obtenemos backend activo
   const backendUrl = activeBackend?.url || null;
-
   const { showToast } = useToast();
-  
+
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 🔹 GET: obtener todos los logs
-  const fetchLogs = useCallback(async () => {
-    if (!backendUrl) {
-      console.warn("⚠️ No hay backend activo configurado.");
-      return [];
-    }
-
+  const getDatos = useCallback(async () => {
+    if (!backendUrl) return;
     setLoading(true);
+
     try {
-      const data = await apiGet(backendUrl, "getLogs");
-      if (data.status === "ok") {
-        setLogs(data.logs || []);
-        showToast("📜 Logs cargados correctamente", "info", 2000, "LogsAdmin");
-        return data.logs;
+      const response = await apiGet(backendUrl, "getLogs");
+      if (response.status === "ok") {
+        setLogs(response.logs || []);
+        showToast(response.mensaje || "📜 Logs cargados correctamente", "info", 2000, "LogsAdmin");
+        // return response.logs;
       } else {
-        showToast("❌ Error obteniendo logs", "danger", 4000, "LogsAdmin");
-        return [];
+        showToast(response.mensaje || "⚠️ No se pudieron cargar los logs.", "warning", 4000, "LogsAdmin");
+        // return [];
       }
     } catch (err) {
-      console.error("❌ fetchLogs error:", err);
-      showToast("⚠️ Error al cargar logs", "danger", 4000, "LogsAdmin");
-      return [];
+      console.error("❌ getLogs error:", err);
+      showToast("❌ Error de conexión al cargar logs.", "danger", 4000, "LogsAdmin");
+      // return [];
     } finally {
       setLoading(false);
     }
   }, [backendUrl, showToast]);
 
   // 🔹 POST: limpiar logs antiguos (mantiene los 10 más recientes)
-  const clearLogs = useCallback(async () => {
+  const clearDatos = useCallback(async () => {
     if (!backendUrl) return;
     setLoading(true);
+
     try {
-      const data = await apiPost(backendUrl, "limpiarLogsAntiguos");
-      if (data.status === "ok") {
-        showToast(data.mensaje || "🧹 Logs limpiados correctamente", "success", 3000, "LogsAdmin");
-        await fetchLogs(); // 👈 opcional: vuelve a cargar los logs actualizados
-        return true;
+      const response = await apiPost(backendUrl, "limpiarLogsAntiguos");
+      if (response.status === "ok") {
+        showToast(response.mensaje || "🧹 Logs limpiados correctamente", "success", 3000, "LogsAdmin");
+        await getDatos(); // 👈 opcional: vuelve a cargar los logs actualizados
+        // return true;
+      } else {
+        showToast(response.mensaje || `⚠️ No se pudo limpiar logs`, "warning", 4000, "LogsAdmin");
       }
-      showToast(data.mensaje || "❌ No se pudo limpiar logs", "danger", 4000, "LogsAdmin");
-      return false;
+      // return false;
     } catch (err) {
       console.error("❌ clearLogs error:", err);
-      showToast("⚠️ Error limpiando logs", "danger", 4000, "LogsAdmin");
-      return false;
+      showToast("❌ Error al limpiar logs", "danger", 4000, "LogsAdmin");
+      // return false;
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast, fetchLogs]);
+  }, [backendUrl, showToast, getDatos]);
+
+
 
 
   // Valor expuesto al resto de la app
@@ -73,8 +73,8 @@ export function LogsAdminProvider({ children }) {
       value={{
         logs,
         loading,
-        fetchLogs,
-        clearLogs,
+        getDatos,
+        clearDatos,
       }}
     >
       {children}

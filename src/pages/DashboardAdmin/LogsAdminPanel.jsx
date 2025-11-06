@@ -1,20 +1,19 @@
 
 import React, { useState, useEffect } from "react";
 import { Button, Table, Spinner } from "react-bootstrap";
-
 import { useLogsAdmin } from "../../context/admin/LogsAdminContext";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import "./Styles/LogsAdminPanel.scss";
 
 export function LogsAdminPanel() {
 
-  const { logs, fetchLogs, clearLogs, loading } = useLogsAdmin();
+  const { logs, getDatos, clearDatos, loading } = useLogsAdmin();
   const [showClearModal, setShowClearModal] = useState(false);
 
   // 🔹 Cargar logs al montar
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    getDatos();
+  }, [getDatos]);
 
   return (
     <div className="p-4">
@@ -105,7 +104,7 @@ export function LogsAdminPanel() {
         }
         confirmLabel="Limpiar Logs"
         confirmVariant="danger"
-        onConfirm={clearLogs}
+        onConfirm={clearDatos}
       />
     </div>
   );
