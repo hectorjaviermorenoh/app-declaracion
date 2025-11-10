@@ -1,14 +1,7 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback
-} from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBackends } from "./BackendsContext";
 import { jwtDecode } from "jwt-decode";
-
 import { useToast } from "../context/ToastContext";
 
 // 📦 Clave para persistir sesión
@@ -19,14 +12,17 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const { activeBackend } = useBackends();
+  const backendUrl = activeBackend?.url || null;
+
   const navigate = useNavigate();
+
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
 
   const [authToken, setAuthToken] = useState(null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
-  const { showToast } = useToast();
 
   // 🧠 Cargar token desde localStorage una sola vez al montar
   useEffect(() => {
@@ -53,7 +49,7 @@ export function AuthProvider({ children }) {
     const session = {
       token,
       user: userData || null,
-      backendUrl: activeBackend?.url || null,
+      backendUrl: backendUrl,
       timestamp: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -69,7 +65,7 @@ export function AuthProvider({ children }) {
       onComplete();
     };
 
-    if (!activeBackend?.url) {
+    if (!backendUrl) {
       handleFail("⚠️ No hay backend activo. No se puede autenticar.", "warning");
       return;
     }
