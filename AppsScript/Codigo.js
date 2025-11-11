@@ -37,7 +37,6 @@ const DATOS_TRIBUTARIOS_INICIALES = [
 // 🧩 Funciones expuestas al frontend (de lógica del negocio)
 const FUNCIONES_LOGICA_NEGOCIO = [
   // --- GET ---
-  "ping",
   "getConfig",
   "getFuncionesLogicaNegocio",
   "getRoles",
@@ -71,6 +70,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
 
 // ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
 const FUNCIONES_GENERALES = [
+  "ping",
   "verificarTokenYAutorizar",
   "validarPermiso",
   "registrarLog",

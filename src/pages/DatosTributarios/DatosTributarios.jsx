@@ -4,7 +4,7 @@ import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import "./DatosTributarios.scss";
 
 export default function DatosTributarios() {
-  // const { datos, fetchDatos, addDato, updateDato, deleteDato, loading } = useDatosTributarios();
+
   const { datos, getDatos, addDato, updateDato, deleteDato, moveDato, loading } = useDatosTributarios();
 
   const [nuevo, setNuevo] = useState({ label: "", valor: "" });

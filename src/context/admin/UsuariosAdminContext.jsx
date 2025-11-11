@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "../BackendsContext";
-import { apiGet, apiPost } from "../../utils/apiClient.js";
+import { apiGet, apiPost, getAuthToken } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
 
 const UsuariosAdminContext = createContext();
@@ -12,7 +12,7 @@ export const UsuariosAdminProvider = ({ children }) => {
 
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [rolesDisponibles, setRolesDisponibles] = useState([]);
 
   /*******************************
@@ -161,6 +161,11 @@ export const UsuariosAdminProvider = ({ children }) => {
    * 🔄 Cargar datos iniciales
    *******************************/
   useEffect(() => {
+
+    // Si no hay token, no intentar cargar datos aquí (AuthContext ya maneja evento global)
+    const token = getAuthToken();
+    if (!token) return;
+
     getRoles();
     getDatos();
   }, [getRoles, getDatos]);

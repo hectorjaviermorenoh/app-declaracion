@@ -217,6 +217,25 @@ export function AuthProvider({ children }) {
     return () => clearInterval(interval);
   }, [authToken, logout]);
 
+  // 🧭 Escuchar eventos globales emitidos por apiClient.js (auth:required)
+  useEffect(() => {
+    function onAuthRequired(e) {
+      const msg = e?.detail?.message || "⚠️ Tu sesión ha expirado. Inicia sesión nuevamente.";
+      console.warn("🟡 Evento auth:required recibido:", msg);
+
+      // Evita múltiples cierres simultáneos (solo si ya estaba autenticado)
+      if (authenticated) {
+        showToast(msg, "warning", 4000, "Autenticación");
+        logout();
+      }
+    }
+
+    window.addEventListener("auth:required", onAuthRequired);
+    return () => window.removeEventListener("auth:required", onAuthRequired);
+  }, [authenticated, logout, showToast]);
+
+
+
   const value = {
     authToken,
     user,

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "./BackendsContext";
-import { apiGet, apiPost } from "../utils/apiClient.js";
+import { apiGet, apiPost, getAuthToken  } from "../utils/apiClient.js";
 import { useToast } from "../context/ToastContext";
 
 // 🧠 Contexto global
@@ -9,9 +9,10 @@ const DatosTributariosContext = createContext(null);
 export function DatosTributariosProvider({ children }) {
   const { activeBackend } = useBackends();
   const backendUrl = activeBackend?.url || null;
+  const { showToast } = useToast();
+
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { showToast } = useToast();
 
   // 🟢 Cargar todos los datos tributarios 579 230 1327 const roles = leerJSON(JSON_ROLES);
   const getDatos = useCallback(async () => {
@@ -34,10 +35,7 @@ export function DatosTributariosProvider({ children }) {
     }
   }, [backendUrl]);
 
-  // 🔄 Carga inicial o cambio de backend
-  useEffect(() => {
-    if (backendUrl) getDatos();
-  }, [backendUrl, getDatos]);
+
 
   // 🧩 Helper para ejecutar CRUD con refresco automático
   const runWithRefresh = useCallback(
@@ -125,6 +123,16 @@ export function DatosTributariosProvider({ children }) {
       ),
     [backendUrl, runWithRefresh]
   );
+
+  // 🔄 Carga inicial o cambio de backend
+  useEffect(() => {
+
+      // Si no hay token, no intentar cargar datos aquí (AuthContext ya maneja evento global)
+      const token = getAuthToken();
+      if (!token) return;
+
+      getDatos();
+  }, [backendUrl, getDatos]);
 
   // 🎯 Exportar valores
   return (

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBackends } from "../BackendsContext";
-import { apiGet, apiPost } from "../../utils/apiClient.js";
+import { apiGet, apiPost, getAuthToken } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
+
 
 const RolesAdminContext = createContext();
 
@@ -133,8 +134,14 @@ export const RolesAdminProvider = ({ children }) => {
    * 🔄 Cargar funciones al inicio
    *******************************/
   useEffect(() => {
+
+    // Si no hay token, no intentar cargar datos aquí (AuthContext ya maneja evento global)
+    const token = getAuthToken();
+    if (!token) return;
+
     getFunciones();
   }, [getFunciones]);
+
 
   return (
     <RolesAdminContext.Provider

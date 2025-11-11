@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useBackends } from "../BackendsContext";
-import { apiGet, apiPost } from "../../utils/apiClient";
+import { apiGet, apiPost, getAuthToken  } from "../../utils/apiClient";
 import { useToast } from "../ToastContext";
 
 const ConfigAdminContext = createContext();
@@ -61,6 +61,11 @@ export const ConfigAdminProvider = ({ children }) => {
    * 🚀 Cargar al inicio
    *******************************/
   useEffect(() => {
+
+    // Si no hay token, no intentar cargar datos aquí (AuthContext ya maneja evento global)
+    const token = getAuthToken();
+    if (!token) return;
+
     getConfig();
   }, [getConfig]);
 

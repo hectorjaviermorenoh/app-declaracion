@@ -1,11 +1,16 @@
-// 🧠 Configuración opcional
-const ENABLE_LOGS = true; // muestra errores en consola si true
-const AUTH_STORAGE_KEY = "auth_session"; // misma clave usada en AuthContext.jsx
+// src/utils/apiClient.js
+const ENABLE_LOGS = true;
+const AUTH_STORAGE_KEY = "auth_session";
 
-/**
- * Obtiene el token de autenticación guardado en localStorage.
- */
-function getAuthToken() {
+/** Error específico para indicar que se requiere autenticación */
+export class AuthRequiredError extends Error {
+  constructor(message = "Autenticación requerida") {
+    super(message);
+    this.name = "AuthRequiredError";
+  }
+}
+
+export function getAuthToken() {
   try {
     const session = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY));
     return session?.token || null;
@@ -14,25 +19,34 @@ function getAuthToken() {
   }
 }
 
+function notifyAuthRequired(message) {
+  if (ENABLE_LOGS) console.warn("notifyAuthRequired:", message);
+  try {
+    window.dispatchEvent(new CustomEvent("auth:required", { detail: { message } }));
+  } catch (e) {
+    if (ENABLE_LOGS) console.error("Error dispatching auth:required", e);
+  }
+}
+
 /**
- * Maneja la respuesta del backend, verificando errores, estructura y permisos.
+ * Maneja la respuesta del backend verificando estructura y permisos
  */
-async function handleResponse(resp, accion) {
+// async function handleResponse(resp, accion) {
+async function handleResponse(resp) {
   if (!resp.ok) {
     throw new Error(`Error HTTP ${resp.status}: ${resp.statusText}`);
   }
 
   const data = await resp.json();
 
-  // 🔒 Si el backend indica que el usuario no está autorizado
-  if (data.autorizado === false) {
-    if (ENABLE_LOGS) console.warn(`🚫 Token inválido o sesión expirada (${accion})`, data.mensaje);
-    // Limpia sesión local (el AuthContext también lo manejará al detectar esto)
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    throw new Error("No autorizado. Por favor, inicia sesión nuevamente.");
+  // backend indica que la sesión/token no es válido
+  if (data.autorizado === false || data.status === "token_invalido" || data.status === "sin_permiso") {
+    const msg = data.mensaje || "Token inválido o sesión expirada";
+    notifyAuthRequired(msg);
+    throw new AuthRequiredError(msg);
   }
 
-  // 🔹 Validar estructura esperada
+  // validar estructura de estado
   if (data.status && !["ok", "exists"].includes(data.status)) {
     throw new Error(data.mensaje || "Error en respuesta del servidor");
   }
@@ -40,18 +54,20 @@ async function handleResponse(resp, accion) {
   return data;
 }
 
-/**
- * Petición GET con token automático.
- */
+
 export async function apiGet(backendUrl, accion, params = {}) {
   if (!backendUrl) throw new Error("Backend no configurado");
 
   const token = getAuthToken();
-  const query = new URLSearchParams({ accion, ...params });
-  if (token) query.append("token", token);
+  if (!token) {
+    notifyAuthRequired("No hay token en localStorage");
+    throw new AuthRequiredError("No hay token de sesión");
+  }
+
+  const query = new URLSearchParams({ accion, ...params, token });
 
   try {
-    const resp = await fetch(`${backendUrl}?${query.toString()}`);
+    const resp = await fetch(`${backendUrl}?${query.toString()}`, { credentials: "omit" });
     return await handleResponse(resp, accion);
   } catch (err) {
     if (ENABLE_LOGS) console.error(`❌ apiGet [${accion}]`, err);
@@ -60,20 +76,25 @@ export async function apiGet(backendUrl, accion, params = {}) {
 }
 
 /**
- * Petición POST con token automático.
+ * Petición POST con token automático
  */
 export async function apiPost(backendUrl, accion, body = {}) {
   if (!backendUrl) throw new Error("Backend no configurado");
 
   const token = getAuthToken();
-  const payload = { accion, ...body };
-  if (token) payload.token = token;
+  if (!token) {
+    notifyAuthRequired("No hay token en localStorage");
+    throw new AuthRequiredError("No hay token de sesión");
+  }
+
+  const payload = { accion, ...body, token };
 
   try {
     const resp = await fetch(backendUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      credentials: "omit",
     });
 
     return await handleResponse(resp, accion);
