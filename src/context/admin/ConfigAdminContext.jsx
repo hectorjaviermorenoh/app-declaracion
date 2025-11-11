@@ -57,6 +57,40 @@ export const ConfigAdminProvider = ({ children }) => {
     }
   };
 
+
+  /*******************************
+   * 🧨 Reinicializar sistema forzado (Nuevo)
+   *******************************/
+  const reinicializarSistemaForzado = async (confirmar, borrarCarpetas = false) => {
+    if (!backendUrl) return { status: "error", mensaje: "Backend no configurado" };
+
+    setLoading(true);
+    try {
+      const response = await apiPost(backendUrl, "inicializarForzado", {
+        confirmar,           // debe ser "INICIALIZAR"
+        borrarCarpetas,      // true o false
+      });
+
+      if (response.status === "ok") {
+        showToast(response.mensaje || "✅ Sistema reinicializado correctamente", "success", 3000, "ConfigAdmin");
+      } else if (response.status === "sin_permiso") {
+        showToast(response.mensaje || "⛔ No tiene permisos para reinicializar", "warning", 4000, "ConfigAdmin");
+      } else {
+        showToast(response.mensaje || "⚠️ Error al reinicializar el sistema", "warning", 4000, "ConfigAdmin");
+      }
+
+      return response;
+    } catch (err) {
+      console.error("❌ reinicializarSistemaForzado error:", err);
+      showToast("❌ Error de conexión al intentar reinicializar el sistema", "danger", 4000, "ConfigAdmin");
+      return { status: "error", mensaje: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   /*******************************
    * 🚀 Cargar al inicio
    *******************************/
@@ -76,6 +110,7 @@ export const ConfigAdminProvider = ({ children }) => {
         loading,
         getConfig,
         updateConfig,
+        reinicializarSistemaForzado,
       }}
     >
       {children}

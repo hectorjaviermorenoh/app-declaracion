@@ -161,9 +161,59 @@ function inicializarSistemaSeguro(data) {
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
  ******************************/
+// function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+//   try {
+//     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+
+//     let resultadoLimpieza = null;
+//     if (borrarCarpetas) {
+//       resultadoLimpieza = limpiarCarpetas(); // devuelve objeto {mensaje: "..."}
+//     }
+
+//     // 1. Sobrescribir configuración
+//     guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, CONFIG_INICIAL);
+
+//     // 2. Sobrescribir usuarios con el correo enviado
+//     guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
+//       { correo: correoAdmin, nombre: "Administrador", rol: "administrador", activo: true }
+//     ]);
+
+//     // 3. Vaciar productos, bddatos y logs
+//     guardarORecrearJSON(carpetaPrincipal, JSON_PRODUCTOS, []);
+//     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_DATOS, []);
+//     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_FACTURAS, []);
+//     guardarORecrearJSON(carpetaPrincipal, JSON_LOGS, []);
+
+
+//     // 4. Crear datos tributarios con valores iniciales
+//     guardarORecrearJSON(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
+
+
+//     Logger.log("✅ Sistema reinicializado forzadamente");
+
+//     return {
+//       status: "ok",
+//       mensaje: "✅ Sistema reinicializado correctamente",
+//       correo: correoAdmin,
+//       limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas"
+//     };
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+/******************************
+ * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
+ ******************************/
 function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+
+  const correoEjecutor = correoAdmin?.correo || "sistema"; // 👈 quién ejecuta la acción
 
   try {
     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
@@ -173,38 +223,54 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
       resultadoLimpieza = limpiarCarpetas(); // devuelve objeto {mensaje: "..."}
     }
 
-    // 1. Sobrescribir configuración
+    // 1️⃣ Sobrescribir configuración
     guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, CONFIG_INICIAL);
 
-    // 2. Sobrescribir usuarios con el correo enviado
+    // 2️⃣ Sobrescribir usuarios con el correo enviado
     guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
-      { correo: correoAdmin, nombre: "Administrador", rol: "administrador", activo: true }
+      { correo: correoAdmin?.correo, nombre: "Administrador", rol: "administrador", activo: true }
     ]);
 
-    // 3. Vaciar productos, bddatos y logs
+    // 3️⃣ Vaciar productos, bddatos y logs
     guardarORecrearJSON(carpetaPrincipal, JSON_PRODUCTOS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_DATOS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_FACTURAS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_LOGS, []);
 
-
-    // 4. Crear datos tributarios con valores iniciales
+    // 4️⃣ Crear datos tributarios con valores iniciales
     guardarORecrearJSON(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
 
+    // 5️⃣ Registrar acción en logs
+    registrarLog("inicializarSistemaForzado", correoEjecutor, {
+      mensaje: "🔁 Sistema reinicializado forzadamente",
+      correoAdmin: correoAdmin?.correo,
+      borrarCarpetas,
+      limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas",
+      fecha: new Date().toISOString()
+    });
 
-    Logger.log("✅ Sistema reinicializado forzadamente");
+    Logger.log(`✅ Sistema reinicializado forzadamente por ${correoEjecutor}`);
 
     return {
       status: "ok",
       mensaje: "✅ Sistema reinicializado correctamente",
-      correo: correoAdmin,
+      correo: correoAdmin?.correo,
       limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas"
     };
 
+  } catch (err) {
+    // 🚨 En caso de error, también registramos en logs
+    registrarLog("ERROR_inicializarSistemaForzado", correoEjecutor, {
+      mensaje: err.message,
+      stack: err.stack
+    });
+    throw err;
   } finally {
     lock.releaseLock();
   }
 }
+
+
 /******************************
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
@@ -678,7 +744,7 @@ function doPost(e) {
     // 🟢 CAMBIO 4: tu switch queda igual, sin tocar tu lógica existente
     switch (accion) {
       case "inicializarForzado":
-         const confirmar = data.confirmar;
+        const confirmar = data.confirmar;
         const borrarCarpetas = data.borrarCarpetas === true || data.borrarCarpetas === "true";
 
         if (confirmar !== "INICIALIZAR") {
@@ -693,69 +759,47 @@ function doPost(e) {
           });
         }
 
-        const resultado = inicializarSistemaForzado(usuario.correo, borrarCarpetas);
+        const resultado = inicializarSistemaForzado(usuario, borrarCarpetas);
         return respuestaJSON({ ...resultado });
 
       case "subirArchivo":
-        return subirArchivoProducto(e, isMultipart);
-
+        return subirArchivoProducto(e, isMultipart, usuario);
       case "subirArchivoFacturas":
-        return subirArchivoFacturas(e, isMultipart);
-
+        return subirArchivoFacturas(e, isMultipart, usuario);
       case "updateConfig":
         return updateConfig(data, usuario);
-
-
-
       case "limpiarLogsAntiguos":
-        return limpiarLogsAntiguos();
-
-
-
+        return limpiarLogsAntiguos(usuario);
       case "addRol":
         return addRol(data, usuario);
       case "updateRol":
         return updateRol(data, usuario);
       case "deleteRol":
         return deleteRol(data, usuario);
-
-
       case "addUsuario":
         return addUsuario(data, usuario);
-
       case "toggleUsuarioActivo":
         return toggleUsuarioActivo(data, usuario);
-
       case "updateUsuario":
         return updateUsuario(data, usuario);
-
       case "deleteUsuario":
         return deleteUsuario(data, usuario);
-
       case "addProducto":
-        return addProducto(data);
-
+        return addProducto(data, usuario);
       case "deleteProducto":
-        return deleteProducto(data.id);
-
+        return deleteProducto(data.id, usuario);
       case "replaceArchivo":
-        return replaceArchivo(data);
-
+        return replaceArchivo(data, usuario);
       case "inicializarSistema":
-        return inicializarSistemaSeguro(data);
-
+        return inicializarSistemaSeguro(data, usuario);
       case "addDatoTributario":
-        return addDatoTributario(data);
-
+        return addDatoTributario(data, usuario);
       case "updateDatoTributario":
-        return updateDatoTributario(data);
-
+        return updateDatoTributario(data, usuario);
       case "deleteDatoTributario":
-        return deleteDatoTributario(data);
-
+        return deleteDatoTributario(data, usuario);
       case "moveDatoTributario":
-        return moveDatoTributario(data);
-
+        return moveDatoTributario(data, usuario);
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
     }
@@ -801,33 +845,9 @@ function getFuncionesLogicaNegocio() {
   }
 }
 
-
-
-
 /******************************
  * 🔧 CRUD DE CONFIGURACIÓN (versión final)
  ******************************/
-
- // Configuración
-//  function setConfig(data) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
-
-//   try {
-//     let config = leerJSON(JSON_CONFIGURACION);
-//     Object.assign(config, data.config);
-//     guardarJSON(JSON_CONFIGURACION, config);
-
-//     // ✅ Registrar log
-//     registrarLog("setConfig", Session.getActiveUser().getEmail(), {
-//       configuracionActualizada: data.config || data
-//     });
-//     return respuestaJSON({ status: "ok", mensaje: "Configuración actualizada", nuevaConfig: config });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
 
 function getConfig() {
   const lock = LockService.getScriptLock();
@@ -890,9 +910,6 @@ function updateConfig(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
 
 /******************************
  * 🔧 CRUD DE ROLES (versión final, integrada con doPost y token)
@@ -1292,56 +1309,14 @@ function deleteUsuario(data, usuario) {
   }
 }
 
-
-
-// function deleteUsuario(data, correoEjecutor) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
-
-//   try {
-//     // Validar admin
-//     if (!esAdmin(correoEjecutor)) {
-//       return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado" });
-//     }
-
-//     let usuarios = leerJSON(JSON_USUARIOS);
-//     const idx = usuarios.findIndex(u => u.correo === data.correo);
-
-//     if (idx === -1) {
-//       return respuestaJSON({ status: "error", mensaje: "❌ Usuario no encontrado" });
-//     }
-
-//     // Evitar que un admin se borre a sí mismo
-//     if (usuarios[idx].correo === correoEjecutor) {
-//       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario administrador" });
-//     }
-
-//     const eliminado = usuarios[idx];
-//     usuarios.splice(idx, 1);
-
-//     guardarJSON(JSON_USUARIOS, usuarios);
-
-//     // ✅ Registrar log
-//     registrarLog("deleteUsuario", correoEjecutor, { usuarioEliminado: eliminado.correo });
-
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: `✅ Usuario ${eliminado.correo} eliminado correctamente`,
-//       usuarioEliminado: eliminado
-//     });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-
-// }
 // Productos
-function addProducto(data) {
+function addProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
     let productos = leerJSON(JSON_PRODUCTOS);
+    const correoEjecutor = usuario?.correo || "sistema";
     let resultados = [];
 
     // Si llega un solo producto, lo convertimos a array
@@ -1364,7 +1339,7 @@ function addProducto(data) {
       productos.push(nuevoProd);
       resultados.push({ nombre: p.nombre, status: "ok", mensaje: "Producto agregado", id: nuevoProd.id });
 
-      registrarLog("addProducto", p.usuario || "desconocido", { producto: nuevoProd });
+      registrarLog("addProducto", correoEjecutor, { producto: nuevoProd });
     });
 
     guardarJSON(JSON_PRODUCTOS, productos);
@@ -1374,20 +1349,22 @@ function addProducto(data) {
     lock.releaseLock();
   }
 }
-function deleteProducto(id) {
+function deleteProducto(id, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   try {
 
     let productos = leerJSON(JSON_PRODUCTOS);
+    const correoEjecutor = usuario?.correo || "sistema";
+
     const eliminado = productos.find(p => p.id === id);
 
     let nuevos = productos.filter(p => p.id !== id);
     guardarJSON(JSON_PRODUCTOS, nuevos);
 
     // ✅ Registrar log
-    registrarLog("deleteProducto", Session.getActiveUser().getEmail(), {
+    registrarLog("deleteProducto", correoEjecutor, {
       productoEliminado: eliminado || id
     });
     return respuestaJSON({ status: "ok", mensaje: "Producto eliminado", productos: nuevos });
@@ -1397,13 +1374,14 @@ function deleteProducto(id) {
   }
 }
 // Archivos
-function subirArchivoProducto(e, isMultipart) {
+function subirArchivoProducto(e, isMultipart, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   try {
 
     let config = leerJSON(JSON_CONFIGURACION);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // 👀 Capturamos el payload que llegó
     const camposEsperados = ["anio", "productosId"];
@@ -1493,7 +1471,7 @@ function subirArchivoProducto(e, isMultipart) {
       return p ? `${p.nombre} (${p.entidad || "sin entidad"})` : pid;
     });
 
-    registrarLog("subirArchivo", Session.getActiveUser().getEmail(), {
+    registrarLog("subirArchivo", correoEjecutor, {
       archivo: archivoBlob.getName(),
       productos: productosAfectados,
       productosId,
@@ -1524,13 +1502,14 @@ function subirArchivoProducto(e, isMultipart) {
     lock.releaseLock();
   }
 }
-function subirArchivoFacturas(e, isMultipart) {
+function subirArchivoFacturas(e, isMultipart, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   try {
 
     let config = leerJSON(JSON_CONFIGURACION);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // 👀 Capturamos el payload que llegó
     const camposEsperados = ["anio", "entidad", "descripcion", "valor", "metodoPago"];
@@ -1603,7 +1582,7 @@ function subirArchivoFacturas(e, isMultipart) {
     guardarJSON(JSON_BDD_FACTURAS, bddatos);
 
     // ✅ Registrar log
-    registrarLog("subirArchivoFacturas", Session.getActiveUser().getEmail(), {
+    registrarLog("subirArchivoFacturas", correoEjecutor, {
       archivo: archivoBlob.getName(),
       anio,
       entidad,
@@ -1624,18 +1603,14 @@ function subirArchivoFacturas(e, isMultipart) {
     lock.releaseLock();
   }
 }
-function replaceArchivo(data) {
+function replaceArchivo(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
-    // Validar que sea administrador
-    let correo = Session.getActiveUser().getEmail() || data.correo || "";
-    if (!esAdmin(correo)) {
-      return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado", correo });
-    }
 
     let bddatos = leerJSON(JSON_BDD_DATOS);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // 1. Buscar el registro base
     let registroBase = bddatos.find(r => r.productoId === data.productoId && r.anio === data.anio);
@@ -1707,7 +1682,7 @@ function replaceArchivo(data) {
         : r.productoId;
     });
 
-    registrarLog("replaceArchivo", correo, {
+    registrarLog("replaceArchivo", correoEjecutor, {
       nuevoFileId: file.getId(),
       nuevoNombre: nombreNormalizado,
       productosAfectados,
@@ -1716,16 +1691,6 @@ function replaceArchivo(data) {
       archivoBorrado: borradoOk ? oldFileName : "no borrado",
       linkNuevoArchivo: file.getUrl()
     });
-
-    // // ✅ Registrar log
-    // registrarLog("replaceArchivo", correo, {
-    //   nuevoFileId: file.getId(),
-    //   nuevoNombre: nombreNormalizado,
-    //   productosAfectados: registrosRelacionados.map(r => r.productoId),
-    //   anio: data.anio,
-    //   replaceOnlyThis: data.replaceOnlyThis === true,
-    //   archivoBorrado: borradoOk ? oldFileName : "no borrado"
-    // });
 
     // 6. Respuesta
     return respuestaJSON({
@@ -1815,12 +1780,13 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-function addDatoTributario(data) {
+function addDatoTributario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
 
   try {
     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // 🔎 Validar duplicados en label o valor normalizados
     const yaExiste = datos.some(d =>
@@ -1850,7 +1816,7 @@ function addDatoTributario(data) {
     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
     // ✅ Registrar log
-    registrarLog("addDatoTributario", Session.getActiveUser().getEmail(), {
+    registrarLog("addDatoTributario", correoEjecutor, {
       datoTributarioAdicionado: nuevo
     });
 
@@ -1859,12 +1825,13 @@ function addDatoTributario(data) {
     lock.releaseLock();
   }
 }
-function updateDatoTributario(data) {
+function updateDatoTributario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // hasta 30s esperando
 
   try {
     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     const idx = datos.findIndex(d => d.id === data.id);
     if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
@@ -1881,7 +1848,7 @@ function updateDatoTributario(data) {
     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
      // ✅ Registrar log
-    registrarLog("updateDatoTributario", Session.getActiveUser().getEmail(), {
+    registrarLog("updateDatoTributario", correoEjecutor, {
       datoTributarioActualizado: data
     });
     return respuestaJSON({ status: "ok", mensaje: "Dato actualizado", datos });
@@ -1890,24 +1857,37 @@ function updateDatoTributario(data) {
     lock.releaseLock();
   }
 }
-function deleteDatoTributario(data) {
-  let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-  datos = datos.filter(d => d.id !== data.id);
-  guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+function deleteDatoTributario(data, usuario) {
 
-  // ✅ Registrar log
-  registrarLog("deleteDatoTributario", Session.getActiveUser().getEmail(), {
-    datoTributarioBorrado: data.id || data
-  });
-  return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000); // hasta 30s esperando
+
+  try {
+    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    datos = datos.filter(d => d.id !== data.id);
+    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+    // ✅ Registrar log
+    registrarLog("deleteDatoTributario", correoEjecutor, {
+      datoTributarioBorrado: data.id || data
+    });
+    return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
+
+  } finally {
+    lock.releaseLock();
+  }
+
 }
-function moveDatoTributario(data) {
+function moveDatoTributario(data, usuario) {
   const { id, direction } = data;  // 👈 desestructurar el objeto
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // Ordenarlos antes de mover
     datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
@@ -1930,7 +1910,7 @@ function moveDatoTributario(data) {
 
     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
-    registrarLog("moveDatoTributario", Session.getActiveUser().getEmail(), {
+    registrarLog("moveDatoTributario", correoEjecutor, {
       idMovido: id,
       direccion: direction
     });
@@ -1978,12 +1958,13 @@ function getLogs() {
     lock.releaseLock();
   }
 }
-function limpiarLogsAntiguos() {
+function limpiarLogsAntiguos(usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // Esperar hasta 30 segundos
 
   try {
     let logs = leerJSON(JSON_LOGS);
+    const correoEjecutor = usuario?.correo || "sistema";
 
     // Si hay 10 o menos, no hacemos nada
     if (!logs || logs.length <= 10) {
@@ -2005,7 +1986,7 @@ function limpiarLogsAntiguos() {
     guardarJSON(JSON_LOGS, logsConservados);
 
     // 📘 Registrar acción en logs (opcional)
-    registrarLog("limpiarLogsAntiguos", Session.getActiveUser().getEmail(), {
+    registrarLog("limpiarLogsAntiguos", correoEjecutor, {
       eliminados,
       totalFinal: logsConservados.length
     });
