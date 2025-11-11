@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { useUsuariosAdmin } from "../../context/admin/UsuariosAdminContext";
+import { getAuthToken } from "../../utils/apiClient.js";
 import { useAuth } from "../../context/AuthContext";
 
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
@@ -7,16 +10,7 @@ import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 
 const UsuariosAdminPanel = () => {
-  const {
-    usuarios,
-    rolesDisponibles,
-    getDatos,
-    addDato,
-    updateDato,
-    toggleActivo,
-    deleteDato,
-    loading,
-  } = useUsuariosAdmin();
+  const { usuarios, rolesDisponibles, getDatos, addDato, updateDato, toggleActivo, deleteDato, loading } = useUsuariosAdmin();
 
   const { user } = useAuth();
 
@@ -31,14 +25,24 @@ const UsuariosAdminPanel = () => {
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const navigate = useNavigate();
+
 
 
   /******************************
    * 🔄 Cargar usuarios al abrir
    ******************************/
   useEffect(() => {
+
+    const token = getAuthToken();
+
+    if (!token) {
+      navigate("/"); // 👈 redirige al login
+      return;
+    }
+
     getDatos();
-  }, [getDatos]);
+  }, [getDatos, navigate]);
 
   /******************************
    * 🧩 Crear o actualizar usuario
@@ -134,17 +138,6 @@ const UsuariosAdminPanel = () => {
                   >
                     ✏️ Editar
                   </Button>
-
-                  {/* <Button
-                    size="sm"
-                    variant="outline-danger"
-                    onClick={() => {
-                      setSelectedUsuario(u);
-                      setShowDeleteModal(true);
-                    }}
-                  >
-                    🗑️ Eliminar
-                  </Button> */}
 
                   <Button
                     size="sm"

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useToast } from "../context/ToastContext";
 import { useBackends } from "../context/BackendsContext";
-import { apiGet, apiPost } from "../utils/apiClient.js";
+import { apiGet, apiPost, getAuthToken } from "../utils/apiClient.js";
 
 
 
@@ -70,12 +70,7 @@ export function ProductosProvider({ children }) {
     }
   }, [backendUrl, fetchArchivosPorAnio]);
 
-  useEffect(() => {
-    // 👇 Esperar a que BackendsContext termine de cargar
-    if (!loading && backendUrl) {
-      refreshProductos();
-    }
-  }, [loading, backendUrl, refreshProductos]);
+
 
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -213,6 +208,18 @@ export function ProductosProvider({ children }) {
       setLoadingProductos(false);
     }
   }, [backendUrl, refreshProductos]);
+
+  useEffect(() => {
+
+    // Si no hay token, no intentar cargar datos aquí (AuthContext ya maneja evento global)
+    const token = getAuthToken();
+    if (!token) return;
+
+    // 👇 Esperar a que BackendsContext termine de cargar
+    if (!loading && backendUrl) {
+      refreshProductos();
+    }
+  }, [loading, backendUrl, refreshProductos]);
 
   return (
     <ProductosContext.Provider

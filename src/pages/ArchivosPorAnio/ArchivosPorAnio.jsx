@@ -1,15 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { useProductos } from "../../context/ProductosContext";
+import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useBackends } from "../../context/BackendsContext";
+import { apiGet, getAuthToken } from "../../utils/apiClient.js";
 import { useToast } from "../../context/ToastContext";
 import "./ArchivosPorAnio.scss";
 
 function ArchivosPorAnio() {
-  const { fetchArchivosPorAnio } = useProductos();
+
+  const { activeBackend } = useBackends();
+  const backendUrl = activeBackend?.url || null;
+
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const currentYear = new Date().getFullYear();
   const [anio, setAnio] = useState(currentYear - 1);
   const [archivos, setArchivos] = useState([]);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -18,23 +25,41 @@ function ArchivosPorAnio() {
     tipo: "",
   });
 
-  const cargarArchivos = async (anioSeleccionado) => {
+
+  const cargarArchivos = useCallback(async (anioSeleccionado) => {
+    if (!backendUrl) return;
     setLoading(true);
     try {
-      const data = await fetchArchivosPorAnio(anioSeleccionado);
-      console.log("que data llega", data);
-      setArchivos(data);
+      const response = await apiGet(backendUrl, "getArchivosPorAnio", { anio: anioSeleccionado });
+      if (response.status === "ok") {
+        setArchivos(response.archivos || []);
+      } else {
+        showToast(response.mensaje || "⚠️ No se pudieron cargar los archivos.", "warning", 4000, "ArchivosPorAnio");
+        setArchivos([]);
+      }
     } catch (e) {
-      showToast(`❌ Error cargando archivos ${e}`, "danger");
+      console.error("❌ Error cargando archivos:", e);
+      showToast("❌ Error al conectar con el servidor", "danger", 4000, "ArchivosPorAnio");
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendUrl, showToast]);
 
   useEffect(() => {
+    const token = getAuthToken();
+
+    if (!token) {
+      navigate("/", { replace: true });
+      return; // 🚫 detenemos aquí
+    }
+
+    setFilters({ entidad: "", nombreProducto: "", tipo: "" });
     cargarArchivos(anio);
-    setFilters({ entidad: "", nombreProducto: "", tipo: "" }); // reset filtros
-  }, [anio]);
+    setCheckingAuth(false); // ✅ ya verificamos token
+  }, [anio, cargarArchivos, navigate]);
+
+
+
 
   const getFileIcon = (filename) => {
     if (!filename) return "📄";
@@ -117,6 +142,15 @@ function ArchivosPorAnio() {
       ])
     ).values(),
   ];
+
+  if (checkingAuth) {
+    return (
+      <div className="text-center p-5">
+        <p>Verificando sesión...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="container mt-4">
