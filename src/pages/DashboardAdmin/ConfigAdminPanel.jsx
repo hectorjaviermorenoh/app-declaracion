@@ -5,7 +5,7 @@ import { Button, Form, InputGroup, Table, Spinner, Row, Col } from "react-bootst
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 
 export const ConfigAdminPanel = () => {
-  const { config, getConfig, updateConfig, loading } = useConfigAdmin();
+  const { config, getConfig, updateConfig, generarBackup, loading } = useConfigAdmin();
 
   const [tamanoMax, setTamanoMax] = useState(10);
   const [tiposPermitidos, setTiposPermitidos] = useState([]);
@@ -78,8 +78,8 @@ export const ConfigAdminPanel = () => {
         </div>
       ) : (
         <>
-          <Row className="mb-3">
-            <Col md={6}>
+          <Row className="mb-3 HECTOR">
+            <Col md={5}>
               <Form.Group>
                 <Form.Label className="fw-bold">📁 Carpeta Principal</Form.Label>
                 <Form.Control
@@ -94,7 +94,7 @@ export const ConfigAdminPanel = () => {
               </Form.Group>
             </Col>
 
-            <Col md={6}>
+            <Col md={5}>
               <Form.Group>
                 <Form.Label className="fw-bold">📦 Tamaño máximo de archivo (MB)</Form.Label>
                 <Form.Control
@@ -105,6 +105,18 @@ export const ConfigAdminPanel = () => {
                   onChange={(e) => setTamanoMax(e.target.value)}
                 />
               </Form.Group>
+            </Col>
+
+            <Col md={2}>
+              <Button variant="primary" onClick={generarBackup}>
+                {loading ? (
+                  <>
+                    <Spinner as="span" animation="border" size="sm" /> Generando Backup...
+                  </>
+                ) : (
+                  "🗄️ Generar Backup"
+                )}
+              </Button>
             </Col>
           </Row>
 
@@ -168,6 +180,7 @@ export const ConfigAdminPanel = () => {
               )}
             </Button>
           </div>
+
         </>
       )}
 

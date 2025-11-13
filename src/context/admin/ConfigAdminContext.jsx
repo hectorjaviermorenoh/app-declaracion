@@ -90,6 +90,34 @@ export const ConfigAdminProvider = ({ children }) => {
   };
 
 
+  const generarBackup = async () => {
+    if (!backendUrl) return;
+    setLoading(true);
+    try {
+      const response = await apiPost(backendUrl, "generarBackupZIP", {});
+
+      if (response.status === "ok" && response.blob) {
+        showToast("✅ Backup generado correctamente", "success", 3000, "ConfigAdmin");
+
+        const url = URL.createObjectURL(response.blob);
+        const a = document.createElement("a");
+        a.href = url;
+        // ⭐ MEJORA: Usar el nombre de archivo dinámico
+        a.download = response.nombreArchivo || "Backup_Declaracion.zip";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        showToast(response.mensaje || "⚠️ No se pudo generar el backup", "warning", 4000, "ConfigAdmin");
+      }
+    } catch (err) {
+      console.error("❌ generarBackup error:", err);
+      showToast("❌ Error al generar el backup", "danger", 4000, "ConfigAdmin");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /*******************************
    * 🚀 Cargar al inicio
@@ -111,6 +139,7 @@ export const ConfigAdminProvider = ({ children }) => {
         getConfig,
         updateConfig,
         reinicializarSistemaForzado,
+        generarBackup,
       }}
     >
       {children}

@@ -28,7 +28,9 @@ function notifyAuthRequired(message) {
   }
 }
 
-
+/**
+ * Maneja la respuesta del backend verificando estructura y permisos
+ */
 // async function handleResponse(resp, accion) {
 async function handleResponse(resp) {
   if (!resp.ok) {
@@ -52,6 +54,7 @@ async function handleResponse(resp) {
   return data;
 }
 
+
 export async function apiGet(backendUrl, accion, params = {}) {
   if (!backendUrl) throw new Error("Backend no configurado");
 
@@ -72,6 +75,9 @@ export async function apiGet(backendUrl, accion, params = {}) {
   }
 }
 
+/**
+ * Petición POST con token automático
+ */
 export async function apiPost(backendUrl, accion, body = {}) {
   if (!backendUrl) throw new Error("Backend no configurado");
 
@@ -91,38 +97,9 @@ export async function apiPost(backendUrl, accion, body = {}) {
       credentials: "omit",
     });
 
-    // 🧩 EXCEPCIÓN: si la acción es generarBackupZIP, devolver blob
-    if (accion === "generarBackupZIP") {
-      if (!resp.ok) throw new Error(`Error HTTP ${resp.status}: ${resp.statusText}`);
-
-      // ⭐ CAMBIO CLAVE A: Leer la respuesta como JSON
-      const data = await resp.json();
-
-      if (data.status === "ok" && data.base64) {
-          // ⭐ CAMBIO CLAVE B: Función de decodificación de Base64 a Blob
-          const byteCharacters = atob(data.base64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: data.mimeType || 'application/zip' });
-
-          return {
-              status: "ok",
-              mensaje: data.mensaje,
-              blob: blob, // Este es el Blob real que estabas buscando
-              nombreArchivo: data.nombreArchivo
-          };
-      }
-      return data; // Retornar status de error
-    }
-
-    // 🔄 Resto de casos normales (respuestas JSON)
     return await handleResponse(resp, accion);
   } catch (err) {
     if (ENABLE_LOGS) console.error(`❌ apiPost [${accion}]`, err);
     throw err;
   }
 }
-

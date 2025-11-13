@@ -30,6 +30,15 @@ const DATOS_TRIBUTARIOS_INICIALES = [
   { id: "codigoActividadEconomica", label: "Cód. Actividad económica", valor: "", orden: 7 }
 ];
 
+const ROLES_INICIALES = [
+    {
+    "rol": "administrador",
+    "permisos": [
+      "*"
+    ]
+  }
+];
+
 /******************************
  * 🔐 CONFIGURACIÓN DE PERMISOS Y VALIDACIÓN
  ******************************/
@@ -65,7 +74,8 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "addDatoTributario",
   "updateDatoTributario",
   "deleteDatoTributario",
-  "moveDatoTributario"
+  "moveDatoTributario",
+  "generarBackupZIP"
 ];
 
 // ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
@@ -81,7 +91,12 @@ const FUNCIONES_GENERALES = [
   "normalizarTexto",
   "normalizarNombreArchivo",
   "toggleUsuarioActivo",
-  "inicializarSistema",
+  "inicializarSistema"
+  // "copiarCarpetaRecursiva",
+  // "copiarCarpetaRecursivo",
+  // "obtenerBlobsDeCarpeta",
+  // "obtenerBlobsConRuta"
+
 ];
 
 
@@ -123,6 +138,9 @@ function inicializarSistema() {
     // 8. Crear datos tributarios con valores iniciales
     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
 
+    // 9. Crear Roles con valores iniciales
+    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_ROLES, ROLES_INICIALES);
+
     Logger.log("✅ Sistema inicializado correctamente");
 
   } finally {
@@ -161,50 +179,6 @@ function inicializarSistemaSeguro(data) {
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
  ******************************/
-// function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
-
-//   try {
-//     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
-
-//     let resultadoLimpieza = null;
-//     if (borrarCarpetas) {
-//       resultadoLimpieza = limpiarCarpetas(); // devuelve objeto {mensaje: "..."}
-//     }
-
-//     // 1. Sobrescribir configuración
-//     guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, CONFIG_INICIAL);
-
-//     // 2. Sobrescribir usuarios con el correo enviado
-//     guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
-//       { correo: correoAdmin, nombre: "Administrador", rol: "administrador", activo: true }
-//     ]);
-
-//     // 3. Vaciar productos, bddatos y logs
-//     guardarORecrearJSON(carpetaPrincipal, JSON_PRODUCTOS, []);
-//     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_DATOS, []);
-//     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_FACTURAS, []);
-//     guardarORecrearJSON(carpetaPrincipal, JSON_LOGS, []);
-
-
-//     // 4. Crear datos tributarios con valores iniciales
-//     guardarORecrearJSON(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
-
-
-//     Logger.log("✅ Sistema reinicializado forzadamente");
-
-//     return {
-//       status: "ok",
-//       mensaje: "✅ Sistema reinicializado correctamente",
-//       correo: correoAdmin,
-//       limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas"
-//     };
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
 
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
@@ -325,6 +299,9 @@ function verificarTokenYAutorizar(token) {
     return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
+
+
+
 function validarPermiso(usuario, accion) {
   // 🚫 Usuario no autenticado
   if (!usuario || !usuario.autorizado) return false;
@@ -381,6 +358,70 @@ function manejarError(err, contexto, usuario) {
     contexto: contexto
   });
 }
+
+
+/**
+ * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve al navegador.
+ */
+
+// En Codigo.js
+
+/**
+ * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve codificado en Base64.
+ */
+// En Codigo.js
+
+/**
+ * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve codificado en Base64.
+ */
+function generarBackupZIP(usuario) {
+  try {
+    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const fecha = new Date();
+    // Generar un nombre de archivo dinámico
+    const nombreZip = `Backup_Declaracion_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}.zip`;
+
+    const blobs = [];
+    // Archivos raíz
+    const archivos = carpetaPrincipal.getFiles();
+    while (archivos.hasNext()) {
+      blobs.push(archivos.next().getBlob());
+    }
+    // Subcarpetas de primer nivel
+    const carpetas = carpetaPrincipal.getFolders();
+    while (carpetas.hasNext()) {
+      const carpeta = carpetas.next();
+      const subArchivos = carpeta.getFiles();
+      while (subArchivos.hasNext()) {
+        const archivo = subArchivos.next();
+        // Mantener jerarquía de carpetas dentro del ZIP
+        blobs.push(archivo.getBlob().setName(`${carpeta.getName()}/${archivo.getName()}`));
+      }
+    }
+
+    const blobZip = Utilities.zip(blobs, nombreZip);
+    
+    // ⭐ CAMBIO CLAVE: Codificar el blob a Base64
+    const base64Data = Utilities.base64Encode(blobZip.getBytes());
+    
+    // Guardar el archivo en Drive (si lo necesitas)
+    const archivoZip = carpetaPrincipal.createFile(blobZip);
+
+    registrarLog("backup", usuario.correo, `Se generó un backup: ${archivoZip.getName()}`);
+
+    return {
+      status: "ok",
+      base64: base64Data, // Retorna la cadena Base64
+      mimeType: blobZip.getContentType(), // application/zip
+      nombreArchivo: nombreZip,
+      mensaje: "✅ Backup generado con éxito"
+    };
+  } catch (err) {
+    return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
+  }
+}
+
+
 /******************************
  * FUNCIONES AUXILIARES
  ******************************/
@@ -768,6 +809,8 @@ function doPost(e) {
         return subirArchivoFacturas(e, isMultipart, usuario);
       case "updateConfig":
         return updateConfig(data, usuario);
+      case "generarBackupZIP":
+        return respuestaJSON(generarBackupZIP(usuario));
       case "limpiarLogsAntiguos":
         return limpiarLogsAntiguos(usuario);
       case "addRol":
