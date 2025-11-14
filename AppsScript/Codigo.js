@@ -360,66 +360,108 @@ function manejarError(err, contexto, usuario) {
 }
 
 
-/**
- * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve al navegador.
- */
+// function generarBackupZIP(usuario) {
+//   try {
+//     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+//     const fecha = new Date();
+//     // Generar un nombre de archivo dinámico
+//     const nombreZip = `Backup_Declaracion_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}.zip`;
 
-// En Codigo.js
+//     const blobs = [];
+//     // Archivos raíz
+//     const archivos = carpetaPrincipal.getFiles();
+//     while (archivos.hasNext()) {
+//       blobs.push(archivos.next().getBlob());
+//     }
+//     // Subcarpetas de primer nivel
+//     const carpetas = carpetaPrincipal.getFolders();
+//     while (carpetas.hasNext()) {
+//       const carpeta = carpetas.next();
+//       const subArchivos = carpeta.getFiles();
+//       while (subArchivos.hasNext()) {
+//         const archivo = subArchivos.next();
+//         // Mantener jerarquía de carpetas dentro del ZIP
+//         blobs.push(archivo.getBlob().setName(`${carpeta.getName()}/${archivo.getName()}`));
+//       }
+//     }
 
-/**
- * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve codificado en Base64.
- */
-// En Codigo.js
+//     const blobZip = Utilities.zip(blobs, nombreZip);
+    
+//     // ⭐ CAMBIO CLAVE: Codificar el blob a Base64
+//     const base64Data = Utilities.base64Encode(blobZip.getBytes());
+    
+//     // Guardar el archivo en Drive (si lo necesitas)
+//     const archivoZip = carpetaPrincipal.createFile(blobZip);
 
-/**
- * 🧩 Genera un backup ZIP manteniendo la estructura de carpetas y lo devuelve codificado en Base64.
- */
+//     // Elimina automáticamente cualquier archivo .zip previo en esa carpeta antes de generar uno nuevo:
+//     const existingZips = carpetaPrincipal.getFilesByType(MimeType.ZIP);
+//     while (existingZips.hasNext()) {
+//       existingZips.next().setTrashed(true);
+//     }
+
+//     registrarLog("backup", usuario.correo, `Se generó un backup: ${archivoZip.getName()}`);
+
+//     return {
+//       status: "ok",
+//       base64: base64Data, // Retorna la cadena Base64
+//       mimeType: blobZip.getContentType(), // application/zip
+//       nombreArchivo: nombreZip,
+//       mensaje: "✅ Backup generado con éxito"
+//     };
+//   } catch (err) {
+//     return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
+//   }
+// }
+
+
 function generarBackupZIP(usuario) {
   try {
     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
     const fecha = new Date();
-    // Generar un nombre de archivo dinámico
+
     const nombreZip = `Backup_Declaracion_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}.zip`;
 
     const blobs = [];
+
     // Archivos raíz
     const archivos = carpetaPrincipal.getFiles();
     while (archivos.hasNext()) {
       blobs.push(archivos.next().getBlob());
     }
-    // Subcarpetas de primer nivel
+
+    // Subcarpetas (mantener estructura)
     const carpetas = carpetaPrincipal.getFolders();
     while (carpetas.hasNext()) {
       const carpeta = carpetas.next();
       const subArchivos = carpeta.getFiles();
       while (subArchivos.hasNext()) {
         const archivo = subArchivos.next();
-        // Mantener jerarquía de carpetas dentro del ZIP
-        blobs.push(archivo.getBlob().setName(`${carpeta.getName()}/${archivo.getName()}`));
+        blobs.push(
+          archivo.getBlob().setName(`${carpeta.getName()}/${archivo.getName()}`)
+        );
       }
     }
 
     const blobZip = Utilities.zip(blobs, nombreZip);
-    
-    // ⭐ CAMBIO CLAVE: Codificar el blob a Base64
-    const base64Data = Utilities.base64Encode(blobZip.getBytes());
-    
-    // Guardar el archivo en Drive (si lo necesitas)
-    const archivoZip = carpetaPrincipal.createFile(blobZip);
 
-    registrarLog("backup", usuario.correo, `Se generó un backup: ${archivoZip.getName()}`);
+    // ⭐ Solo lo enviamos al frontend → NO guardar en Drive
+    const base64Data = Utilities.base64Encode(blobZip.getBytes());
+
+    registrarLog("backup", usuario.correo, `Se generó un backup descargado por el usuario`);
 
     return {
       status: "ok",
-      base64: base64Data, // Retorna la cadena Base64
-      mimeType: blobZip.getContentType(), // application/zip
+      base64: base64Data,
+      mimeType: blobZip.getContentType(),
       nombreArchivo: nombreZip,
       mensaje: "✅ Backup generado con éxito"
     };
+
   } catch (err) {
     return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
   }
 }
+
 
 
 /******************************

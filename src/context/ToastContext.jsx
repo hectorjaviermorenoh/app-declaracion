@@ -9,7 +9,9 @@ export function ToastProvider({ children }) {
   // 🔹 Mostrar un nuevo toast
   const showToast = useCallback(
     (message, variant = "success", delay = 3000, header = "Notificación") => {
-      const id = Date.now();
+      // const id = Date.now();
+      const id = crypto.randomUUID()
+
       setToasts((prev) => [
         ...prev,
         { id, message, variant, delay, header }

@@ -164,7 +164,7 @@ export function AuthProvider({ children }) {
       logout();
       return false;
     }
-  }, [authToken, activeBackend, logout, showToast]);
+  }, [authToken, activeBackend, logout, showToast, authenticated]);
 
   // 🧠 Verificar token automáticamente al cargar (una vez)
   useEffect(() => {
@@ -215,7 +215,7 @@ export function AuthProvider({ children }) {
     const interval = setInterval(checkExpiration, 60 * 1000); // cada 1 minuto
     checkExpiration(); // ejecutar una vez al inicio
     return () => clearInterval(interval);
-  }, [authToken, logout]);
+  }, [authToken, logout, showToast]);
 
   // 🧭 Escuchar eventos globales emitidos por apiClient.js (auth:required)
   useEffect(() => {

@@ -84,10 +84,23 @@ const RolesAdminPanel = () => {
     <div className="p-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="fw-bold">Administración de Roles</h4>
-        <Button onClick={() => setShowModal(true)} variant="primary">
+        {/* <Button onClick={() => setShowModal(true)} variant="primary">
+          ➕ Nuevo Rol
+        </Button> */}
+        <Button
+          onClick={() => {
+            setRolEditando(null);           // ← marca que NO estás editando
+            setNuevoRol("");                // ← limpia el input
+            setPermisosSeleccionados([]);   // ← limpia los permisos
+            setShowModal(true);             // ← abre el modal
+          }}
+          variant="primary"
+        >
           ➕ Nuevo Rol
         </Button>
       </div>
+
+
 
       {loading ? (
         <div className="text-center py-5">

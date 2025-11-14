@@ -47,7 +47,8 @@ export function BackendsProvider({ children }) {
     }
 
     const newBackend = {
-      id: Date.now(),
+      // id: Date.now(),
+      id: crypto.randomUUID(),
       alias: alias.trim(),
       url: url.trim(),
       avatar,

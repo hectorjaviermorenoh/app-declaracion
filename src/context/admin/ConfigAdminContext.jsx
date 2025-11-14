@@ -98,6 +98,7 @@ export const ConfigAdminProvider = ({ children }) => {
 
       if (response.status === "ok" && response.blob) {
         showToast("✅ Backup generado correctamente", "success", 3000, "ConfigAdmin");
+        console.log(response.blob);
 
         const url = URL.createObjectURL(response.blob);
         const a = document.createElement("a");
