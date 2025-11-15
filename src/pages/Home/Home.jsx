@@ -62,7 +62,7 @@ export default function Home() {
 
         login(token, () => {
           setIsLoggingIn(false);
-          showToast("✅ Sesión iniciada correctamente", "success", 2000, "Login");
+          // showToast("✅ Sesión iniciada correctamente", "success", 2000, "Login");
         });
       },
     });

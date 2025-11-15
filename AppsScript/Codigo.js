@@ -10,6 +10,7 @@ const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
+const TOKEN_SECRET = "528138845199053779904519";
 
 /******************************
  * CONSTANTE DE CONFIGURACIONES INICIALES
@@ -333,6 +334,125 @@ function validarPermiso(usuario, accion) {
   return false;
 }
 
+/************************************************************************************ */
+/************************************************************************************ */
+
+/**
+ * 🔑 GENERA un token de sesión propio (JWT-like)
+ * Este token se genera DESPUÉS de que Google valida al usuario.
+ */
+function generarTokenPropio(usuarioInfo) {
+  const payload = {
+    // Info del usuario (verificada por Google)
+    correo: usuarioInfo.correo,
+    rol: usuarioInfo.rol,
+    nombre: usuarioInfo.nombre,
+    picture: usuarioInfo.picture,
+    permisos: usuarioInfo.permisos,
+    
+    // 💡 Tiempos de vida (iat = issued at, exp = expiration)
+    iat: Math.floor(Date.now() / 1000),
+    // exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
+    exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 8 horas
+  };
+  
+  // Codificamos el payload (String -> Byte[] -> Base64WebSafe)
+  const payloadStr = JSON.stringify(payload);
+  const payloadB64 = Utilities.base64EncodeWebSafe(payloadStr, Utilities.Charset.UTF_8); // ✅ CORREGIDO 1
+
+  // Creamos la firma
+  // computeHmacSha256Signature necesita el payloadB64 como String, lo cual es correcto
+  const signature = Utilities.computeHmacSha256Signature(payloadB64, TOKEN_SECRET); 
+
+  // Codificamos la firma (Byte[] -> Base64WebSafe)
+  const signatureB64 = Utilities.base64EncodeWebSafe(signature); // ✅ CORREGIDO 2
+  
+  // Formato: [payload].[signature]
+  return payloadB64 + "." + signatureB64;
+}
+
+/**
+ * 🔐 VALIDA un token de sesión propio
+ * Se usará en CADA petición (doGet/doPost) excepto en el login.
+ */
+function verificarTokenPropio(token) {
+  if (!token) {
+    return { autorizado: false, mensaje: "No se proporcionó token" };
+  }
+
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 2) {
+      return { autorizado: false, mensaje: "Token malformado" };
+    }
+    
+    const [payloadB64, signatureB64] = parts;
+    
+    // 1. Verificar la firma
+    const signature = Utilities.base64DecodeWebSafe(signatureB64);
+    const expectedSignature = Utilities.computeHmacSha256Signature(payloadB64, TOKEN_SECRET);
+    
+    // Comparación segura de los bytes de la firma
+    if (signature.length !== expectedSignature.length || !signature.every((byte, i) => byte === expectedSignature[i])) {
+      return { autorizado: false, mensaje: "Firma de token inválida" };
+    }
+    
+    // 2. Decodificar payload
+    const payloadStr = Utilities.newBlob(Utilities.base64DecodeWebSafe(payloadB64)).getDataAsString();
+    const payload = JSON.parse(payloadStr);
+
+    // 3. Verificar expiración
+    if (payload.exp * 1000 < Date.now()) {
+      return { autorizado: false, mensaje: "Token expirado" };
+    }
+
+    // ✅ Si todo está ok, devolvemos el payload del usuario
+    return { autorizado: true, ...payload };
+  
+  } catch (e) {
+    return { autorizado: false, mensaje: "Error al validar token: " + e.message };
+  }
+}
+
+
+/**
+ * 📞 MANEJA EL INTERCAMBIO DE TOKEN
+ * El cliente llama a esta función con el token de Google.
+ * Esta función devuelve un token propio.
+ */
+function handleGoogleLogin(data) {
+  const { googleToken } = data;
+  if (!googleToken) {
+    return respuestaJSON({ status: "error", mensaje: "No se recibió el token de Google (googleToken)" });
+  }
+  
+  // 1. Validar el token de Google y buscar usuario (función que YA TENÍAS)
+  const infoUsuarioGoogle = verificarTokenYAutorizar(googleToken);
+  
+  if (!infoUsuarioGoogle.autorizado) {
+    // Si el token de Google es inválido o el usuario no está en usuarios.json
+    return respuestaJSON(infoUsuarioGoogle);
+  }
+  
+  // 2. Si es válido, generar nuestro propio token de sesión
+  const tokenPropio = generarTokenPropio(infoUsuarioGoogle);
+  
+  // 3. Devolver el token propio y la info del usuario al cliente
+  return respuestaJSON({
+    status: "ok",
+    token: tokenPropio, // 👈 Nuestro token
+    user: {            // 👈 Info del usuario para el AuthContext
+      correo: infoUsuarioGoogle.correo,
+      nombre: infoUsuarioGoogle.nombre,
+      picture: infoUsuarioGoogle.picture,
+      rol: infoUsuarioGoogle.rol,
+      permisos: infoUsuarioGoogle.permisos
+    }
+  });
+}
+
+/************************************************************************************ */
+/************************************************************************************ */
 
 /******************************
  * MANEJO CENTRALIZADO DE ERRORES
@@ -694,35 +814,133 @@ function limpiarCarpetas() {
 /******************************
  * MÉTODO DOGET
  ******************************/
+// function doGet(e) {
+//   try {
+//     const accion = e.parameter.accion;
+
+//     const token = e.parameter.token || (data && data.token);
+//     const usuario = verificarTokenYAutorizar(token);
+//     if (!usuario.autorizado) {
+//       return respuestaJSON({ autorizado: false, mensaje: usuario.mensaje });
+//     }
+
+//     if (!validarPermiso(usuario, accion)) {
+//       return respuestaJSON({ autorizado: false, mensaje: "No tienes permiso para ejecutar " + accion });
+//     }
+
+//     switch (accion) {
+//       case "ping":
+//       return ContentService.createTextOutput(
+//         JSON.stringify({
+//           status: "ok",
+//           mensaje: "API funcionando",
+//           autorizado: true,
+//           correo: usuario.correo,
+//           nombre: usuario.nombre,
+//           picture: usuario.picture,
+//           rol: usuario.rol || "sin rol",
+//           permisos: usuario.permisos || [],
+//           activo: usuario.activo ?? true,
+//         })
+//       ).setMimeType(ContentService.MimeType.JSON);
+
+//       case "getConfig":
+//         return getConfig();
+//       case "getFuncionesLogicaNegocio":
+//         return getFuncionesLogicaNegocio();
+//       case "getUsuarios":
+//         return getUsuarios();
+//       case "getRoles":
+//         return getRoles();
+//       case "getProductos":
+//         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
+
+//       case "getDatosTributarios":
+//         return getDatosTributarios();
+
+//       case "getLogs":
+//         return getLogs();
+
+//       // --- 📌 Nuevo endpoint ArchivosPorAño ---
+//       case "getArchivosPorAnio":
+//         const anio = e.parameter.anio;
+//         if (!anio) {
+//           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
+//         }
+//         return getArchivosPorAnio(anio);
+
+//       // --- 📌 Nuevo endpoint ProductosPorArchivo ---
+//       case "getProductosPorArchivo":
+//         const archivoId = e.parameter.archivoId;
+//         if (!archivoId) {
+//           return respuestaJSON({ status: "error", mensaje: "Debe enviar archivoId" });
+//         }
+//         return getProductosPorArchivo(archivoId);
+
+//       default:
+//         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
+//     }
+
+//   } catch (err) {
+//     const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
+//     return manejarError(err, "doGet", correo);
+//   }
+// }
+
+
+/******************************
+ * MÉTODO DOGET
+ ******************************/
 function doGet(e) {
   try {
     const accion = e.parameter.accion;
+    const token = e.parameter.token;
+    let usuario; // Variable para guardar el usuario validado
 
-    const token = e.parameter.token || (data && data.token);
-    const usuario = verificarTokenYAutorizar(token);
+    // --- 1. AUTENTICACIÓN (NUEVO) ---
+    // Todas las acciones GET requieren un token propio válido
+    if (!token) {
+      return respuestaJSON({ autorizado: false, mensaje: "Token de sesión requerido" });
+    }
+    
+    usuario = verificarTokenPropio(token); // 👈 USA EL NUEVO VALIDADOR
+    
     if (!usuario.autorizado) {
       return respuestaJSON({ autorizado: false, mensaje: usuario.mensaje });
     }
-
+    
+    // --- 2. AUTORIZACIÓN (PERMISOS) ---
     if (!validarPermiso(usuario, accion)) {
       return respuestaJSON({ autorizado: false, mensaje: "No tienes permiso para ejecutar " + accion });
     }
-
+    
+    // --- 3. SWITCH DE ACCIONES ---
     switch (accion) {
+      // case "ping":
+      //   // Si llega aquí, el token es válido.
+      //   // El 'ping' ahora sirve para verificar la sesión y refrescar datos.
+      //   return respuestaJSON({
+      //     status: "ok",
+      //     mensaje: "Token de sesión válido",
+      //     autorizado: true,
+      //     // Devolvemos el payload del token (correo, rol, permisos, etc.)
+      //     ...usuario 
+      //   });
+
       case "ping":
-      return ContentService.createTextOutput(
-        JSON.stringify({
+        // 1. Si llegó aquí, el token es válido.
+        
+        // 2. Generar un NUEVO token de sesión con 8 horas más de vida
+        const nuevoTokenPropio = generarTokenPropio(usuario);
+        
+        // 3. Devolver el nuevo token y los datos de usuario
+        return respuestaJSON({
           status: "ok",
-          mensaje: "API funcionando",
+          mensaje: "Token de sesión renovado",
           autorizado: true,
-          correo: usuario.correo,
-          nombre: usuario.nombre,
-          picture: usuario.picture,
-          rol: usuario.rol || "sin rol",
-          permisos: usuario.permisos || [],
-          activo: usuario.activo ?? true,
-        })
-      ).setMimeType(ContentService.MimeType.JSON);
+          token: nuevoTokenPropio, // 👈 NUEVO TOKEN
+          ...usuario 
+        });
 
       case "getConfig":
         return getConfig();
@@ -741,7 +959,6 @@ function doGet(e) {
       case "getLogs":
         return getLogs();
 
-      // --- 📌 Nuevo endpoint ArchivosPorAño ---
       case "getArchivosPorAnio":
         const anio = e.parameter.anio;
         if (!anio) {
@@ -749,7 +966,6 @@ function doGet(e) {
         }
         return getArchivosPorAnio(anio);
 
-      // --- 📌 Nuevo endpoint ProductosPorArchivo ---
       case "getProductosPorArchivo":
         const archivoId = e.parameter.archivoId;
         if (!archivoId) {
@@ -758,14 +974,143 @@ function doGet(e) {
         return getProductosPorArchivo(archivoId);
 
       default:
-        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
+        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backens" });
     }
 
   } catch (err) {
-    const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
+    const correo = (e && e.parameter && e.parameter.correo) || "desconocido";
     return manejarError(err, "doGet", correo);
   }
 }
+/******************************
+ * MÉTODO DOPOST
+ ******************************/
+// function doPost(e) {
+//   try {
+//     let accion = "";
+//     let data = {};
+//     const isMultipart = e.files && Object.keys(e.files).length > 0;
+
+//     // 🟢 CAMBIO 1: primero detectamos si es multipart o JSON
+//     if (isMultipart) {
+//       // 📂 Caso form-data
+//       accion = e.parameter.accion || "";
+//       data = e.parameter; // aquí NO hay JSON, solo parámetros de formulario
+//     } else if (e.postData && e.postData.contents) {
+//       // 📦 Caso JSON
+//       try {
+//         data = JSON.parse(e.postData.contents);
+//       } catch (err) {
+//         return respuestaJSON({
+//           success: false,
+//           status: "error_json",
+//           mensaje: "❌ Error al parsear el cuerpo JSON: " + err.message,
+//         });
+//       }
+//       accion = data.accion || "";
+//     } else {
+//       return respuestaJSON({
+//         success: false,
+//         status: "sin_datos",
+//         mensaje: "❌ No se recibió ni JSON ni archivos en la solicitud",
+//         parametros: e.parameter || null,
+//       });
+//     }
+
+//     // 🟢 CAMBIO 2: ahora que 'data' ya existe, podemos buscar el token sin error
+//     const token = e.parameter.token || data.token;
+//     const usuario = verificarTokenYAutorizar(token);
+
+//     // 🟢 CAMBIO 3: validamos token y permisos DESPUÉS de tener acción y data
+//     if (!usuario.autorizado) {
+//       return respuestaJSON({
+//         autorizado: false,
+//         success: false,
+//         status: "token_invalido",
+//         mensaje: usuario.mensaje || "Token inválido o expirado",
+//       });
+//     }
+
+//     if (!validarPermiso(usuario, accion)) {
+//       return respuestaJSON({
+//         autorizado: false,
+//         success: false,
+//         status: "sin_permiso",
+//         mensaje: "No tienes permiso para ejecutar " + accion,
+//       });
+//     }
+
+//     // 🟢 CAMBIO 4: tu switch queda igual, sin tocar tu lógica existente
+//     switch (accion) {
+//       case "inicializarForzado":
+//         const confirmar = data.confirmar;
+//         const borrarCarpetas = data.borrarCarpetas === true || data.borrarCarpetas === "true";
+
+//         if (confirmar !== "INICIALIZAR") {
+//           return respuestaJSON({ status: "error", mensaje: "⚠️ Confirmación inválida, escriba INICIALIZAR" });
+//         }
+
+//         // 🟢 Solo el rol administrador puede inicializar
+//         if (usuario.rol !== "administrador") {
+//           return respuestaJSON({
+//             status: "sin_permiso",
+//             mensaje: "Solo el rol administrador puede reinicializar el sistema",
+//           });
+//         }
+
+//         const resultado = inicializarSistemaForzado(usuario, borrarCarpetas);
+//         return respuestaJSON({ ...resultado });
+
+//       case "subirArchivo":
+//         return subirArchivoProducto(e, isMultipart, usuario);
+//       case "subirArchivoFacturas":
+//         return subirArchivoFacturas(e, isMultipart, usuario);
+//       case "updateConfig":
+//         return updateConfig(data, usuario);
+//       case "generarBackupZIP":
+//         return respuestaJSON(generarBackupZIP(usuario));
+//       case "limpiarLogsAntiguos":
+//         return limpiarLogsAntiguos(usuario);
+//       case "addRol":
+//         return addRol(data, usuario);
+//       case "updateRol":
+//         return updateRol(data, usuario);
+//       case "deleteRol":
+//         return deleteRol(data, usuario);
+//       case "addUsuario":
+//         return addUsuario(data, usuario);
+//       case "toggleUsuarioActivo":
+//         return toggleUsuarioActivo(data, usuario);
+//       case "updateUsuario":
+//         return updateUsuario(data, usuario);
+//       case "deleteUsuario":
+//         return deleteUsuario(data, usuario);
+//       case "addProducto":
+//         return addProducto(data, usuario);
+//       case "deleteProducto":
+//         return deleteProducto(data.id, usuario);
+//       case "replaceArchivo":
+//         return replaceArchivo(data, usuario);
+//       case "inicializarSistema":
+//         return inicializarSistemaSeguro(data, usuario);
+//       case "addDatoTributario":
+//         return addDatoTributario(data, usuario);
+//       case "updateDatoTributario":
+//         return updateDatoTributario(data, usuario);
+//       case "deleteDatoTributario":
+//         return deleteDatoTributario(data, usuario);
+//       case "moveDatoTributario":
+//         return moveDatoTributario(data, usuario);
+//       default:
+//         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
+//     }
+
+//   } catch (err) {
+//     const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
+//     return manejarError(err, "doPost", correo);
+//   }
+// }
+
 /******************************
  * MÉTODO DOPOST
  ******************************/
@@ -775,13 +1120,11 @@ function doPost(e) {
     let data = {};
     const isMultipart = e.files && Object.keys(e.files).length > 0;
 
-    // 🟢 CAMBIO 1: primero detectamos si es multipart o JSON
+    // --- 1. PARSEO DE REQUEST (Sin cambios) ---
     if (isMultipart) {
-      // 📂 Caso form-data
       accion = e.parameter.accion || "";
-      data = e.parameter; // aquí NO hay JSON, solo parámetros de formulario
+      data = e.parameter; 
     } else if (e.postData && e.postData.contents) {
-      // 📦 Caso JSON
       try {
         data = JSON.parse(e.postData.contents);
       } catch (err) {
@@ -801,31 +1144,50 @@ function doPost(e) {
       });
     }
 
-    // 🟢 CAMBIO 2: ahora que 'data' ya existe, podemos buscar el token sin error
-    const token = e.parameter.token || data.token;
-    const usuario = verificarTokenYAutorizar(token);
+    // --- 2. AUTENTICACIÓN Y AUTORIZACIÓN (NUEVO) ---
+    let usuario; // Variable para guardar el usuario validado
 
-    // 🟢 CAMBIO 3: validamos token y permisos DESPUÉS de tener acción y data
-    if (!usuario.autorizado) {
-      return respuestaJSON({
-        autorizado: false,
-        success: false,
-        status: "token_invalido",
-        mensaje: usuario.mensaje || "Token inválido o expirado",
-      });
+    // La acción 'googleLogin' es pública (no requiere token previo)
+    // Todas las demás acciones SÍ requieren un token propio
+    if (accion !== "googleLogin") {
+      const token = e.parameter.token || data.token;
+      if (!token) {
+        return respuestaJSON({
+          autorizado: false,
+          success: false,
+          status: "sin_token",
+          mensaje: "Token de sesión requerido",
+        });
+      }
+
+      usuario = verificarTokenPropio(token); // 👈 USA EL NUEVO VALIDADOR
+
+      if (!usuario.autorizado) {
+        return respuestaJSON({
+          autorizado: false,
+          success: false,
+          status: "token_invalido",
+          mensaje: usuario.mensaje || "Token inválido o expirado",
+        });
+      }
+
+      // Validar permisos (como antes, pero con el 'usuario' del token)
+      if (!validarPermiso(usuario, accion)) {
+        return respuestaJSON({
+          autorizado: false,
+          success: false,
+          status: "sin_permiso",
+          mensaje: "No tienes permiso para ejecutar " + accion,
+        });
+      }
     }
 
-    if (!validarPermiso(usuario, accion)) {
-      return respuestaJSON({
-        autorizado: false,
-        success: false,
-        status: "sin_permiso",
-        mensaje: "No tienes permiso para ejecutar " + accion,
-      });
-    }
-
-    // 🟢 CAMBIO 4: tu switch queda igual, sin tocar tu lógica existente
+    // --- 3. SWITCH DE ACCIONES ---
+    // Ahora 'usuario' está disponible para todas las funciones que lo necesiten
     switch (accion) {
+      case "googleLogin": // 👈 NUEVA ACCIÓN
+        return handleGoogleLogin(data);
+
       case "inicializarForzado":
         const confirmar = data.confirmar;
         const borrarCarpetas = data.borrarCarpetas === true || data.borrarCarpetas === "true";
@@ -834,7 +1196,7 @@ function doPost(e) {
           return respuestaJSON({ status: "error", mensaje: "⚠️ Confirmación inválida, escriba INICIALIZAR" });
         }
 
-        // 🟢 Solo el rol administrador puede inicializar
+        // --- 👇 CORRECCIÓN 3 ---
         if (usuario.rol !== "administrador") {
           return respuestaJSON({
             status: "sin_permiso",
@@ -843,6 +1205,7 @@ function doPost(e) {
         }
 
         const resultado = inicializarSistemaForzado(usuario, borrarCarpetas);
+        
         return respuestaJSON({ ...resultado });
 
       case "subirArchivo":
@@ -886,11 +1249,11 @@ function doPost(e) {
       case "moveDatoTributario":
         return moveDatoTributario(data, usuario);
       default:
-        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
+        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backend post" });
     }
 
   } catch (err) {
-    const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
+    const correo = (e && e.parameter && e.parameter.correo) || "desconocido";
     return manejarError(err, "doPost", correo);
   }
 }

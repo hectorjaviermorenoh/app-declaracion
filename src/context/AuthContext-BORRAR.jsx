@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBackends } from "./BackendsContext";
 // import { jwtDecode } from "jwt-decode";
 import { useToast } from "../context/ToastContext";
+import { apiPost } from "../utils/apiClient.js";
 
 // 📦 Clave para persistir sesión
 const STORAGE_KEY = "auth_session";
@@ -33,37 +34,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
 
+  // 🧠 Función para guardar sesión en localStorage (¡Ahora estable!)
+  const persistSession = useCallback((token, userInfo) => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ token: token, user: userInfo })
+      );
+  }, []); // 👈 Dependencia vacía: ¡La función es ahora estable!
+
+
 
   // 🧠 Cargar token desde localStorage una sola vez al montar
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.token) {
-          setAuthToken(parsed.token);
-          setUser(parsed.user || null);
-          setAuthenticated(true);
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.token) {
+            setAuthToken(parsed.token);
+            setUser(parsed.user || null);
+            setAuthenticated(true);
+          } else { // 👈 Si existe pero no tiene token (malformado)
+              localStorage.removeItem(STORAGE_KEY);
+          }
+        } catch (err) {
+          console.error("Error parseando sesión guardada:", err);
+          localStorage.removeItem(STORAGE_KEY); // 👈 ¡Ya lo tienes, perfecto!
         }
-      } catch (err) {
-        console.error("Error parseando sesión guardada:", err);
-        localStorage.removeItem(STORAGE_KEY);
       }
-    }
-    setLoading(false);
+      setLoading(false);
   }, []);
-
-  // 🧩 Guardar sesión persistente
-  const persistSession = (token, userData) => {
-    if (!token) return;
-    const session = {
-      token,
-      user: userData || null,
-      backendUrl: backendUrl,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  };
 
 
 // 🚀 Iniciar sesión
@@ -120,69 +120,86 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 🚪 Cerrar sesión
-  const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+
+// 🚪 Función de cierre de sesión
+const logout = useCallback((shouldRedirect = true) => {
     setAuthToken(null);
     setUser(null);
     setAuthenticated(false);
-
-    // 🔁 Redirige siempre al login
-    if (window.location.pathname !== "/") {
-      navigate("/", { replace: true }); // replace evita volver atrás con el navegador
+    localStorage.removeItem(STORAGE_KEY);
+    if (shouldRedirect) {
+        navigate("/");
     }
+}, [navigate]); // 👈 Solo depende de navigate
 
-    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación 134");
 
-  }, [navigate, showToast ]);
 
-// 🔄 Verificar token (ahora valida el token PROPIO contra el 'ping')
-  const verifyToken = useCallback(async () => {
+// 🔄 Verificar token (ahora usa apiPost para la renovación)
+const verifyToken = useCallback(async () => {
     if (!authToken || !activeBackend?.url) return false;
 
     try {
-      // Esta llamada ahora envía el TOKEN PROPIO
-      // El backend (doGet -> ping) lo validará (firma, expiración)
-      const resp = await fetch(`${activeBackend.url}?accion=ping&token=${authToken}`);
-      const data = await resp.json();
 
-      // Si el backend dice "ok", el token es válido
-      if (data && (data.status === "ok" || data.autorizado)) {
+      const data = await apiPost(backendUrl, "ping"); // 👈 Uso CORRECTO: solo acción y body (vacío)
+      // const resp = await fetch(`${activeBackend.url}?accion=ping&token=${authToken}`);
+      // const data = await resp.json();
 
-        // Refrescamos los datos del usuario (rol, permisos) desde el token
-        setUser((prev) => ({
-          ...prev, // Mantiene datos que no estén en el token (si los hubiera)
-          correo: data.correo,
-          nombre: data.nombre,
-          picture: data.picture,
-          rol: data.rol,
-          permisos: data.permisos,
-        }));
-        setAuthenticated(true);
-        return true;
+        // Si el backend dice "ok", el token es válido
+        if (data && (data.status === "ok" || data.autorizado)) {
 
-      } else {
-        // El backend rechazó el token (expirado, inválido)
-        if (authenticated) {
-          showToast(data.mensaje || "⚠️ Tu sesión ha expirado.", "warning", 4000, "Autenticación");
+            // ⭐ CAMBIO CLAVE: Si el backend envía un token nuevo, lo guardamos (RENOVACIÓN)
+            if (data.token && data.token !== authToken) {
+                setAuthToken(data.token);
+
+                persistSession(data.token, {
+                    correo: data.correo,
+                    nombre: data.nombre,
+                    picture: data.picture,
+                    rol: data.rol,
+                    permisos: data.permisos,
+                });
+                console.log("Token de sesión renovado por el backend.");
+            }
+
+            // Refrescamos los datos del usuario (ya sea con o sin renovación de token)
+            setUser((prev) => ({
+                ...prev,
+                correo: data.correo,
+                rol: data.rol,
+                permisos: data.permisos,
+                // Si tienes más campos en el payload, añádelos aquí.
+            }));
+            setAuthenticated(true);
+            return true;
+        } else {
+            // El backend rechazó el token (expirado, inválido)
+            if (authenticated) {
+                showToast(data.mensaje || "⚠️ Tu sesión ha expirado.", "warning", 4000, "Autenticación 166");
+            }
+            logout();
+            return false;
         }
-        logout();
-        return false;
-      }
     } catch (err) {
-      // Error de red o similar
-      console.log("auth184 (verifyToken)", err.message);
-      showToast("⚠️ Error de conexión. No se pudo verificar la sesión.", "warning", 4000, "Autenticación");
-      logout(); // Asumimos lo peor y cerramos sesión
-      return false;
+        if (err.name !== "AuthRequiredError") {
+            console.log("auth184 (verifyToken) Error de red/interno:", err.message);
+            showToast("⚠️ Error de conexión o interno. No se pudo verificar la sesión.", "warning", 4000, "Autenticación 174");
+        }
+        return false;
     }
-  }, [authToken, activeBackend, logout, showToast, authenticated]);
+}, [authToken, activeBackend, logout, showToast, authenticated, persistSession, backendUrl, user]);
+
 
   // 🧠 Verificar token automáticamente al cargar (una vez)
   useEffect(() => {
-    if (authToken && !authenticated) {
-      verifyToken();
-    }
+      // Solo si el token fue cargado y no está autenticado (es decir, viene de localStorage)
+      if (authToken && !authenticated) {
+        // Usamos setTimeout para que se ejecute después de que todos los estados se hayan asentado
+        const timer = setTimeout(() => {
+          verifyToken();
+        }, 50); // Pequeño delay de 50ms para permitir que el logout se complete
+
+        return () => clearTimeout(timer);
+      }
   }, [authToken, authenticated, verifyToken]);
 
   // ⏳ Revalidar token cada cierto tiempo (5 min)
