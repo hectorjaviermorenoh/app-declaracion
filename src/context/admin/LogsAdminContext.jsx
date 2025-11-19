@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { useBackends } from "../BackendsContext";
 import { apiGet, apiPost } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
 
@@ -9,8 +8,6 @@ const LogsAdminContext = createContext(null);
 // Provider
 export function LogsAdminProvider({ children }) {
 
-  const { activeBackend } = useBackends(); // 👈 obtenemos backend activo
-  const backendUrl = activeBackend?.url || null;
   const { showToast } = useToast();
 
   const [logs, setLogs] = useState([]);
@@ -18,11 +15,10 @@ export function LogsAdminProvider({ children }) {
 
   // 🔹 GET: obtener todos los logs
   const getDatos = useCallback(async () => {
-    if (!backendUrl) return;
     setLoading(true);
 
     try {
-      const response = await apiGet(backendUrl, "getLogs");
+      const response = await apiGet("getLogs");
       if (response.status === "ok") {
         setLogs(response.logs || []);
         showToast(response.mensaje || "📜 Logs cargados correctamente", "info", 2000, "LogsAdmin");
@@ -38,15 +34,14 @@ export function LogsAdminProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
   // 🔹 POST: limpiar logs antiguos (mantiene los 10 más recientes)
   const clearDatos = useCallback(async () => {
-    if (!backendUrl) return;
     setLoading(true);
 
     try {
-      const response = await apiPost(backendUrl, "limpiarLogsAntiguos");
+      const response = await apiPost("limpiarLogsAntiguos");
       if (response.status === "ok") {
         showToast(response.mensaje || "🧹 Logs limpiados correctamente", "success", 3000, "LogsAdmin");
         await getDatos(); // 👈 opcional: vuelve a cargar los logs actualizados
@@ -62,7 +57,7 @@ export function LogsAdminProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast, getDatos]);
+  }, [showToast, getDatos]);
 
 
 

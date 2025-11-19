@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { useBackends } from "../BackendsContext";
 import { apiGet, apiPost, getAuthToken  } from "../../utils/apiClient";
 import { useToast } from "../ToastContext";
 
 const ConfigAdminContext = createContext();
 
 export const ConfigAdminProvider = ({ children }) => {
-  const { activeBackend } = useBackends();
-  const backendUrl = activeBackend?.url || null;
-  const { showToast } = useToast();
 
+  const { showToast } = useToast();
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,10 +14,9 @@ export const ConfigAdminProvider = ({ children }) => {
    * ⚙️ Obtener configuración
    *******************************/
   const getConfig = useCallback(async () => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
-      const response = await apiGet(backendUrl, "getConfig");
+      const response = await apiGet("getConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
         showToast(response.mensaje || "⚙️ Configuración cargada correctamente", "info", 2000, "ConfigAdmin");
@@ -33,16 +29,15 @@ export const ConfigAdminProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
   /*******************************
    * 💾 Actualizar configuración
    *******************************/
   const updateConfig = async (nuevaConfig) => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
-      const response = await apiPost(backendUrl, "updateConfig", nuevaConfig);
+      const response = await apiPost("updateConfig", nuevaConfig);
       if (response.status === "ok") {
         setConfig(response.datos || nuevaConfig);
         showToast(response.mensaje || "✅ Configuración actualizada correctamente", "success", 2000, "ConfigAdmin");
@@ -62,11 +57,9 @@ export const ConfigAdminProvider = ({ children }) => {
    * 🧨 Reinicializar sistema forzado (Nuevo)
    *******************************/
   const reinicializarSistemaForzado = async (confirmar, borrarCarpetas = false) => {
-    if (!backendUrl) return { status: "error", mensaje: "Backend no configurado" };
-
     setLoading(true);
     try {
-      const response = await apiPost(backendUrl, "inicializarForzado", {
+      const response = await apiPost("inicializarForzado", {
         confirmar,           // debe ser "INICIALIZAR"
         borrarCarpetas,      // true o false
       });
@@ -91,10 +84,9 @@ export const ConfigAdminProvider = ({ children }) => {
 
 
   const generarBackup = async () => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
-      const response = await apiPost(backendUrl, "generarBackupZIP", {});
+      const response = await apiPost("generarBackupZIP", {});
 
       if (response.status === "ok" && response.blob) {
         showToast("✅ Backup generado correctamente", "success", 3000, "ConfigAdmin");

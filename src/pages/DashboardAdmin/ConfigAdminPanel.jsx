@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import { Button, Form, InputGroup, Table, Spinner, Row, Col } from "react-bootstrap";
-// import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 
 export const ConfigAdminPanel = () => {

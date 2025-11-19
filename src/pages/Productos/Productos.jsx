@@ -3,38 +3,26 @@ import { Container, Row, Col, Card, Button, Toast, ToastContainer } from "react-
 import UploadModal from "../../components/Productos/UploadModal/UploadModal";
 import { useToast } from "../../context/ToastContext";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
-
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
-// import AddProductoModal from "../../components/AddProductoModal/AddProductoModal";
 import AddProductoModal from "../../components/Modals/AddProductoModal/AddProductoModal";
-
-// import DeleteProductoModal from "../../components/DeleteProductoModal/DeleteProductoModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
-
-import { useBackends } from "../../context/BackendsContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { confirmarAccion } from "../../utils/alerts.js";
 import "./Productos.scss";
 
 export default function Productos() {
 
-  const { activeBackend, loading: backendsLoading } = useBackends();
   const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo, deleteProducto  } = useProductos();
-
   const { showToast } = useToast();
-
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
-
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [archivo, setArchivo] = useState(null);
   const [anioSeleccionado, setAnioSeleccionado] = useState("");
   const [showTitle, setshowTitle] = useState("");
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const [productoOrigen, setProductoOrigen] = useState(null);
 
 
@@ -67,12 +55,8 @@ export default function Productos() {
 
   // ✅ carga inicial
   useEffect(() => {
-    if (!backendsLoading && !activeBackend ) {
-      showToast("⚠️ No hay URL configurada para el backend.", "info", 2000, "Productos");
-      return;
-    }
     refreshProductos(); // ahora lo hace el contexto
-  }, [activeBackend, refreshProductos]);
+  }, [refreshProductos]);
 
   // abrir modal subir/replace
   const handleUpload = (producto) => {

@@ -1,3 +1,5 @@
+import { getBackendURLGlobal } from "../context/backendURLGlobal";
+
 // src/utils/apiClient.js
 const ENABLE_LOGS = true;
 const AUTH_STORAGE_KEY = "auth_session";
@@ -52,7 +54,10 @@ async function handleResponse(resp) {
   return data;
 }
 
-export async function apiGet(backendUrl, accion, params = {}) {
+export async function apiGet(accion, params = {}) {
+
+  const backendUrl = getBackendURLGlobal();
+
   if (!backendUrl) throw new Error("Backend no configurado");
 
   const token = getAuthToken();
@@ -72,7 +77,10 @@ export async function apiGet(backendUrl, accion, params = {}) {
   }
 }
 
-export async function apiPost(backendUrl, accion, body = {}) {
+export async function apiPost(accion, body = {}) {
+
+  const backendUrl = getBackendURLGlobal();
+
   if (!backendUrl) throw new Error("Backend no configurado");
 
   const token = getAuthToken();

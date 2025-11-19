@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { setBackendURLGlobal } from "./backendURLGlobal"; // ⬅ importante
 
 const STORAGE_KEY = "backends_config";
 
@@ -7,7 +8,7 @@ const BackendsContext = createContext();
 export function BackendsProvider({ children }) {
   const [backends, setBackends] = useState([]);
   const [activeBackend, setActiveBackend] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false); // 👈 agregado
+  const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,32 +23,34 @@ export function BackendsProvider({ children }) {
       }
     }
     setIsLoaded(true);
-    setLoading(false); // ✅ ya terminó la carga inicial
-
+    setLoading(false);
   }, []);
 
-  // 🔹 Guardar en localStorage al cambiar (solo si ya cargamos)
   useEffect(() => {
-    if (!isLoaded) return; // 👈 evita guardar en frío
+    if (!isLoaded) return;
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ backends, active: activeBackend })
     );
   }, [backends, activeBackend, isLoaded]);
 
+  // 🔥 actualizar apiClient.js
+  useEffect(() => {
+    if (activeBackend?.url) {
+      setBackendURLGlobal(activeBackend.url);
+    }
+  }, [activeBackend]);
 
   const addBackend = (alias, url, avatar = null) => {
     if (!alias?.trim() || !url?.trim()) {
       throw new Error("Alias y URL son obligatorios");
     }
 
-    // evitar duplicados por alias
     if (backends.some((b) => b.alias === alias.trim())) {
       throw new Error(`Ya existe un backend con alias "${alias}"`);
     }
 
     const newBackend = {
-      // id: Date.now(),
       id: crypto.randomUUID(),
       alias: alias.trim(),
       url: url.trim(),
@@ -58,14 +61,11 @@ export function BackendsProvider({ children }) {
     if (!activeBackend) setActiveBackend(newBackend);
   };
 
-
-  // ❌ Eliminar backend
   const deleteBackend = (alias) => {
     setBackends((prev) => prev.filter((b) => b.alias !== alias));
     if (activeBackend?.alias === alias) setActiveBackend(null);
   };
 
-  // ✅ Seleccionar backend activo
   const setActiveByAlias = (alias) => {
     const backend = backends.find((b) => b.alias === alias);
     if (backend) setActiveBackend(backend);

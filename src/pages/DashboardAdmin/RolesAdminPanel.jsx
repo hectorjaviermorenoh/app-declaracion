@@ -6,21 +6,12 @@ import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/Confi
 
 
 const RolesAdminPanel = () => {
-  const {
-    roles,
-    funcionesDisponibles,
-    getDatos,
-    addDato,
-    updateDato,
-    deleteDato,
-    loading,
-  } = useRolesAdmin();
+  const {roles, funcionesDisponibles, getDatos, addDato, updateDato, deleteDato, loading,} = useRolesAdmin();
 
   const [showModal, setShowModal] = useState(false);
   const [nuevoRol, setNuevoRol] = useState("");
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
   const [rolEditando, setRolEditando] = useState(null);
-
   const [selectedRol, setSelectedRol] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 

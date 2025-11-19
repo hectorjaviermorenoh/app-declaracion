@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useBackends } from "./BackendsContext";
 import { apiGet, apiPost, getAuthToken  } from "../utils/apiClient.js";
 import { useToast } from "../context/ToastContext";
 
@@ -7,8 +6,6 @@ import { useToast } from "../context/ToastContext";
 const DatosTributariosContext = createContext(null);
 
 export function DatosTributariosProvider({ children }) {
-  const { activeBackend } = useBackends();
-  const backendUrl = activeBackend?.url || null;
   const { showToast } = useToast();
 
   const [datos, setDatos] = useState([]);
@@ -16,11 +13,9 @@ export function DatosTributariosProvider({ children }) {
 
   // 🟢 Cargar todos los datos tributarios 579 230 1327 const roles = leerJSON(JSON_ROLES);
   const getDatos = useCallback(async () => {
-    if (!backendUrl) return { ok: false, mensaje: "Configure URL del backend" };
-
     setLoading(true);
     try {
-      const data = await apiGet(backendUrl, "getDatosTributarios");
+      const data = await apiGet("getDatosTributarios");
       console.log("datosTributarios 23", data)
       if (data.status === "ok") {
         setDatos(data.data || []);
@@ -33,7 +28,7 @@ export function DatosTributariosProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl]);
+  }, []);
 
 
 
@@ -74,13 +69,13 @@ export function DatosTributariosProvider({ children }) {
         valor,
       };
       return runWithRefresh(
-        () => apiPost(backendUrl, "addDatoTributario", payload),
+        () => apiPost("addDatoTributario", payload),
         "✅ Guardado correctamente",
         "❌ Error al guardar",
         "addDato"
       );
     },
-    [backendUrl, runWithRefresh]
+    [runWithRefresh]
   );
 
   // ✏️ Actualizar
@@ -91,37 +86,37 @@ export function DatosTributariosProvider({ children }) {
       if (orden !== undefined) payload.orden = orden;
 
       return runWithRefresh(
-        () => apiPost(backendUrl, "updateDatoTributario", payload),
+        () => apiPost("updateDatoTributario", payload),
         "✅ Actualizado correctamente",
         "❌ Error al actualizar",
         "updateDato"
       );
     },
-    [backendUrl, runWithRefresh]
+    [runWithRefresh]
   );
 
   // 🗑️ Eliminar
   const deleteDato = useCallback(
     (id) =>
       runWithRefresh(
-        () => apiPost(backendUrl, "deleteDatoTributario", { id }),
+        () => apiPost("deleteDatoTributario", { id }),
         "✅ Eliminado correctamente",
         "❌ Error al eliminar",
         "deleteDato"
       ),
-    [backendUrl, runWithRefresh]
+    [runWithRefresh]
   );
 
   // ↕️ Mover (subir/bajar)
   const moveDato = useCallback(
     (id, direction) =>
       runWithRefresh(
-        () => apiPost(backendUrl, "moveDatoTributario", { id, direction }),
+        () => apiPost("moveDatoTributario", { id, direction }),
         "↕️ Orden cambiado",
         "❌ Error al mover",
         "moveDato"
       ),
-    [backendUrl, runWithRefresh]
+    [runWithRefresh]
   );
 
   // 🔄 Carga inicial o cambio de backend
@@ -132,7 +127,7 @@ export function DatosTributariosProvider({ children }) {
       if (!token) return;
 
       getDatos();
-  }, [backendUrl, getDatos]);
+  }, [getDatos]);
 
   // 🎯 Exportar valores
   return (

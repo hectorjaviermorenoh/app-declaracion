@@ -1,27 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useBackends } from "../BackendsContext";
 import { apiGet, apiPost, getAuthToken } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
 
 const UsuariosAdminContext = createContext();
 
 export const UsuariosAdminProvider = ({ children }) => {
-  const { activeBackend } = useBackends();
-  const backendUrl = activeBackend?.url || null;
   const { showToast } = useToast();
-
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [rolesDisponibles, setRolesDisponibles] = useState([]);
 
   /*******************************
    * 📘 Obtener roles disponibles
    *******************************/
   const getRoles = useCallback(async () => {
-    if (!backendUrl) return;
     try {
-      const response = await apiGet(backendUrl, "getRoles");
+      const response = await apiGet("getRoles");
       if (response.status === "ok") {
         setRolesDisponibles(response.data || []);
       } else {
@@ -31,16 +25,15 @@ export const UsuariosAdminProvider = ({ children }) => {
       console.error("❌ Error al cargar roles:", err);
       showToast("❌ Error de conexión al obtener roles.", "danger", 4000, "UsuariosAdmin");
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
   /*******************************
    * 📋 Obtener lista de usuarios
    *******************************/
   const getDatos = useCallback(async () => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
-      const response = await apiGet(backendUrl, "getUsuarios");
+      const response = await apiGet("getUsuarios");
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || "📜 Usuarios cargados correctamente.", "info", 2000, "UsuariosAdmin");
@@ -53,13 +46,12 @@ export const UsuariosAdminProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
   /*******************************
    * ➕ Crear nuevo usuario
    *******************************/
   const addDato = async (nuevoUsuario) => {
-    if (!backendUrl) return;
     if (!nuevoUsuario?.correo || !nuevoUsuario?.nombre || !nuevoUsuario?.rol) {
       return showToast("⚠️ Todos los campos son obligatorios (correo, nombre, rol).", "warning", 4000, "UsuariosAdmin");
     }
@@ -72,7 +64,7 @@ export const UsuariosAdminProvider = ({ children }) => {
         rol: nuevoUsuario.rol,
       };
 
-      const response = await apiPost(backendUrl, "addUsuario", payload);
+      const response = await apiPost("addUsuario", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || "✅ Usuario creado correctamente.", "success", 2000, "UsuariosAdmin");
@@ -91,11 +83,10 @@ export const UsuariosAdminProvider = ({ children }) => {
    * ✏️ Actualizar usuario
    *******************************/
   const updateDato = async (correo, datosActualizados) => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
       const payload = { correo, ...datosActualizados };
-      const response = await apiPost(backendUrl, "updateUsuario", payload);
+      const response = await apiPost("updateUsuario", payload);
 
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
@@ -115,11 +106,10 @@ export const UsuariosAdminProvider = ({ children }) => {
    * 🔄 Activar / Desactivar usuario
    *******************************/
   const toggleActivo = async (correo, activo) => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
       const payload = { correo, activo };
-      const response = await apiPost(backendUrl, "toggleUsuarioActivo", payload);
+      const response = await apiPost("toggleUsuarioActivo", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || `🔁 Estado de "${correo}" actualizado.`, "success", 2000, "UsuariosAdmin");
@@ -138,11 +128,10 @@ export const UsuariosAdminProvider = ({ children }) => {
    * 🗑️ Eliminar usuario
    *******************************/
   const deleteDato = async (correo) => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
       const payload = { correo };
-      const response = await apiPost(backendUrl, "deleteUsuario", payload);
+      const response = await apiPost("deleteUsuario", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || `🗑️ Usuario "${correo}" eliminado correctamente.`, "success", 3000, "UsuariosAdmin");

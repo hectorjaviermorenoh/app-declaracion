@@ -5,7 +5,7 @@ import Home from './pages/Home/Home'
 import AppNavbar from './components/Navbar/Navbar'
 import Productos from "./pages/Productos/Productos";
 import DatosTributarios from "./pages/DatosTributarios/DatosTributarios";
-import ArchivosPorAnio from "./pages/ArchivosPorAnio/ArchivosPorAnio";
+import Contador from "./pages/Contador/Contador";
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
 
@@ -19,7 +19,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/productos" element={<Productos />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
-          <Route path="/contador" element={<ArchivosPorAnio />} />
+          <Route path="/contador" element={<Contador />} />
           <Route path="/admin" element={<DashboardAdmin />} />
         </Routes>
       </Container>
