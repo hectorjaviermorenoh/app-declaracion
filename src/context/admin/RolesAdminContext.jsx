@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useBackends } from "../BackendsContext";
 import { apiGet, apiPost, getAuthToken } from "../../utils/apiClient.js";
 import { useToast } from "../ToastContext";
 
@@ -7,8 +6,6 @@ import { useToast } from "../ToastContext";
 const RolesAdminContext = createContext();
 
 export const RolesAdminProvider = ({ children }) => {
-  const { activeBackend } = useBackends();
-  const backendUrl = activeBackend?.url || null;
   const { showToast } = useToast();
 
   const [roles, setRoles] = useState([]);
@@ -19,9 +16,9 @@ export const RolesAdminProvider = ({ children }) => {
    * 📘 Obtener funciones del backend
    *******************************/
   const getFunciones = useCallback(async () => {
-    if (!backendUrl) return;
+
     try {
-      const response = await apiGet(backendUrl, "getFuncionesLogicaNegocio");
+      const response = await apiGet("getFuncionesLogicaNegocio");
       if (response.status === "ok") {
         setFuncionesDisponibles(response.datos || []);
       } else {
@@ -31,13 +28,12 @@ export const RolesAdminProvider = ({ children }) => {
       console.error("❌ Error al Cargar Funciones", err);
       showToast("❌ Error al Cargar Funciones", "danger", 4000, "RolesAdmin");
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
   const getDatos = useCallback(async () => {
-    if (!backendUrl) return;
     setLoading(true);
     try {
-      const response = await apiGet(backendUrl, "getRoles");
+      const response = await apiGet("getRoles");
       if (response.status === "ok") {
         setRoles(response.data || []);
         showToast(response.mensaje || "📜 Roles cargados correctamente", "info", 2000, "RolesAdmin");
@@ -50,11 +46,10 @@ export const RolesAdminProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [backendUrl, showToast]);
+  }, [showToast]);
 
 
   const addDato = async (nuevoRol, permisosSeleccionados) => {
-    if (!backendUrl) return;
     if (!nuevoRol) return showToast("⚠️ Debe ingresar un nombre para el rol", "warning", 4000, "AdminRoles");
     setLoading(true);
     try {
@@ -63,7 +58,7 @@ export const RolesAdminProvider = ({ children }) => {
         rol: nuevoRol,
         permisos: permisosSeleccionados || [],
       };
-      const response = await apiPost(backendUrl, "addRol", payload)
+      const response = await apiPost("addRol", payload)
       if (response.status === "ok") {
         showToast(response.mensaje || "✅ Rol creado correctamente.", "success", 2000, "RolesAdmin");
         setRoles(response.datos || []);
@@ -79,7 +74,6 @@ export const RolesAdminProvider = ({ children }) => {
   };
 
   const updateDato = async (rol, permisosActualizados) => {
-    if (!backendUrl) return;
     setLoading(true);
 
     try {
@@ -87,7 +81,7 @@ export const RolesAdminProvider = ({ children }) => {
         rol,
         permisos: permisosActualizados,
       };
-      const response = await apiPost(backendUrl, "updateRol", payload)
+      const response = await apiPost("updateRol", payload)
       if (response.status === "ok") {
         showToast(response.mensaje || `✅ Rol "${rol}" actualizado correctamente.`, "success", 2000, "RolesAdmin");
         setRoles(response.datos || []);
@@ -103,7 +97,6 @@ export const RolesAdminProvider = ({ children }) => {
   };
 
   const deleteDato = async (rol) => {
-    if (!backendUrl) return;
     setLoading(true);
 
     if (rol === "administrador") {
@@ -112,7 +105,7 @@ export const RolesAdminProvider = ({ children }) => {
 
     try {
             const payload = { rol };
-      const response = await apiPost(backendUrl, "deleteRol", payload)
+      const response = await apiPost("deleteRol", payload)
       if (response.status === "ok") {
         showToast(response.mensaje, "success", 3000, "RolesAdmin");
         setRoles(response.datos || []);

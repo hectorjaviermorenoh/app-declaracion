@@ -1,23 +1,18 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useBackends } from "../../context/BackendsContext";
-import { apiGet, getAuthToken } from "../../utils/apiClient.js";
-import { useToast } from "../../context/ToastContext";
-import "./ArchivosPorAnio.scss";
+import { useProductos } from "../../context/ProductosContext.jsx";
+import "./Contador.scss";
 
-function ArchivosPorAnio() {
+function Contador() {
 
-  const { activeBackend } = useBackends();
-  const backendUrl = activeBackend?.url || null;
+  const { loading, fetchArchivosPorAnio  } = useProductos();
 
-  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const currentYear = new Date().getFullYear();
   const [anio, setAnio] = useState(currentYear - 1);
   const [archivos, setArchivos] = useState([]);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     entidad: "",
@@ -25,39 +20,20 @@ function ArchivosPorAnio() {
     tipo: "",
   });
 
-
   const cargarArchivos = useCallback(async (anioSeleccionado) => {
-    if (!backendUrl) return;
-    setLoading(true);
     try {
-      const response = await apiGet(backendUrl, "getArchivosPorAnio", { anio: anioSeleccionado });
-      if (response.status === "ok") {
-        setArchivos(response.archivos || []);
-      } else {
-        showToast(response.mensaje || "⚠️ No se pudieron cargar los archivos.", "warning", 4000, "ArchivosPorAnio");
-        setArchivos([]);
-      }
+       const response = await fetchArchivosPorAnio(anioSeleccionado);
+       setArchivos(response || []);
     } catch (e) {
       console.error("❌ Error cargando archivos:", e);
-      showToast("❌ Error al conectar con el servidor", "danger", 4000, "ArchivosPorAnio");
-    } finally {
-      setLoading(false);
     }
-  }, [backendUrl, showToast]);
+  }, [fetchArchivosPorAnio]);
 
   useEffect(() => {
-    const token = getAuthToken();
-
-    if (!token) {
-      navigate("/", { replace: true });
-      return; // 🚫 detenemos aquí
-    }
-
     setFilters({ entidad: "", nombreProducto: "", tipo: "" });
     cargarArchivos(anio);
     setCheckingAuth(false); // ✅ ya verificamos token
   }, [anio, cargarArchivos, navigate]);
-
 
 
 
@@ -262,4 +238,4 @@ function ArchivosPorAnio() {
   );
 }
 
-export default ArchivosPorAnio;
+export default Contador;

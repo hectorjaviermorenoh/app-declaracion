@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import { Button, Form, InputGroup, Table, Spinner, Row, Col } from "react-bootstrap";
-// import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import { usePermisos } from "../../hooks/usePermisos.js";
+import NoPermiso from "../../components/NoPermiso/NoPermiso";
 
 export const ConfigAdminPanel = () => {
   const { config, getConfig, updateConfig, generarBackup, loading } = useConfigAdmin();
@@ -12,13 +13,17 @@ export const ConfigAdminPanel = () => {
   const [nuevoTipo, setNuevoTipo] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tipoAEliminar, setTipoAEliminar] = useState("");
+  const { puede } = usePermisos();
+  const puedeVerConfig = puede("getConfig");
 
   /*******************************
    * 🔄 Cargar configuración
    *******************************/
   useEffect(() => {
-    getConfig();
-  }, [getConfig]);
+    if(puedeVerConfig){
+      getConfig();
+    }
+  }, [getConfig, puedeVerConfig]);
 
   /*******************************
    * 📦 Sincronizar datos al cargar config
@@ -67,6 +72,8 @@ export const ConfigAdminPanel = () => {
     };
     await updateConfig(nuevaConfig);
   };
+
+  if (!puedeVerConfig) return <NoPermiso />;
 
   return (
     <div className="p-3">
