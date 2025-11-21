@@ -1,0 +1,19 @@
+.config-admin-page {
+  max-width: 1000px;
+
+  .card {
+    border-radius: 12px;
+  }
+
+  .shadow-inner-sm {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+  }
+
+  h3, h5 {
+    color: #0d6efd;
+  }
+
+  table td {
+    vertical-align: middle;
+  }
+}
