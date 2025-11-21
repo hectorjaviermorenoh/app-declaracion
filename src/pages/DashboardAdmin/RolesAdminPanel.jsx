@@ -3,6 +3,8 @@ import { useRolesAdmin } from "../../context/admin/RolesAdminContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import { usePermisos } from "../../hooks/usePermisos.js";
+import NoPermiso from "../../components/NoPermiso/NoPermiso";
 
 
 const RolesAdminPanel = () => {
@@ -14,14 +16,18 @@ const RolesAdminPanel = () => {
   const [rolEditando, setRolEditando] = useState(null);
   const [selectedRol, setSelectedRol] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { puede } = usePermisos();
+  const puedeVerRoles = puede("getRoles");
 
 
   /******************************
    * 🔄 Cargar roles al abrir
    ******************************/
   useEffect(() => {
-    getDatos();
-  }, [getDatos]);
+    if(puedeVerRoles){
+      getDatos();
+    }
+  }, [getDatos, puedeVerRoles]);
 
   /******************************
    * 🧩 Crear o actualizar rol
@@ -70,6 +76,9 @@ const RolesAdminPanel = () => {
       setPermisosSeleccionados(funcionesDisponibles);
     }
   };
+
+  // Ahora sí retornar condicional
+  if (!puedeVerRoles) return <NoPermiso />;
 
   return (
     <div className="p-3">

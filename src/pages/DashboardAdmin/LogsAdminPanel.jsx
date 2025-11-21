@@ -3,17 +3,27 @@ import React, { useState, useEffect } from "react";
 import { Button, Table, Spinner } from "react-bootstrap";
 import { useLogsAdmin } from "../../context/admin/LogsAdminContext";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import { usePermisos } from "../../hooks/usePermisos.js";
+import NoPermiso from "../../components/NoPermiso/NoPermiso";
 import "./Styles/LogsAdminPanel.scss";
 
 export function LogsAdminPanel() {
+
+  const { puede } = usePermisos();
+  const puedeVerLogs = puede("getLogs");
 
   const { logs, getDatos, clearDatos, loading } = useLogsAdmin();
   const [showClearModal, setShowClearModal] = useState(false);
 
   // 🔹 Cargar logs al montar
   useEffect(() => {
-    getDatos();
-  }, [getDatos]);
+    if(puedeVerLogs) {
+      getDatos();
+    }
+  }, [getDatos, puedeVerLogs]);
+
+  // Ahora sí retornar condicional
+  if (!puedeVerLogs) return <NoPermiso />;
 
   return (
     <div className="p-4">

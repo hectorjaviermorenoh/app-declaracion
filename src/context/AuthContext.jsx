@@ -94,6 +94,9 @@ export function AuthProvider({ children }) {
 
       const data = await resp.json();
 
+      console.log("user", data.user.permisos);
+
+
       // Si el backend nos rechaza (token G inválido, usuario no activo, etc.)
       if (!data || data.status !== "ok" || !data.token || !data.user) {
         handleFail(data.mensaje || "❌ Error de autenticación desde el backend");

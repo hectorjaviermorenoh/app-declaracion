@@ -54,7 +54,6 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "getProductos",
   "getDatosTributarios",
   "getLogs",
-  "getArchivosPorAnio",
   "getProductosPorArchivo",
 
   // --- POST ---
@@ -92,11 +91,8 @@ const FUNCIONES_GENERALES = [
   "normalizarTexto",
   "normalizarNombreArchivo",
   "toggleUsuarioActivo",
-  "inicializarSistema"
-  // "copiarCarpetaRecursiva",
-  // "copiarCarpetaRecursivo",
-  // "obtenerBlobsDeCarpeta",
-  // "obtenerBlobsConRuta"
+  "inicializarSistema",
+  "getArchivosPorAnio"
 
 ];
 
@@ -300,9 +296,6 @@ function verificarTokenYAutorizar(token) {
     return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
-
-
-
 function validarPermiso(usuario, accion) {
   // 🚫 Usuario no autenticado
   if (!usuario || !usuario.autorizado) return false;
@@ -352,8 +345,8 @@ function generarTokenPropio(usuarioInfo) {
     
     // 💡 Tiempos de vida (iat = issued at, exp = expiration)
     iat: Math.floor(Date.now() / 1000),
-    // exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
-    exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 8 horas
+    exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
+    // exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
   };
   
   // Codificamos el payload (String -> Byte[] -> Base64WebSafe)
@@ -479,61 +472,6 @@ function manejarError(err, contexto, usuario) {
   });
 }
 
-
-// function generarBackupZIP(usuario) {
-//   try {
-//     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
-//     const fecha = new Date();
-//     // Generar un nombre de archivo dinámico
-//     const nombreZip = `Backup_Declaracion_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}.zip`;
-
-//     const blobs = [];
-//     // Archivos raíz
-//     const archivos = carpetaPrincipal.getFiles();
-//     while (archivos.hasNext()) {
-//       blobs.push(archivos.next().getBlob());
-//     }
-//     // Subcarpetas de primer nivel
-//     const carpetas = carpetaPrincipal.getFolders();
-//     while (carpetas.hasNext()) {
-//       const carpeta = carpetas.next();
-//       const subArchivos = carpeta.getFiles();
-//       while (subArchivos.hasNext()) {
-//         const archivo = subArchivos.next();
-//         // Mantener jerarquía de carpetas dentro del ZIP
-//         blobs.push(archivo.getBlob().setName(`${carpeta.getName()}/${archivo.getName()}`));
-//       }
-//     }
-
-//     const blobZip = Utilities.zip(blobs, nombreZip);
-    
-//     // ⭐ CAMBIO CLAVE: Codificar el blob a Base64
-//     const base64Data = Utilities.base64Encode(blobZip.getBytes());
-    
-//     // Guardar el archivo en Drive (si lo necesitas)
-//     const archivoZip = carpetaPrincipal.createFile(blobZip);
-
-//     // Elimina automáticamente cualquier archivo .zip previo en esa carpeta antes de generar uno nuevo:
-//     const existingZips = carpetaPrincipal.getFilesByType(MimeType.ZIP);
-//     while (existingZips.hasNext()) {
-//       existingZips.next().setTrashed(true);
-//     }
-
-//     registrarLog("backup", usuario.correo, `Se generó un backup: ${archivoZip.getName()}`);
-
-//     return {
-//       status: "ok",
-//       base64: base64Data, // Retorna la cadena Base64
-//       mimeType: blobZip.getContentType(), // application/zip
-//       nombreArchivo: nombreZip,
-//       mensaje: "✅ Backup generado con éxito"
-//     };
-//   } catch (err) {
-//     return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
-//   }
-// }
-
-
 function generarBackupZIP(usuario) {
   try {
     const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
@@ -581,8 +519,6 @@ function generarBackupZIP(usuario) {
     return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
   }
 }
-
-
 
 /******************************
  * FUNCIONES AUXILIARES
@@ -814,83 +750,6 @@ function limpiarCarpetas() {
 /******************************
  * MÉTODO DOGET
  ******************************/
-// function doGet(e) {
-//   try {
-//     const accion = e.parameter.accion;
-
-//     const token = e.parameter.token || (data && data.token);
-//     const usuario = verificarTokenYAutorizar(token);
-//     if (!usuario.autorizado) {
-//       return respuestaJSON({ autorizado: false, mensaje: usuario.mensaje });
-//     }
-
-//     if (!validarPermiso(usuario, accion)) {
-//       return respuestaJSON({ autorizado: false, mensaje: "No tienes permiso para ejecutar " + accion });
-//     }
-
-//     switch (accion) {
-//       case "ping":
-//       return ContentService.createTextOutput(
-//         JSON.stringify({
-//           status: "ok",
-//           mensaje: "API funcionando",
-//           autorizado: true,
-//           correo: usuario.correo,
-//           nombre: usuario.nombre,
-//           picture: usuario.picture,
-//           rol: usuario.rol || "sin rol",
-//           permisos: usuario.permisos || [],
-//           activo: usuario.activo ?? true,
-//         })
-//       ).setMimeType(ContentService.MimeType.JSON);
-
-//       case "getConfig":
-//         return getConfig();
-//       case "getFuncionesLogicaNegocio":
-//         return getFuncionesLogicaNegocio();
-//       case "getUsuarios":
-//         return getUsuarios();
-//       case "getRoles":
-//         return getRoles();
-//       case "getProductos":
-//         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
-
-//       case "getDatosTributarios":
-//         return getDatosTributarios();
-
-//       case "getLogs":
-//         return getLogs();
-
-//       // --- 📌 Nuevo endpoint ArchivosPorAño ---
-//       case "getArchivosPorAnio":
-//         const anio = e.parameter.anio;
-//         if (!anio) {
-//           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
-//         }
-//         return getArchivosPorAnio(anio);
-
-//       // --- 📌 Nuevo endpoint ProductosPorArchivo ---
-//       case "getProductosPorArchivo":
-//         const archivoId = e.parameter.archivoId;
-//         if (!archivoId) {
-//           return respuestaJSON({ status: "error", mensaje: "Debe enviar archivoId" });
-//         }
-//         return getProductosPorArchivo(archivoId);
-
-//       default:
-//         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
-//     }
-
-//   } catch (err) {
-//     const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
-//     return manejarError(err, "doGet", correo);
-//   }
-// }
-
-
-/******************************
- * MÉTODO DOGET
- ******************************/
 function doGet(e) {
   try {
     const accion = e.parameter.accion;
@@ -982,135 +841,6 @@ function doGet(e) {
     return manejarError(err, "doGet", correo);
   }
 }
-/******************************
- * MÉTODO DOPOST
- ******************************/
-// function doPost(e) {
-//   try {
-//     let accion = "";
-//     let data = {};
-//     const isMultipart = e.files && Object.keys(e.files).length > 0;
-
-//     // 🟢 CAMBIO 1: primero detectamos si es multipart o JSON
-//     if (isMultipart) {
-//       // 📂 Caso form-data
-//       accion = e.parameter.accion || "";
-//       data = e.parameter; // aquí NO hay JSON, solo parámetros de formulario
-//     } else if (e.postData && e.postData.contents) {
-//       // 📦 Caso JSON
-//       try {
-//         data = JSON.parse(e.postData.contents);
-//       } catch (err) {
-//         return respuestaJSON({
-//           success: false,
-//           status: "error_json",
-//           mensaje: "❌ Error al parsear el cuerpo JSON: " + err.message,
-//         });
-//       }
-//       accion = data.accion || "";
-//     } else {
-//       return respuestaJSON({
-//         success: false,
-//         status: "sin_datos",
-//         mensaje: "❌ No se recibió ni JSON ni archivos en la solicitud",
-//         parametros: e.parameter || null,
-//       });
-//     }
-
-//     // 🟢 CAMBIO 2: ahora que 'data' ya existe, podemos buscar el token sin error
-//     const token = e.parameter.token || data.token;
-//     const usuario = verificarTokenYAutorizar(token);
-
-//     // 🟢 CAMBIO 3: validamos token y permisos DESPUÉS de tener acción y data
-//     if (!usuario.autorizado) {
-//       return respuestaJSON({
-//         autorizado: false,
-//         success: false,
-//         status: "token_invalido",
-//         mensaje: usuario.mensaje || "Token inválido o expirado",
-//       });
-//     }
-
-//     if (!validarPermiso(usuario, accion)) {
-//       return respuestaJSON({
-//         autorizado: false,
-//         success: false,
-//         status: "sin_permiso",
-//         mensaje: "No tienes permiso para ejecutar " + accion,
-//       });
-//     }
-
-//     // 🟢 CAMBIO 4: tu switch queda igual, sin tocar tu lógica existente
-//     switch (accion) {
-//       case "inicializarForzado":
-//         const confirmar = data.confirmar;
-//         const borrarCarpetas = data.borrarCarpetas === true || data.borrarCarpetas === "true";
-
-//         if (confirmar !== "INICIALIZAR") {
-//           return respuestaJSON({ status: "error", mensaje: "⚠️ Confirmación inválida, escriba INICIALIZAR" });
-//         }
-
-//         // 🟢 Solo el rol administrador puede inicializar
-//         if (usuario.rol !== "administrador") {
-//           return respuestaJSON({
-//             status: "sin_permiso",
-//             mensaje: "Solo el rol administrador puede reinicializar el sistema",
-//           });
-//         }
-
-//         const resultado = inicializarSistemaForzado(usuario, borrarCarpetas);
-//         return respuestaJSON({ ...resultado });
-
-//       case "subirArchivo":
-//         return subirArchivoProducto(e, isMultipart, usuario);
-//       case "subirArchivoFacturas":
-//         return subirArchivoFacturas(e, isMultipart, usuario);
-//       case "updateConfig":
-//         return updateConfig(data, usuario);
-//       case "generarBackupZIP":
-//         return respuestaJSON(generarBackupZIP(usuario));
-//       case "limpiarLogsAntiguos":
-//         return limpiarLogsAntiguos(usuario);
-//       case "addRol":
-//         return addRol(data, usuario);
-//       case "updateRol":
-//         return updateRol(data, usuario);
-//       case "deleteRol":
-//         return deleteRol(data, usuario);
-//       case "addUsuario":
-//         return addUsuario(data, usuario);
-//       case "toggleUsuarioActivo":
-//         return toggleUsuarioActivo(data, usuario);
-//       case "updateUsuario":
-//         return updateUsuario(data, usuario);
-//       case "deleteUsuario":
-//         return deleteUsuario(data, usuario);
-//       case "addProducto":
-//         return addProducto(data, usuario);
-//       case "deleteProducto":
-//         return deleteProducto(data.id, usuario);
-//       case "replaceArchivo":
-//         return replaceArchivo(data, usuario);
-//       case "inicializarSistema":
-//         return inicializarSistemaSeguro(data, usuario);
-//       case "addDatoTributario":
-//         return addDatoTributario(data, usuario);
-//       case "updateDatoTributario":
-//         return updateDatoTributario(data, usuario);
-//       case "deleteDatoTributario":
-//         return deleteDatoTributario(data, usuario);
-//       case "moveDatoTributario":
-//         return moveDatoTributario(data, usuario);
-//       default:
-//         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida" });
-//     }
-
-//   } catch (err) {
-//     const correo = (e && e.parameter && e.parameter.correo) || Session.getActiveUser().getEmail();
-//     return manejarError(err, "doPost", correo);
-//   }
-// }
-
 /******************************
  * MÉTODO DOPOST
  ******************************/

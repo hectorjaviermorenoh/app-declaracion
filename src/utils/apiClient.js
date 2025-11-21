@@ -39,20 +39,31 @@ async function handleResponse(resp) {
 
   const data = await resp.json();
 
-  // backend indica que la sesión/token no es válido
-  if (data.autorizado === false || data.status === "token_invalido" || data.status === "sin_permiso") {
+  // ⚠️ CASO 1: Token inválido → cerrar sesión
+  if (
+    data.status === "token_invalido" ||
+    data.autorizado === false && data.motivo === "token_invalido"
+  ) {
     const msg = data.mensaje || "Token inválido o sesión expirada";
-    notifyAuthRequired(msg);
+    notifyAuthRequired(msg);  // 👉 indica al sistema que debe cerrar sesión
     throw new AuthRequiredError(msg);
   }
 
-  // validar estructura de estado
+  // ⚠️ CASO 2: Usuario sin permiso → NO cerrar sesión
+  if (data.status === "sin_permiso") {
+    const msg = data.mensaje || "No tiene permiso para realizar esta acción";
+    if (ENABLE_LOGS) console.warn("⛔ Acción bloqueada por permisos:", msg);
+    throw new Error(msg);   // 👉 lanza error normal, NO AuthRequiredError
+  }
+
+  // ✔️ Caso normal: validar estado
   if (data.status && !["ok", "exists"].includes(data.status)) {
     throw new Error(data.mensaje || "Error en respuesta del servidor");
   }
 
   return data;
 }
+
 
 export async function apiGet(accion, params = {}) {
 

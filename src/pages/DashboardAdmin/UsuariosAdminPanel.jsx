@@ -4,6 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import { usePermisos } from "../../hooks/usePermisos.js";
+import NoPermiso from "../../components/NoPermiso/NoPermiso";
 
 const UsuariosAdminPanel = () => {
   const { usuarios, rolesDisponibles, getDatos, addDato, updateDato, toggleActivo, deleteDato, loading } = useUsuariosAdmin();
@@ -18,14 +20,18 @@ const UsuariosAdminPanel = () => {
   });
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { puede } = usePermisos();
+  const puedeVerUsuarios = puede("getUsuarios");
 
 
   /******************************
    * 🔄 Cargar usuarios al abrir
    ******************************/
   useEffect(() => {
-    getDatos();
-  }, [getDatos]);
+    if(puedeVerUsuarios) {
+      getDatos();
+    }
+  }, [getDatos, puedeVerUsuarios]);
 
   /******************************
    * 🧩 Crear o actualizar usuario
@@ -65,6 +71,10 @@ const UsuariosAdminPanel = () => {
   const handleToggleActivo = async (usuario) => {
     await toggleActivo(usuario.correo, !usuario.activo);
   };
+
+
+  // Ahora sí retornar condicional
+  if (!puedeVerUsuarios) return <NoPermiso />;
 
   return (
     <div className="p-3">
