@@ -5,6 +5,8 @@ import "./Contador.scss";
 
 function Contador() {
 
+  const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
+
   const { loading, fetchArchivosPorAnio  } = useProductos();
 
   const navigate = useNavigate();
@@ -19,6 +21,13 @@ function Contador() {
     nombreProducto: "",
     tipo: "",
   });
+
+  // 🔥 Controlar qué acordeón está abierto
+  const [openItem, setOpenItem] = useState(null);
+
+  const toggleOpen = (index) => {
+    setOpenItem(openItem === index ? null : index);
+  };
 
   const cargarArchivos = useCallback(async (anioSeleccionado) => {
     try {
@@ -155,84 +164,133 @@ function Contador() {
       ) : filteredArchivos.length === 0 ? (
         <p>No hay archivos para este año.</p>
       ) : (
-        <div className="table-responsive archivos-por-anio">
-          <table className="table table-bordered table-hover">
-            <thead className="table-light">
-              <tr>
-                <th className="thicon"></th>
-                <th>
-                  Entidad
-                  <select
-                    className="form-select form-select-sm mt-1"
-                    value={filters.entidad}
-                    onChange={(e) =>
-                      setFilters({ ...filters, entidad: e.target.value })
-                    }
-                  >
-                    <option value="">Todas</option>
-                    {entidades.map((ent) => (
-                      <option key={ent.value} value={ent.value}>
-                        {ent.label}
-                      </option>
-                    ))}
-                  </select>
-                </th>
 
-                <th>
-                  Nombre del producto
-                  <select
-                    className="form-select form-select-sm mt-1"
-                    value={filters.nombreProducto}
-                    onChange={(e) =>
-                      setFilters({ ...filters, nombreProducto: e.target.value })
-                    }
-                  >
-                    <option value="">Todos</option>
-                    {productos.map((prod) => (
-                      <option key={prod.value} value={prod.value}>
-                        {prod.label}
-                      </option>
-                    ))}
-                  </select>
-                </th>
+        <>
+          {!isMobile && (
+            <div className="table-responsive archivos-por-anio">
+              <table className="table table-bordered table-hover">
+                <thead className="table-light">
+                  <tr>
+                    <th className="thicon"></th>
+                    <th>
+                      Entidad
+                      <select
+                        className="form-select form-select-sm mt-1"
+                        value={filters.entidad}
+                        onChange={(e) =>
+                          setFilters({ ...filters, entidad: e.target.value })
+                        }
+                      >
+                        <option value="">Todas</option>
+                        {entidades.map((ent) => (
+                          <option key={ent.value} value={ent.value}>
+                            {ent.label}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
 
-                <th>
-                  Tipo
-                  <select
-                    className="form-select form-select-sm mt-1"
-                    value={filters.tipo}
-                    onChange={(e) =>
-                      setFilters({ ...filters, tipo: e.target.value })
-                    }
-                  >
-                    <option value="">Todos</option>
-                    {tipos.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </th>
+                    <th>
+                      Nombre del producto
+                      <select
+                        className="form-select form-select-sm mt-1"
+                        value={filters.nombreProducto}
+                        onChange={(e) =>
+                          setFilters({ ...filters, nombreProducto: e.target.value })
+                        }
+                      >
+                        <option value="">Todos</option>
+                        {productos.map((prod) => (
+                          <option key={prod.value} value={prod.value}>
+                            {prod.label}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
 
-                <th>Descripción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredArchivos.map((a) => (
-                <tr
+                    <th>
+                      Tipo
+                      <select
+                        className="form-select form-select-sm mt-1"
+                        value={filters.tipo}
+                        onChange={(e) =>
+                          setFilters({ ...filters, tipo: e.target.value })
+                        }
+                      >
+                        <option value="">Todos</option>
+                        {tipos.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+
+                    <th>Descripción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredArchivos.map((a) => (
+                    <tr
+                      key={a.registroId}
+                      onClick={() => window.open(a.link, "_blank")}
+                    >
+                      <td className="icono">{getFileIcon(a.nombreArchivo)}</td>
+                      <td>{a.entidad || "-"}</td>
+                      <td>{a.nombreProducto}</td>
+                      <td>{a.tipo || "-"}</td>
+                      <td>{a.descripcion || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {isMobile && (
+            <div className="accordion-mobile">
+              {filteredArchivos.map((a, idx) => (
+                <div
                   key={a.registroId}
-                  onClick={() => window.open(a.link, "_blank")}
+                  className="archivo-card"
                 >
-                  <td className="icono">{getFileIcon(a.nombreArchivo)}</td>
-                  <td>{a.entidad || "-"}</td>
-                  <td>{a.nombreProducto}</td>
-                  <td>{a.tipo || "-"}</td>
-                  <td>{a.descripcion || "-"}</td>
-                </tr>
+                  <div
+                    className="accordion-header"
+                    onClick={() => toggleOpen(idx)}
+                  >
+                    <span className="icono">{getFileIcon(a.nombreArchivo)}</span>
+
+                    <div className="ms-2 flex-grow-1">
+                      <div className="fw-bold">{a.entidad}</div>
+                      <div className="text-muted small">{a.nombreProducto}</div>
+                    </div>
+
+                    <span className="arrow">
+                      {openItem === idx ? "▲" : "▼"}
+                    </span>
+                  </div>
+
+                  {openItem === idx && (
+                    <div className="accordion-body">
+                      <p><strong>Entidad:</strong> {a.entidad}</p>
+                      <p><strong>Producto:</strong> {a.nombreProducto}</p>
+                      <p><strong>Tipo:</strong> {a.tipo}</p>
+                      <p><strong>Descripción:</strong> {a.descripcion || "-"}</p>
+
+                      <button
+                        className="btn btn-primary btn-sm w-100 mt-2"
+                        onClick={() => window.open(a.link, "_blank")}
+                      >
+                        📄 Abrir archivo
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )}
+        </>
+
       )}
     </div>
   );

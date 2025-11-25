@@ -22,6 +22,7 @@ const UsuariosAdminPanel = () => {
   const {
     usuarios,
     rolesDisponibles,
+    rolesErrorPermisos,
     getDatos,
     addDato,
     updateDato,
@@ -280,7 +281,10 @@ const UsuariosAdminPanel = () => {
               />
             </Form.Group>
 
-            <Form.Group>
+
+
+
+            {/* <Form.Group>
               <Form.Label>Rol</Form.Label>
               <Form.Select
                 value={nuevoUsuario.rol}
@@ -295,7 +299,40 @@ const UsuariosAdminPanel = () => {
                   </option>
                 ))}
               </Form.Select>
+            </Form.Group> */}
+
+
+            <Form.Group className="mb-3">
+              <Form.Label>Rol</Form.Label>
+
+              {rolesErrorPermisos ? (
+                <div className="alert alert-warning py-2">
+                  ⚠️ No tienes permiso para ver la lista de roles.
+                  <br />
+                  Contacta al usuario administrador.
+                </div>
+              ) : (
+                <Form.Select
+                  value={nuevoUsuario.rol}
+                  onChange={(e) =>
+                    setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
+                  }
+                >
+                  <option value="">Seleccionar rol...</option>
+                  {rolesDisponibles.map((r, i) => (
+                    <option key={i} value={r.rol}>
+                      {r.rol}
+                    </option>
+                  ))}
+                </Form.Select>
+              )}
             </Form.Group>
+
+
+
+
+
+
           </Form>
         </Modal.Body>
 

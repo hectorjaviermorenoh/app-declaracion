@@ -20,14 +20,17 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 768px) {
-  /* En móvil: mostrar tarjetas y ocultar tabla */
-  table {
-    display: none !important;
-  }
 
-  .usuarios-cards {
-    display: block;
+.usuarios-admin {
+  @media (max-width: 768px) {
+    table {
+      display: none !important;
+    }
+
+    .usuarios-cards {
+      display: block;
+    }
   }
 }
+
 

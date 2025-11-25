@@ -85,3 +85,51 @@
 // .icono {
 //   background-color: blue !important;
 // }
+
+// ***************************************************************
+
+
+/* ----- CARD / ACCORDION PARA CELULARES ----- */
+.accordion-mobile {
+  margin-top: 1rem;
+  display: block;
+
+  .archivo-card {
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid #e1e1e1;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  }
+
+  .accordion-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .icono {
+    font-size: 1.4rem;
+  }
+
+  .accordion-body {
+    padding-top: 10px;
+    font-size: 0.9rem;
+    border-top: 1px solid #eee;
+  }
+}
+
+/* 👉 Ocultar tabla en móvil */
+@media (max-width: 768px) {
+  .archivos-por-anio {
+    display: none !important;
+  }
+}
+
+/* 👉 Mostrar tabla en desktop */
+@media (min-width: 769px) {
+  .accordion-mobile {
+    display: none !important;
+  }
+}

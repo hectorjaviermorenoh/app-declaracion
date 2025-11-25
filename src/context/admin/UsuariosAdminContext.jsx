@@ -9,6 +9,7 @@ export const UsuariosAdminProvider = ({ children }) => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [rolesDisponibles, setRolesDisponibles] = useState([]);
+  const [rolesErrorPermisos, setRolesErrorPermisos] = useState(false);
 
   /*******************************
    * 📘 Obtener roles disponibles
@@ -18,11 +19,16 @@ export const UsuariosAdminProvider = ({ children }) => {
       const response = await apiGet("getRoles");
       if (response.status === "ok") {
         setRolesDisponibles(response.data || []);
+        setRolesErrorPermisos(false);
       } else {
+        setRolesDisponibles([]); // ← dejar vacío
+        setRolesErrorPermisos(true); // ← marcar que falló por permisos
         showToast(response.mensaje || "⚠️ No se pudieron cargar los roles.", "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
       console.error("❌ Error al cargar roles:", err);
+      setRolesDisponibles([]);
+      setRolesErrorPermisos(true);
       showToast("❌ Error de conexión al obtener roles.", "danger", 4000, "UsuariosAdmin");
     }
   }, [showToast]);
@@ -164,6 +170,7 @@ export const UsuariosAdminProvider = ({ children }) => {
       value={{
         usuarios,
         rolesDisponibles,
+        rolesErrorPermisos,
         loading,
         getDatos,
         addDato,
