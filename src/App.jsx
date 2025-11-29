@@ -6,6 +6,7 @@ import AppNavbar from './components/Navbar/Navbar'
 import Productos from "./pages/Productos/Productos";
 import DatosTributarios from "./pages/DatosTributarios/DatosTributarios";
 import Contador from "./pages/Contador/Contador";
+import Facturas from "./pages/Facturas/Facturas";
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/productos" element={<Productos />} />
           <Route path="/datos-tributarios" element={<DatosTributarios />} />
           <Route path="/contador" element={<Contador />} />
+          <Route path="/facturas" element={<Facturas />} />
           <Route path="/admin" element={<DashboardAdmin />} />
         </Routes>
       </Container>

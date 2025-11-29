@@ -4,6 +4,7 @@ import { HashRouter } from "react-router-dom";
 import { BackendsProvider } from "./context/BackendsContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ProductosProvider } from "./context/ProductosContext";
+import { FacturasProvider } from "./context/FacturasContext";
 import { DatosTributariosProvider } from "./context/DatosTributariosContext";
 import { AdminProvider } from "./context/admin/AdminProvider";
 import { ToastProvider } from "./context/ToastContext";
@@ -18,16 +19,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <ToastProvider>
         <BackendsProvider>
           <AuthProvider>
-            <ProductosProvider>
-              <DatosTributariosProvider>
-                <AdminProvider>
-                  <App />
-                </AdminProvider>
-              </DatosTributariosProvider>
-            </ProductosProvider>
+            <FacturasProvider>
+              <ProductosProvider>
+                  <DatosTributariosProvider>
+                    <AdminProvider>
+                      <App />
+                    </AdminProvider>
+                  </DatosTributariosProvider>
+              </ProductosProvider>
+            </FacturasProvider>
           </AuthProvider>
         </BackendsProvider>
       </ToastProvider>
     </HashRouter>
   </React.StrictMode>
 );
+
+

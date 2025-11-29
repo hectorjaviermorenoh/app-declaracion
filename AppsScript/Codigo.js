@@ -55,6 +55,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "getDatosTributarios",
   "getLogs",
   "getProductosPorArchivo",
+  "getTotalesFacturas",
 
   // --- POST ---
   "inicializarForzado",
@@ -825,6 +826,13 @@ function doGet(e) {
         }
         return getArchivosPorAnio(anio);
 
+      case "getFacturasPorAnio":
+        const anioF = e.parameter.anio;
+        if (!anioF) {
+          return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
+        }
+        return getFacturasPorAnio(anioF);
+
       case "getProductosPorArchivo":
         const archivoId = e.parameter.archivoId;
         if (!archivoId) {
@@ -978,6 +986,12 @@ function doPost(e) {
         return deleteDatoTributario(data, usuario);
       case "moveDatoTributario":
         return moveDatoTributario(data, usuario);
+      case "updateFactura":
+        return updateFactura(data, usuario);
+
+      case "deleteFactura":
+        return deleteFactura(data, usuario);
+
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backend post" });
     }
@@ -1743,18 +1757,21 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     // --- Registrar en base de datos ---
     let bddatos = leerJSON(JSON_BDD_FACTURAS);
 
+
     const registro = {
       registroId: "fac" + new Date().getTime() + Math.round(Math.random() * 10000),
       fileId: file.getId(),
       anio,
       entidad,
       descripcion,
-      valor,
+      valor: Number(valor),   // 👈 convertir a número
       metodoPago,
-      nombreArchivo: resultadoDrive.nuevoNombre, // ✅ usar resultadoDrive
-      link: resultadoDrive.link,                 // ✅ usar resultadoDrive
+      nombreArchivo: resultadoDrive.nuevoNombre,
+      link: resultadoDrive.link,
       fecha: new Date().toISOString(),
     };
+
+
 
     bddatos.push(registro);
     guardarJSON(JSON_BDD_FACTURAS, bddatos);
@@ -1910,6 +1927,116 @@ function getArchivosPorAnio(anio) {
   return respuestaJSON({ status: "ok", anio, archivos: resultado });
   
 }
+
+
+
+function getFacturasPorAnio(anio) {
+  let data = leerJSON(JSON_BDD_FACTURAS);
+
+  const filtrado = data.filter(f => String(f.anio) === String(anio));
+
+  return respuestaJSON({
+    status: "ok",
+    data: filtrado,
+  });
+}
+function updateFactura(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    let bddatos = leerJSON(JSON_BDD_FACTURAS);
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const { registroId, entidad, descripcion, valor, metodoPago } = data;
+
+    if (!registroId) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "❌ Se requiere el registroId para actualizar la factura."
+      });
+    }
+
+    const index = bddatos.findIndex(f => f.registroId === registroId);
+    if (index === -1) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: `❌ No se encontró la factura con ID ${registroId}.`
+      });
+    }
+
+    // --- Actualizar campos ---
+    if (entidad !== undefined) bddatos[index].entidad = entidad;
+    if (descripcion !== undefined) bddatos[index].descripcion = descripcion;
+    if (valor !== undefined) bddatos[index].valor = Number(valor);
+    if (metodoPago !== undefined) bddatos[index].metodoPago = metodoPago;
+
+    guardarJSON(JSON_BDD_FACTURAS, bddatos);
+
+    registrarLog("updateFactura", correoEjecutor, { registroId });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "✅ Factura actualizada correctamente.",
+      datos: bddatos[index]
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+function deleteFactura(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    let bddatos = leerJSON(JSON_BDD_FACTURAS);
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const { registroId } = data;
+
+    if (!registroId) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "❌ Se requiere el registroId para eliminar la factura."
+      });
+    }
+
+    const factura = bddatos.find(f => f.registroId === registroId);
+    if (!factura) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: `❌ No se encontró la factura con ID ${registroId}.`
+      });
+    }
+
+    // --- 1. Eliminar archivo en Drive ---
+    try {
+      const archivo = DriveApp.getFileById(factura.fileId);
+      archivo.setTrashed(true);
+    } catch (_) {
+      // Si no existe, no se cae
+    }
+
+    // --- 2. Eliminar registro ---
+    const nuevos = bddatos.filter(f => f.registroId !== registroId);
+    guardarJSON(JSON_BDD_FACTURAS, nuevos);
+
+    registrarLog("deleteFactura", correoEjecutor, { registroId });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "🗑️ Factura eliminada correctamente.",
+      datos: factura
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+
 function getProductosPorArchivo(fileId) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
