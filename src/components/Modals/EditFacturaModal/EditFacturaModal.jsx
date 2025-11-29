@@ -46,69 +46,71 @@ function EditFacturaModal({ show, onHide, factura, onUpdated }) {
   if (!factura) return null;
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>✏️ Editar factura</Modal.Title>
-      </Modal.Header>
+    <div className="edit-factura-modal">
+      <Modal show={show} onHide={onHide} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>✏️ Editar factura</Modal.Title>
+        </Modal.Header>
 
-      <Modal.Body>
-        <Form>
-          <Form.Group className="mb-3">
-            <Form.Label>Entidad</Form.Label>
-            <Form.Control
-              type="text"
-              name="entidad"
-              value={formData.entidad}
-              onChange={handleChange}
-              placeholder="Entidad"
-            />
-          </Form.Group>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Entidad</Form.Label>
+              <Form.Control
+                type="text"
+                name="entidad"
+                value={formData.entidad}
+                onChange={handleChange}
+                placeholder="Entidad"
+              />
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Descripción</Form.Label>
-            <Form.Control
-              type="text"
-              name="descripcion"
-              value={formData.descripcion}
-              onChange={handleChange}
-              placeholder="Descripción"
-            />
-          </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Descripción</Form.Label>
+              <Form.Control
+                type="text"
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+                placeholder="Descripción"
+              />
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Valor</Form.Label>
-            <Form.Control
-              type="number"
-              name="valor"
-              value={formData.valor}
-              onChange={handleChange}
-              placeholder="Ej: 25000"
-            />
-          </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Valor</Form.Label>
+              <Form.Control
+                type="number"
+                name="valor"
+                value={formData.valor}
+                onChange={handleChange}
+                placeholder="Ej: 25000"
+              />
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Método de pago</Form.Label>
-            <Form.Control
-              type="text"
-              name="metodoPago"
-              value={formData.metodoPago}
-              onChange={handleChange}
-              placeholder="Ej: Nequi, Daviplata, Tarjeta Crédito"
-            />
-          </Form.Group>
-        </Form>
-      </Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Método de pago</Form.Label>
+              <Form.Control
+                type="text"
+                name="metodoPago"
+                value={formData.metodoPago}
+                onChange={handleChange}
+                placeholder="Ej: Nequi, Daviplata, Tarjeta Crédito"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
 
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
-          Cancelar
-        </Button>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onHide}>
+            Cancelar
+          </Button>
 
-        <Button variant="primary" onClick={handleSubmit}>
-          Guardar cambios
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          <Button variant="primary" onClick={handleSubmit}>
+            Guardar cambios
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
   );
 }
 

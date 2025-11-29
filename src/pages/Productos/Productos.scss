@@ -1,4 +1,5 @@
 .productos-page {
+
   .producto-card {
     transition: all 0.25s ease;
     border-radius: 6px;
@@ -20,99 +21,78 @@
       }
     }
   }
-}
-
-// .btn-add-producto {
-//   position: fixed;
-//   top: 80px; // debajo del navbar
-//   right: 20px;
-//   z-index: 1100;
-
-//   width: 45px;
-//   height: 45px;
-//   border-radius: 50%;
-//   background-color: #0d6efd; // azul bootstrap
-//   color: #fff;
-//   font-size: 1.5rem;
-//   font-weight: bold;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-
-//   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-
-//   &:hover {
-//     background-color: #0b5ed7;
-//   }
-// }
-
-.btn-add-producto {
-  z-index: 1100;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: #0d6efd;
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-
-  &:hover {
-    background-color: #0b5ed7;
-  }
-}
 
 
-.productos-container {
-  position: relative;
-}
-
-.fab-move {
-  position: fixed;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background-color: #0d6efd;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22px;
-  cursor: grab;
-  z-index: 1050;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-
-  // 🌀 animación suave al soltar
-  transition: top 0.25s ease, left 0.25s ease;
-}
-
-/* 🔥 Mostrar solo en móviles/tablets (<992px) */
-@media (min-width: 992px) {
-  .fab-move {
-    display: none !important;
-  }
-}
-
-
-.producto-card {
-  position: relative;
-
-  .btn-close {
+  .btn-add-producto {
+    z-index: 1100;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    opacity: 0.9;
+    background-color: #0d6efd;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 
     &:hover {
-      background-color: red;
-      opacity: 1;
+      background-color: #0b5ed7;
     }
   }
+
+
+  .productos-container {
+    position: relative;
+  }
+
+  .fab-move {
+    position: fixed;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    cursor: grab;
+    z-index: 1050;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+
+    // 🌀 animación suave al soltar
+    transition: top 0.25s ease, left 0.25s ease;
+  }
+
+  /* 🔥 Mostrar solo en móviles/tablets (<992px) */
+  @media (min-width: 992px) {
+    .fab-move {
+      display: none !important;
+    }
+  }
+
+
+  .producto-card {
+    position: relative;
+
+    .btn-close {
+      border-radius: 50%;
+      opacity: 0.9;
+
+      &:hover {
+        background-color: red;
+        opacity: 1;
+      }
+    }
 }
 
 
+
+
+}
 
 
 

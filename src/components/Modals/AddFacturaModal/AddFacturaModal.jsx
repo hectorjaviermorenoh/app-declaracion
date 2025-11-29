@@ -40,67 +40,69 @@ function AddFacturaModal({ onClose }) {
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content">
+    <div className="Add-Factura-Modal">
+      <div className="modal-backdrop">
+        <div className="modal-content">
 
-        <h4>Subir factura</h4>
+          <h4>Subir factura</h4>
 
-        <label>Año</label>
-        <input
-          type="number"
-          className="form-control"
-          name="anio"
-          value={form.anio}
-          onChange={handleChange}
-        />
+          <label>Año</label>
+          <input
+            type="number"
+            className="form-control"
+            name="anio"
+            value={form.anio}
+            onChange={handleChange}
+          />
 
-        <label>Entidad</label>
-        <input
-          className="form-control"
-          name="entidad"
-          onChange={handleChange}
-        />
+          <label>Entidad</label>
+          <input
+            className="form-control"
+            name="entidad"
+            onChange={handleChange}
+          />
 
-        <label>Descripción</label>
-        <input
-          className="form-control"
-          name="descripcion"
-          onChange={handleChange}
-        />
+          <label>Descripción</label>
+          <input
+            className="form-control"
+            name="descripcion"
+            onChange={handleChange}
+          />
 
-        <label>Valor (COP)</label>
-        <input
-          type="number"
-          className="form-control"
-          name="valor"
-          onChange={handleChange}
-        />
+          <label>Valor (COP)</label>
+          <input
+            type="number"
+            className="form-control"
+            name="valor"
+            onChange={handleChange}
+          />
 
-        <label>Método de Pago</label>
-        <select
-          className="form-control"
-          name="metodoPago"
-          onChange={handleChange}
-        >
-          <option>Tarjeta Débito</option>
-          <option>Tarjeta Crédito</option>
-          <option>Transferencia</option>
-          <option>Efectivo</option>
-          <option>Otro</option>
-        </select>
+          <label>Método de Pago</label>
+          <select
+            className="form-control"
+            name="metodoPago"
+            onChange={handleChange}
+          >
+            <option>Tarjeta Débito</option>
+            <option>Tarjeta Crédito</option>
+            <option>Transferencia</option>
+            <option>Efectivo</option>
+            <option>Otro</option>
+          </select>
 
-        <label>Archivo</label>
-        <input
-          type="file"
-          className="form-control"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
+          <label>Archivo</label>
+          <input
+            type="file"
+            className="form-control"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
 
-        <div className="mt-3 d-flex gap-2">
-          <button className="btn btn-primary" onClick={handleSubmit}>Subir</button>
-          <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+          <div className="mt-3 d-flex gap-2">
+            <button className="btn btn-primary" onClick={handleSubmit}>Subir</button>
+            <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+          </div>
+
         </div>
-
       </div>
     </div>
   );

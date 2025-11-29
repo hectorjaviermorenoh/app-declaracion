@@ -4,193 +4,196 @@ $primary-color: #0d6efd; // azul bootstrap
 $text-color: #00253D;
 $hover-bg: #f1f1f1;
 
-.navbar {
-  background-color: #fff;
-  border-bottom: 1px solid #ddd;
-  height: 4.5rem !important;
+.navbar-return-container {
 
-  .navbar-brand {
-    font-weight: 600;
-    color: $primary-color !important;
-    font-size: 1.2rem;
-
-    &:hover {
-      text-decoration: none;
-      opacity: 0.85;
-    }
-  }
-
-  .offcanvas {
+  .navbar {
     background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    height: 4.5rem !important;
 
-    .offcanvas-header {
-      border-bottom: 1px solid #eee;
-    }
-
-    .nav-link {
-      color: $text-color !important;
-      font-family: 'Roboto', sans-serif !important;
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
-      font-weight: 400;
-      line-height: 1.5rem;
-
-
+    .navbar-brand {
+      font-weight: 600;
+      color: $primary-color !important;
+      font-size: 1.2rem;
 
       &:hover {
-        background-color: $hover-bg;
-        color: $primary-color !important;
-        border-radius: 6px;
+        text-decoration: none;
+        opacity: 0.85;
       }
     }
 
-    .dropdown-menu {
-      font-size: 0.95rem;
-    }
-  }
+    .offcanvas {
+      background-color: #fff;
 
-  // Botón hamburguesa
-  .navbar-toggler {
-    border: none;
-    &:focus {
-      box-shadow: none;
-    }
-  }
+      .offcanvas-header {
+        border-bottom: 1px solid #eee;
+      }
 
-  // 🔥 Estilo de los 3 puntos verticales
-  .nav-link[title="Configurar Backend"] {
-    font-size: 1.5rem;
-    line-height: 1;
-    padding: 0.5rem;
-    cursor: pointer;
-    user-select: none;
+      .nav-link {
+        color: $text-color !important;
+        font-family: 'Roboto', sans-serif !important;
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+        font-weight: 400;
+        line-height: 1.5rem;
 
-    &:hover {
-      color: $primary-color !important;
-      transform: scale(1.1);
-      transition: 0.2s ease-in-out;
-    }
-  }
-}
 
-// ✅ Responsivo: menú más compacto en móvil
-@media (max-width: 768px) {
-  .navbar {
-    .nav-link {
-      font-size: 1.05rem;
-      padding: 0.5rem 0.75rem;
+
+        &:hover {
+          background-color: $hover-bg;
+          color: $primary-color !important;
+          border-radius: 6px;
+        }
+      }
+
+      .dropdown-menu {
+        font-size: 0.95rem;
+      }
     }
 
+    // Botón hamburguesa
+    .navbar-toggler {
+      border: none;
+      &:focus {
+        box-shadow: none;
+      }
+    }
+
+    // 🔥 Estilo de los 3 puntos verticales
     .nav-link[title="Configurar Backend"] {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        color: $primary-color !important;
+        transform: scale(1.1);
+        transition: 0.2s ease-in-out;
+      }
     }
   }
-}
 
+  // ✅ Responsivo: menú más compacto en móvil
+  @media (max-width: 768px) {
+    .navbar {
+      .nav-link {
+        font-size: 1.05rem;
+        padding: 0.5rem 0.75rem;
+      }
 
-.backend-circle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #0d6efd; // azul bootstrap
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.list-group-item.active {
-  background-color: #0d6efd;
-  color: white;
-}
-
-.backend-circle-Brand {
-  display: flex;
-  align-items: center;
-  // gap: 0.5rem;
-}
-
-
-.contCamp {
-  display: flex;
-}
-
-.datos-tributarios-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.dato-item {
-  display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  gap: 0.5rem;
-  align-items: start;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-
-  textarea {
-    width: 100%;
-    resize: vertical;
-    min-height: 40px;
+      .nav-link[title="Configurar Backend"] {
+        font-size: 1.3rem;
+      }
+    }
   }
 
-  .dato-label {
+
+  .backend-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #0d6efd; // azul bootstrap
+    color: white;
     font-weight: bold;
+    cursor: pointer;
   }
 
-  .dato-valor {
-    white-space: pre-wrap;
+  .list-group-item.active {
+    background-color: #0d6efd;
+    color: white;
   }
 
-  .actions {
+  .backend-circle-Brand {
+    display: flex;
+    align-items: center;
+    // gap: 0.5rem;
+  }
+
+
+  .contCamp {
+    display: flex;
+  }
+
+  .datos-tributarios-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 1rem;
   }
-}
 
-@media (max-width: 768px) {
   .dato-item {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 0.5rem;
+    align-items: start;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 40px;
+    }
+
+    .dato-label {
+      font-weight: bold;
+    }
+
+    .dato-valor {
+      white-space: pre-wrap;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
   }
-}
 
-
-.grupNavTex {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.1;
-  min-width: 0; // necesario para text-overflow
-  // margin-top: 0.4rem;
-  padding: 0.5rem 0.5rem 0px 0.5rem;
-
-
-  .app-brand {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #0d6efd;
-    text-decoration: none;
-    margin-bottom: 0.1rem;
-    white-space: nowrap;
+  @media (max-width: 768px) {
+    .dato-item {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .navbar-brand {
-    padding: 0;
-    margin: 0;
-  }
 
-  .backend-alias {
-    font-size: 0.9rem;
-    color: #6c757d;
-    text-align: center;
-    max-width: 110px; // 👈 limita el ancho para truncar
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .grupNavTex {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+    min-width: 0; // necesario para text-overflow
+    // margin-top: 0.4rem;
+    padding: 0.5rem 0.5rem 0px 0.5rem;
+
+
+    .app-brand {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #0d6efd;
+      text-decoration: none;
+      margin-bottom: 0.1rem;
+      white-space: nowrap;
+    }
+
+    .navbar-brand {
+      padding: 0;
+      margin: 0;
+    }
+
+    .backend-alias {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-align: center;
+      max-width: 110px; // 👈 limita el ancho para truncar
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

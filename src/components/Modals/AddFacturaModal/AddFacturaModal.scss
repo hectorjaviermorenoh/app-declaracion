@@ -1,34 +1,39 @@
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 15px;
-  z-index: 9999;
-}
+.Add-Factura-Modal {
 
-.modal-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-}
-
-@media (max-width: 480px) {
-  .modal-content {
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 15px;
-    border-radius: 10px;
+    z-index: 9999;
+  }
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
   }
 
-  h4 {
-    font-size: 1.2rem;
-  }
+  @media (max-width: 480px) {
+    .modal-content {
+      padding: 15px;
+      border-radius: 10px;
+    }
 
-  .form-control {
-    font-size: 0.9rem;
+    h4 {
+      font-size: 1.2rem;
+    }
+
+    .form-control {
+      font-size: 0.9rem;
+    }
   }
 }
+
+
+
