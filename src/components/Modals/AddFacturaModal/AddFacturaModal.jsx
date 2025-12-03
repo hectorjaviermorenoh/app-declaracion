@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Spinner } from "react-bootstrap";
 import { useFacturas } from "../../../context/FacturasContext";
+import { useProductos } from "../../../context/ProductosContext";
 import "./AddFacturaModal.scss";
 
 function AddFacturaModal({ onClose }) {
 
   const { subirFactura } = useFacturas();
+  const { getProductos } = useProductos();
 
   const [form, setForm] = useState({
     anio: new Date().getFullYear(),
@@ -15,6 +18,52 @@ function AddFacturaModal({ onClose }) {
   });
 
   const [file, setFile] = useState(null);
+  const [metodosDinamicos, setMetodosDinamicos] = useState([]);
+  const [loadingMetodos, setLoadingMetodos] = useState(true);
+
+  const capitalizar = (texto) =>
+    texto
+      .toLowerCase()
+      .split(" ")
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(" ");
+
+  useEffect(() => {
+    async function cargarMetodos() {
+      setLoadingMetodos(true);
+
+      const resp = await getProductos();
+      const productos = resp?.data || resp || [];
+
+      const filtrados = productos
+        .filter((p) => p.nombre?.toLowerCase().startsWith("tarjeta"))
+        .map((p) => capitalizar(p.nombre));
+
+      setMetodosDinamicos(filtrados);
+      setLoadingMetodos(false);
+    }
+
+    cargarMetodos();
+  }, [getProductos]);
+
+  const metodosFijos = [
+    "Tarjeta Débito",
+    "Tarjeta Crédito",
+    "Transferencia",
+    "Efectivo",
+    "Bre-B",
+    "Nequi",
+    "Daviplata"
+  ];
+
+  const metodosPago = Array.from(new Set([...metodosFijos, ...metodosDinamicos]))
+    .sort((a, b) => {
+      const aTar = a.toLowerCase().startsWith("tarjeta");
+      const bTar = b.toLowerCase().startsWith("tarjeta");
+      if (aTar && !bTar) return -1;
+      if (!aTar && bTar) return 1;
+      return a.localeCompare(b);
+    });
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,8 +75,6 @@ function AddFacturaModal({ onClose }) {
       ...form,
       file,
     };
-
-    console.log("Payload enviado:", payload);
 
     const resp = await subirFactura(payload);
 
@@ -78,17 +125,32 @@ function AddFacturaModal({ onClose }) {
           />
 
           <label>Método de Pago</label>
+
           <select
             className="form-control"
             name="metodoPago"
             onChange={handleChange}
+            value={form.metodoPago}
+            disabled={loadingMetodos}
           >
-            <option>Tarjeta Débito</option>
-            <option>Tarjeta Crédito</option>
-            <option>Transferencia</option>
-            <option>Efectivo</option>
-            <option>Otro</option>
+            {loadingMetodos ? (
+              <option>Cargando métodos...</option>
+            ) : (
+              <>
+                <option value="">Seleccione...</option>
+                {metodosPago.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </>
+            )}
           </select>
+
+          {loadingMetodos && (
+            <div className="mt-1 d-flex align-items-center gap-2" style={{ fontSize: "0.9rem" }}>
+              <Spinner animation="border" size="sm" />
+              <span>Cargando métodos de pago...</span>
+            </div>
+          )}
 
           <label>Archivo</label>
           <input

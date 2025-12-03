@@ -9,7 +9,8 @@ const anioAnterior = new Date().getFullYear() - 1;
 export function ProductosProvider({ children }) {
   const { showToast } = useToast();
 
-  const [productos, setProductos] = useState([]);
+  // const [productos, setProductos] = useState([]);
+  const [registroProductos, setRegistroProductos] = useState([]);
   const [loadingProductos, setLoadingProductos] = useState(false);
 
   const fetchArchivosPorAnio = useCallback(async (anio) => {
@@ -20,6 +21,23 @@ export function ProductosProvider({ children }) {
       return data.archivos || [];
     } catch (e) {
       console.error("❌ Error al obtener archivos por año:", e.message);
+      return [];
+    } finally {
+      setLoadingProductos(false);
+    }
+  }, []);
+
+  const getProductos = useCallback(async () => {
+    setLoadingProductos(true);
+    try {
+      const data = await apiGet("getProductos");
+
+      if (data && data.status === "ok") {
+        return data.data || []
+      }
+
+    } catch (e) {
+      console.error("❌ Error al obtener productos", e.message);
       return [];
     } finally {
       setLoadingProductos(false);
@@ -55,7 +73,7 @@ export function ProductosProvider({ children }) {
         return 0;
       });
 
-      setProductos(productosOrdenados);
+      setRegistroProductos(productosOrdenados);
     } catch (e) {
       console.error("❌ Error refreshProductos:", e.message);
     } finally {
@@ -233,10 +251,12 @@ export function ProductosProvider({ children }) {
     refreshProductos();
   }, [refreshProductos]);
 
+
   return (
     <ProductosContext.Provider
       value={{
-        productos,
+        registroProductos,
+        getProductos,
         refreshProductos,
         anioAnterior,
         subirArchivo,

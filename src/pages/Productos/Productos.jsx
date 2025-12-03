@@ -12,7 +12,7 @@ import "./Productos.scss";
 
 export default function Productos() {
 
-  const { productos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo, deleteProducto  } = useProductos();
+  const { registroProductos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo, deleteProducto  } = useProductos();
   const { showToast } = useToast();
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
@@ -150,7 +150,7 @@ export default function Productos() {
         </div>
 
         <Row>
-          {productos.map((prod) => (
+          {registroProductos.map((prod) => (
             <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
 
               <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
@@ -225,7 +225,7 @@ export default function Productos() {
           onClose={() => setShowSelectModal(false)}
           onConfirm={handleSelectProductos}
           productoOrigen={productoOrigen}   // ✅ nuevo prop
-          productos={productos}
+          productos={registroProductos}
         />
 
 

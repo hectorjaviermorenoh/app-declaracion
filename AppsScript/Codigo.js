@@ -776,16 +776,6 @@ function doGet(e) {
     
     // --- 3. SWITCH DE ACCIONES ---
     switch (accion) {
-      // case "ping":
-      //   // Si llega aquí, el token es válido.
-      //   // El 'ping' ahora sirve para verificar la sesión y refrescar datos.
-      //   return respuestaJSON({
-      //     status: "ok",
-      //     mensaje: "Token de sesión válido",
-      //     autorizado: true,
-      //     // Devolvemos el payload del token (correo, rol, permisos, etc.)
-      //     ...usuario 
-      //   });
 
       case "ping":
         // 1. Si llegó aquí, el token es válido.
@@ -812,6 +802,7 @@ function doGet(e) {
         return getRoles();
       case "getProductos":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
+        // return getProductos();
 
       case "getDatosTributarios":
         return getDatosTributarios();
@@ -1536,7 +1527,10 @@ function addProducto(data, usuario) {
 
     guardarJSON(JSON_PRODUCTOS, productos);
 
-    return respuestaJSON({ status: "ok", resultados });
+    return respuestaJSON({ 
+      status: "ok", 
+      resultados
+      });
   } finally {
     lock.releaseLock();
   }
@@ -1926,6 +1920,40 @@ function getArchivosPorAnio(anio) {
 
   return respuestaJSON({ status: "ok", anio, archivos: resultado });
   
+}
+
+function getProductos() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const productos = leerJSON(JSON_PRODUCTOS);
+
+    // 🧩 Si el archivo está vacío o no hay productos
+    if (!productos || productos.length === 0) {
+      return respuestaJSON({
+        status: "ok",
+        mensaje: "No hay productos para mostrar",
+        data: []
+      });
+    }
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Productos obtenidos correctamente",
+      data: productos
+    });
+
+  } catch (error) {
+    return respuestaJSON({
+      status: "error",
+      mensaje: "Error al obtener productos",
+      detalle: error.message || "No se pudo leer el archivo JSON_PRODUCTOS"
+    });
+
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 
