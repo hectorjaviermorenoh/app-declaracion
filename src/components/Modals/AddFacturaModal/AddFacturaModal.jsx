@@ -3,14 +3,19 @@ import { Spinner } from "react-bootstrap";
 import { useFacturas } from "../../../context/FacturasContext";
 import { useProductos } from "../../../context/ProductosContext";
 import LoadingOverlay from "../../LoadingOverlay/LoadingOverlay";
+import FormErrorList from "../../FormErrorList/FormErrorList";
+import { useFormValidator } from "../../../hooks/useFormValidator";
+import { normalizeField } from "../../../utils/formValidator";
 import "./AddFacturaModal.scss";
-import { normalizeText } from "../../../utils/validations.js";
 
 function AddFacturaModal({ onClose, onSaved }) {
-
   const { subirFactura } = useFacturas();
   const { getProductos } = useProductos();
+
+  const { errors, validateField, validateForm, clearErrors, clearError } = useFormValidator();
+
   const [loading, setLoading] = useState(false);
+  const [loadingMetodos, setLoadingMetodos] = useState(true);
 
   const [form, setForm] = useState({
     anio: new Date().getFullYear(),
@@ -18,11 +23,24 @@ function AddFacturaModal({ onClose, onSaved }) {
     descripcion: "",
     valor: "",
     metodoPago: "",
+    archivo: null,
   });
 
-  const [file, setFile] = useState(null);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setForm({ ...form, [name]: value });
+
+    validateField(name, value);
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    setForm({ ...form, archivo: file });
+    validateField("archivo", file);
+  };
+
   const [metodosDinamicos, setMetodosDinamicos] = useState([]);
-  const [loadingMetodos, setLoadingMetodos] = useState(true);
 
   const capitalizar = (texto) =>
     texto
@@ -56,63 +74,53 @@ function AddFacturaModal({ onClose, onSaved }) {
     "Efectivo",
     "Bre-B",
     "Nequi",
-    "Daviplata"
+    "Daviplata",
   ];
 
-  const metodosPago = Array.from(new Set([...metodosFijos, ...metodosDinamicos]))
-    .sort((a, b) => {
+  const metodosPago = Array.from(new Set([...metodosFijos, ...metodosDinamicos])).sort(
+    (a, b) => {
       const aTar = a.toLowerCase().startsWith("tarjeta");
       const bTar = b.toLowerCase().startsWith("tarjeta");
       if (aTar && !bTar) return -1;
       if (!aTar && bTar) return 1;
       return a.localeCompare(b);
-    });
-
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    }
+  );
 
   const handleSubmit = async () => {
+    clearErrors();
 
-    if (!form.entidad.trim()) {
-      alert("El campo ENTIDAD es obligatorio.");
-      return;
-    }
-
-    if (!form.valor.trim()) {
-      alert("El campo VALOR es obligatorio.");
-      return;
-    }
-
-    if (!file) return alert("Debes seleccionar un archivo");
-
+    const isValid = validateForm(form);
+    if (!isValid) return;
 
     setLoading(true);
 
-    // const payload = {
-    //   ...form,
-    //   file,
-    // };
-
     const payload = {
       ...form,
-      entidad: normalizeText(form.entidad),
-      descripcion: normalizeText(form.descripcion),
-      metodoPago: normalizeText(form.metodoPago),
-      file,
+      anio: form.anio, // ya validado como número
+      entidad: normalizeField(form.entidad),
+      descripcion: form.descripcion ? normalizeField(form.descripcion) : "",
+      valor: form.valor,
+      metodoPago: normalizeField(form.metodoPago),
+      file: form.archivo,
     };
+
 
     const resp = await subirFactura(payload);
 
-    if (resp.ok) {
-      alert("Factura subida correctamente.");
+    setLoading(false);
 
+    if (resp.ok) {
       if (onSaved) onSaved();
-      setLoading(false);
       onClose();
     } else {
-      setLoading(false);
       alert("Error: " + resp.mensaje);
     }
+  };
+
+  const formatCOP = (num) => {
+    if (!num) return "";
+    return new Intl.NumberFormat("es-CO").format(num);
   };
 
   return (
@@ -122,96 +130,144 @@ function AddFacturaModal({ onClose, onSaved }) {
 
           <h4>Subir factura</h4>
 
+          {/* LISTA DE ERRORES */}
+          <FormErrorList errors={errors} />
+
+
+          {/* ********************************************* */}
+
           <label>Año</label>
           <input
-            type="number"
+            list="listaAnios"
             className="form-control"
             name="anio"
             value={form.anio}
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              clearError("anio");
+            }}
+            onBlur={(e) => validateField("anio", e.target.value)}
+            placeholder="Seleccione o escriba un año"
           />
+
+
+
+
+          {/* ******************************************************* */}
+
+          <datalist id="listaAnios">
+            {Array.from({ length: 10 }).map((_, i) => {
+              const y = new Date().getFullYear() - i;
+              return <option key={y} value={y} />;
+            })}
+          </datalist>
+
+
 
           <label>Entidad</label>
           <input
             className="form-control"
             name="entidad"
-            required
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              clearError("entidad");
+            }}
+            onBlur={(e) => validateField("entidad", e.target.value)}
           />
 
           <label>Descripción</label>
           <input
             className="form-control"
             name="descripcion"
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              clearError("descripcion");
+            }}
+            onBlur={(e) => validateField("descripcion", e.target.value)}
           />
 
-          <label>Valor (COP)</label>
+          {/* <label>Valor (COP)</label>
           <input
             type="number"
             className="form-control"
             name="valor"
-            required
-            onChange={handleChange}
-          />
+            onChange={(e) => {
+              handleChange(e);
+              clearError("valor");
+            }}
+            onBlur={(e) => validateField("valor", e.target.value)}
+          /> */}
+
+        <label>Valor (COP)</label>
+        <input
+          type="text"
+          className="form-control"
+          name="valor"
+          value={form.valor ? formatCOP(form.valor) : ""}
+          onChange={(e) => {
+            // Quitamos todo lo que NO sea número
+            const raw = e.target.value.replace(/\D/g, "");
+            // Guardamos el valor sin puntos en el estado
+            setForm({ ...form, valor: raw });
+            // Validación en tiempo real
+            validateField("valor", raw);
+            // Limpia error si se corrige
+            clearError("valor");
+          }}
+          // onBlur={(e) => validateField("valor", e.target.value)}
+          onBlur={() => validateField("valor", form.valor)}
+          placeholder="Ingrese valor sin decimales"
+        />
 
           <label>Método de Pago</label>
-
           <select
             className="form-control"
             name="metodoPago"
-            onChange={handleChange}
             value={form.metodoPago}
             disabled={loadingMetodos}
+            onChange={(e) => {
+              handleChange(e);
+              clearError("metodoPago");
+            }}
+            onBlur={(e) => validateField("metodoPago", e.target.value)}
           >
             {loadingMetodos ? (
-              <option>Cargando métodos...</option>
+              <option>Cargando...</option>
             ) : (
               <>
                 <option value="">Seleccione...</option>
                 {metodosPago.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </>
             )}
           </select>
 
-          {loadingMetodos && (
-            <div className="mt-1 d-flex align-items-center gap-2" style={{ fontSize: "0.9rem" }}>
-              <Spinner animation="border" size="sm" />
-              <span>Cargando métodos de pago...</span>
-            </div>
-          )}
-
           <label>Archivo</label>
-          <input
-            type="file"
-            className="form-control"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
+          <input type="file" className="form-control" onChange={handleFile} />
 
           <div className="mt-3 d-flex gap-2">
             <button className="btn btn-primary" onClick={handleSubmit}>
-
-               {loading ? (
+              {loading ? (
                 <>
-                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                  {" "}Guardando...
+                  <Spinner as="span" animation="border" size="sm" /> Guardando...
                 </>
               ) : (
                 "Subir"
               )}
-
-
             </button>
-            <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-          </div>
 
+            <button className="btn btn-secondary" onClick={onClose}>
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
+
       <LoadingOverlay show={loading} />
     </div>
-
   );
 }
 
