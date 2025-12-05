@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Spinner } from "react-bootstrap";
 import { useFacturas } from "../../context/FacturasContext";
 import AddFacturaModal from "../../components/Modals/AddFacturaModal/AddFacturaModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
@@ -125,10 +126,17 @@ function Facturas() {
         </select>
       </div>
 
-      {loading && <p>Cargando facturas...</p>}
+      {loading &&
+        <div className="Facturas-Loading-CargandoFacturas">
+          <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+          <p>Cargando facturas ...</p>
+        </div>
+      }
 
       {!loading && facturasFiltradas.length === 0 && (
-        <p>No hay facturas con esos filtros.</p>
+        <div className="Facturas-Loading-CargandoFacturas">
+          <p>No hay facturas con esos filtros.</p>
+        </div>
       )}
 
       {/* DESKTOP */}
@@ -221,7 +229,13 @@ function Facturas() {
       )}
 
       {/* MODALES */}
-      {showModal && <AddFacturaModal onClose={() => setShowModal(false)} />}
+      {/* {showModal && <AddFacturaModal onClose={() => setShowModal(false)} />} */}
+      {showModal && (
+        <AddFacturaModal
+          onClose={() => setShowModal(false)}
+          onSaved={refrescarLista}   // ← LE MANDAMOS ESTA FUNCIÓN
+        />
+      )}
 
       <ConfirmActionModal
         show={showDeleteModal}

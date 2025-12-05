@@ -1,147 +1,160 @@
-.archivos-por-anio {
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 1.1rem; // ✅ texto un poco más grande
-    background-color: #fff;
-  }
+.contador-container {
 
-  thead {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    font-size: 1.15rem;
-    text-align: left;
-
-    th {
-      padding: 12px;
-      border: 1px solid #dee2e6;
+  .archivos-por-anio {
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1.1rem; // ✅ texto un poco más grande
+      background-color: #fff;
     }
-    .thicon {
-      width: 40px;
-    }
-  }
 
-  tbody {
-    tr {
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out;
+    thead {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      font-size: 1.15rem;
+      text-align: left;
 
-      &:hover {
-        background-color: #f1f1f1; // ✅ resaltado al pasar el mouse
-      }
-
-      td {
+      th {
         padding: 12px;
         border: 1px solid #dee2e6;
-        vertical-align: middle;
       }
-
-      // ✅ columna de iconos (1ra)
-      td.icono {
-        display: flex;
-        justify-content: center;
+      .thicon {
         width: 40px;
-        text-align: center;
-        font-size: 1.3rem; // icono más grande
+      }
+    }
+
+    tbody {
+      tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+
+        &:hover {
+          background-color: #f1f1f1; // ✅ resaltado al pasar el mouse
+        }
+
+        td {
+          padding: 12px;
+          border: 1px solid #dee2e6;
+          vertical-align: middle;
+        }
+
+        // ✅ columna de iconos (1ra)
+        td.icono {
+          display: flex;
+          justify-content: center;
+          width: 40px;
+          text-align: center;
+          font-size: 1.3rem; // icono más grande
+        }
+      }
+    }
+
+    // ✅ Mobile first: en pantallas pequeñas, los textos deben ser legibles
+    @media (max-width: 768px) {
+      .table {
+        font-size: 1rem;
+      }
+
+      thead {
+        font-size: 1rem;
+      }
+
+      tbody tr td {
+        padding: 8px;
+      }
+    }
+
+    // ✅ En pantallas grandes (desktop)
+    @media (min-width: 992px) {
+      .table {
+        font-size: 1.15rem;
+      }
+
+      thead {
+        font-size: 1.2rem;
       }
     }
   }
 
-  // ✅ Mobile first: en pantallas pequeñas, los textos deben ser legibles
-  @media (max-width: 768px) {
-    .table {
-      font-size: 1rem;
-    }
-
-    thead {
-      font-size: 1rem;
-    }
-
-    tbody tr td {
-      padding: 8px;
-    }
+  // ✅ Mensajes de carga o "no hay datos"
+  .archivos-por-anio-mensaje {
+    font-size: 1.1rem;
+    color: #555;
+    margin-top: 1rem;
   }
 
-  // ✅ En pantallas grandes (desktop)
-  @media (min-width: 992px) {
-    .table {
-      font-size: 1.15rem;
-    }
 
-    thead {
-      font-size: 1.2rem;
-    }
-  }
-}
+  // .icono {
+  //   background-color: blue !important;
+  // }
 
-// ✅ Mensajes de carga o "no hay datos"
-.archivos-por-anio-mensaje {
-  font-size: 1.1rem;
-  color: #555;
-  margin-top: 1rem;
-}
+  // ***************************************************************
 
 
-// .icono {
-//   background-color: blue !important;
-// }
-
-// ***************************************************************
-
-
-/* ----- CARD / ACCORDION PARA CELULARES ----- */
-.accordion-mobile {
-  margin-top: 1rem;
-  display: block;
-
-  .archivo-card {
-    background: white;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    padding: 12px;
-    border: 1px solid #e1e1e1;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-    white-space: normal;
-    word-wrap: break-word;
-    word-break: break-word;
-  }
-
-  .accordion-header {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    white-space: normal;
-    word-wrap: break-word;
-    word-break: break-word;
-  }
-
-  .icono {
-    font-size: 1.4rem;
-  }
-
-  .accordion-body {
-    padding-top: 10px;
-    font-size: 0.9rem;
-    border-top: 1px solid #eee;
-    white-space: normal;
-    word-wrap: break-word;
-    word-break: break-word;
-  }
-
-}
-
-/* 👉 Ocultar tabla en móvil */
-@media (max-width: 768px) {
-  .archivos-por-anio {
-    display: none !important;
-  }
-}
-
-/* 👉 Mostrar tabla en desktop */
-@media (min-width: 769px) {
+  /* ----- CARD / ACCORDION PARA CELULARES ----- */
   .accordion-mobile {
-    display: none !important;
+    margin-top: 1rem;
+    display: block;
+
+    .archivo-card {
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      padding: 12px;
+      border: 1px solid #e1e1e1;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .icono {
+      font-size: 1.4rem;
+    }
+
+    .accordion-body {
+      padding-top: 10px;
+      font-size: 0.9rem;
+      border-top: 1px solid #eee;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
   }
+
+  /* 👉 Ocultar tabla en móvil */
+  @media (max-width: 768px) {
+    .archivos-por-anio {
+      display: none !important;
+    }
+  }
+
+  /* 👉 Mostrar tabla en desktop */
+  @media (min-width: 769px) {
+    .accordion-mobile {
+      display: none !important;
+    }
+  }
+
+  .Contador-Loading-CargandoContador {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: center;
+      align-items: baseline;
+    p {
+      color:#386f6b;
+    }
+  }
+
+
 }
-
-

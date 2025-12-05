@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Spinner } from "react-bootstrap";
 import { useFacturas } from "../../../context/FacturasContext";
 import { useProductos } from "../../../context/ProductosContext";
+import LoadingOverlay from "../../LoadingOverlay/LoadingOverlay";
 import "./AddFacturaModal.scss";
+import { normalizeText } from "../../../utils/validations.js";
 
-function AddFacturaModal({ onClose }) {
+function AddFacturaModal({ onClose, onSaved }) {
 
   const { subirFactura } = useFacturas();
   const { getProductos } = useProductos();
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     anio: new Date().getFullYear(),
@@ -69,10 +72,32 @@ function AddFacturaModal({ onClose }) {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async () => {
+
+    if (!form.entidad.trim()) {
+      alert("El campo ENTIDAD es obligatorio.");
+      return;
+    }
+
+    if (!form.valor.trim()) {
+      alert("El campo VALOR es obligatorio.");
+      return;
+    }
+
     if (!file) return alert("Debes seleccionar un archivo");
+
+
+    setLoading(true);
+
+    // const payload = {
+    //   ...form,
+    //   file,
+    // };
 
     const payload = {
       ...form,
+      entidad: normalizeText(form.entidad),
+      descripcion: normalizeText(form.descripcion),
+      metodoPago: normalizeText(form.metodoPago),
       file,
     };
 
@@ -80,8 +105,12 @@ function AddFacturaModal({ onClose }) {
 
     if (resp.ok) {
       alert("Factura subida correctamente.");
+
+      if (onSaved) onSaved();
+      setLoading(false);
       onClose();
     } else {
+      setLoading(false);
       alert("Error: " + resp.mensaje);
     }
   };
@@ -106,6 +135,7 @@ function AddFacturaModal({ onClose }) {
           <input
             className="form-control"
             name="entidad"
+            required
             onChange={handleChange}
           />
 
@@ -121,6 +151,7 @@ function AddFacturaModal({ onClose }) {
             type="number"
             className="form-control"
             name="valor"
+            required
             onChange={handleChange}
           />
 
@@ -160,13 +191,27 @@ function AddFacturaModal({ onClose }) {
           />
 
           <div className="mt-3 d-flex gap-2">
-            <button className="btn btn-primary" onClick={handleSubmit}>Subir</button>
+            <button className="btn btn-primary" onClick={handleSubmit}>
+
+               {loading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  {" "}Guardando...
+                </>
+              ) : (
+                "Subir"
+              )}
+
+
+            </button>
             <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
           </div>
 
         </div>
       </div>
+      <LoadingOverlay show={loading} />
     </div>
+
   );
 }
 

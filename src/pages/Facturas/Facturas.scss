@@ -171,9 +171,9 @@
   }
 
   /* Ocultar botón tradicional */
-  .btn.btn-primary {
-    display: none !important;
-  }
+  // .btn.btn-primary {
+  //   display: none !important;
+  // }
 }
 
 
@@ -231,6 +231,18 @@
     transform: scale(0.93);
   }
 }
+
+.Facturas-Loading-CargandoFacturas {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: center;
+    align-items: baseline;
+  p {
+    color:#386f6b;
+  }
+}
+
+
 
 
 }
