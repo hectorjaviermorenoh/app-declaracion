@@ -2,53 +2,78 @@ import React, { useState } from "react";
 import { Modal, Form, Button, Toast, ToastContainer, Spinner } from "react-bootstrap";
 import { useProductos } from "../../../context/ProductosContext";
 import LoadingOverlay from "../../../components/LoadingOverlay/LoadingOverlay";
+import FormErrorList from "../../../components/FormErrorList/FormErrorList";
+import { useFormValidator } from "../../../hooks/useFormValidator";
+import { normalizeField } from "../../../utils/formValidator";
+
 import "./AddProductoModal.scss";
 
-function AddProductoModal({ show, onHide}) {
-
+function AddProductoModal({ show, onHide }) {
   const { addProducto } = useProductos();
 
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [entidad, setEntidad] = useState("");
-  const [tipo, setTipo] = useState("");
+  const { errors, validateField, validateForm, clearError, clearErrors } = useFormValidator();
 
+  const [form, setForm] = useState({
+    nombre: "",
+    descripcion: "",
+    entidadProducto: "",
+    tipo: "",
+  });
+
+  const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
-  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    validateField(name, value);
+    clearError(name);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    clearErrors();
+
+    const isValid = validateForm(form);
+    if (!isValid) return;
 
     setLoading(true);
+
     try {
-      const producto = { nombre, descripcion, entidad, tipo };
-      const response = await addProducto(producto);
+      const payload = {
+        nombre: normalizeField(form.nombre),
+        descripcion: form.descripcion ? normalizeField(form.descripcion) : "",
+        entidad: normalizeField(form.entidadProducto),
+        tipo: form.tipo ? normalizeField(form.tipo) : "",
+      };
+
+      const response = await addProducto(payload);
 
       if (!response.ok) throw new Error("Error al guardar producto");
 
-      // limpiar
-      if (response.ok) {
-        setNombre("");
-        setDescripcion("");
-        setEntidad("");
-        setTipo("");
+      // Limpiar formulario
+      setForm({
+        nombre: "",
+        descripcion: "",
+        entidadProducto: "",
+        tipo: "",
+      });
 
-        setToastVariant(response.ok ? "success" : "danger");
-        setToastMsg(response.mensaje);
-        setShowToast(true);
+      // Mostrar toast
+      setToastVariant("success");
+      setToastMsg(response.mensaje);
+      setShowToast(true);
 
-        // cerrar modal
-        onHide();
-      }
-
-
-    } catch (error) {
+      onHide();
+    } catch (err) {
       setToastVariant("danger");
       setToastMsg("❌ Error al guardar el producto");
       setShowToast(true);
-      console.error(error);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -60,50 +85,64 @@ function AddProductoModal({ show, onHide}) {
         <Modal.Header closeButton>
           <Modal.Title>Adicionar Producto</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
+          {/* 🔥 MOSTRAR ERRORES DEL FORMULARIO */}
+          <FormErrorList errors={errors} />
+
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
+              <Form.Label>Nombre *</Form.Label>
               <Form.Control
                 type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                required
-                placeholder="Ej: Tarjeta 6992, Cta 1108, Medicina prepagada, Factura Notaria 38"
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                onBlur={(e) => validateField("nombre", e.target.value)}
+                placeholder="Ej: Tarjeta 6992, Cta 1108"
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Descripción</Form.Label>
               <Form.Control
                 type="text"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                placeholder="Ej: Certificado de retenciones año 2024, Extracto bancario, Factura de póliza de salud"
+                name="descripcion"
+                value={form.descripcion}
+                onChange={handleChange}
+                onBlur={(e) => validateField("descripcion", e.target.value)}
+                placeholder="Ej: Extracto bancario, póliza, certificado"
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Entidad</Form.Label>
+              <Form.Label>Entidad *</Form.Label>
               <Form.Control
                 type="text"
-                value={entidad}
-                onChange={(e) => setEntidad(e.target.value)}
-                placeholder="Ej: Banco de Bogotá, Seguros Sura, Ecopetrol, Colpensiones, Notaria 38"
+                name="entidadProducto"
+                value={form.entidadProducto}
+                onChange={handleChange}
+                onBlur={(e) => validateField("entidadProducto", e.target.value)}
+                placeholder="Ej: Banco de Bogotá, Sura, Ecopetrol"
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Tipo</Form.Label>
               <Form.Control
                 type="text"
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
-                placeholder="Ej: Inversión, Ahorro, Deuda, Certificado, Salud, Credito, Debito"
+                name="tipo"
+                value={form.tipo}
+                onChange={handleChange}
+                onBlur={(e) => validateField("tipo", e.target.value)}
+                placeholder="Ej: Salud, Deuda, Certificado"
               />
             </Form.Group>
 
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? (
                 <>
-                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  <Spinner as="span" animation="border" size="sm" />
                   {" "}Guardando...
                 </>
               ) : (
@@ -111,6 +150,7 @@ function AddProductoModal({ show, onHide}) {
               )}
             </Button>
           </Form>
+
           <LoadingOverlay show={loading} />
         </Modal.Body>
       </Modal>

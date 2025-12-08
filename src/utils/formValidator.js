@@ -1,5 +1,7 @@
 export const validators = {
 
+  // ====== FACTURAS ======
+
   anio: (value) => {
     if (!value || !value.toString().trim()) {
       return "El año es obligatorio.";
@@ -27,14 +29,14 @@ export const validators = {
 
   valor: (value) => {
     if (value == null || value === "") {
-      return ["El valor es obligatorio."];
+      return "El valor es obligatorio.";
     }
 
     // Asegurar que value sea string
     const clean = String(value).replace(/\D/g, "");
 
     if (!/^\d+$/.test(clean)) {
-      return ["El valor debe ser un número entero sin decimales."];
+      return "El valor debe ser un número entero sin decimales.";
     }
 
     return "";
@@ -53,19 +55,38 @@ export const validators = {
     if (!file) return "Debe seleccionar un archivo.";
     return "";
   },
+
+  // ====== PRODUCTOS ======
+
+  nombre: (value) => {
+    if (!value || !value.trim()) {
+      return "El nombre del producto es obligatorio.";
+    }
+    // No permite caracteres especiales
+    if (!/^[a-zA-Z0-9ÁÉÍÓÚáéíóúñÑ\s]+$/.test(value)) {
+      return "El nombre no puede contener caracteres especiales.";
+    }
+    return "";
+  },
+
+  entidadProducto: (value) => {
+    if (!value || !value.trim()) {
+      return "La entidad del producto es obligatoria.";
+    }
+    return "";
+  },
+
+
+  tipo: (value) => {
+    if (!value) return "";
+    // Solo letras y espacios
+    if (!/^[a-zA-ZÁÉÍÓÚáéíóúñÑ\s]+$/.test(value)) {
+      return "El tipo solo debe contener letras.";
+    }
+    return "";
+  },
+
 };
-
-
-// Normalización reutilizable (todas las palabras capitalizadas)
-// export function normalizeField(text = "") {
-//   if (!text) return "";
-//   return text
-//     .toLowerCase()
-//     .trim()
-//     .split(/\s+/)
-//     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-//     .join(" ");
-// }
 
 
 export function normalizeField(text = "") {
