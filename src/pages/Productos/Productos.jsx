@@ -11,6 +11,7 @@ import { confirmarAccion } from "../../utils/alerts.js";
 import "./Productos.scss";
 
 export default function Productos() {
+  const isMobile = window.innerWidth < 2000;
   const {
     registroProductos,
     loading,
@@ -44,21 +45,21 @@ export default function Productos() {
     if (savedPos) setBtnPos(JSON.parse(savedPos));
   }, []);
 
-  const handleDragEnd = (e) => {
-    const btnWidth = 45;
-    const btnHeight = 45;
-    const padding = 10;
+  // const handleDragEnd = (e) => {
+  //   const btnWidth = 45;
+  //   const btnHeight = 45;
+  //   const padding = 10;
 
-    let left = e.clientX - btnWidth / 2;
-    let top = e.clientY - btnHeight / 2;
+  //   let left = e.clientX - btnWidth / 2;
+  //   let top = e.clientY - btnHeight / 2;
 
-    left = Math.max(padding, Math.min(left, window.innerWidth - btnWidth - padding));
-    top = Math.max(padding, Math.min(top, window.innerHeight - btnHeight - padding));
+  //   left = Math.max(padding, Math.min(left, window.innerWidth - btnWidth - padding));
+  //   top = Math.max(padding, Math.min(top, window.innerHeight - btnHeight - padding));
 
-    const newPos = { top, left, right: "auto" };
-    setBtnPos(newPos);
-    localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
-  };
+  //   const newPos = { top, left, right: "auto" };
+  //   setBtnPos(newPos);
+  //   localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
+  // };
 
   /* =============================
      Carga inicial
@@ -193,7 +194,7 @@ export default function Productos() {
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
 
-          <Button
+          {/* <Button
             className="btn-add-producto fab-move"
             style={{
               top: btnPos.top,
@@ -207,7 +208,8 @@ export default function Productos() {
             title="Adicionar Producto"
           >
             +
-          </Button>
+          </Button> */}
+          
         </div>
 
         <Row>
@@ -270,6 +272,12 @@ export default function Productos() {
             </Col>
           ))}
         </Row>
+
+        {isMobile && (
+          <button className="fab-subir" onClick={() => setShowAddModal(true)}>
+            <i className="bi bi-plus-lg"></i>
+          </button>
+        )}
 
         {/* Modales */}
         <UploadModal

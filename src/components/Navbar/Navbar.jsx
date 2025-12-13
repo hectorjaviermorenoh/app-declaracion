@@ -2,7 +2,7 @@ import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
-import AddProductoModal from "../Modals/AddProductoModal/AddProductoModal";
+// import AddProductoModal from "../Modals/AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
@@ -33,7 +33,7 @@ function AppNavbar() {
   const { user, logout } = useAuth();
 
   const [showModal, setShowModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
+  // const [showAddModal, setShowAddModal] = useState(false);
   const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -109,14 +109,15 @@ function AppNavbar() {
                 <Nav
                   className="justify-content-end flex-grow-1 pe-3"
                 >
-                  <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Add Producto</Nav.Link>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>Add Facturas</Nav.Link>
+                  {/* <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Add Producto</Nav.Link> */}
                   <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>Productos</Nav.Link>
+                  <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>Add Facturas</Nav.Link>
                   <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
 
                   <NavDropdown title="Más" id="nav-dropdown">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
-                    <NavDropdown.Item onClick={() => { setShowReinitModal(true); setShow(false); }} >Reinicializar Proyecto</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Donaciones</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>
                   </NavDropdown>
@@ -201,13 +202,13 @@ function AppNavbar() {
           </Modal.Footer>
         </Modal>
 
-        <AddProductoModal
+        {/* <AddProductoModal
           show={showAddModal}
           onHide={() => setShowAddModal(false)}
           onProductoAgregado={() => {
             setShowAddModal(false);
           }}
-        />
+        /> */}
 
         <ReinitModal
           show={showReinitModal}
