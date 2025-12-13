@@ -1,0 +1,18 @@
+import { usePermisos } from "../../hooks/usePermisos.js";
+import NoPermiso from "../../components/NoPermiso/NoPermiso";
+
+  const { puede } = usePermisos();
+  const puedeVerLogs = puede("getLogs");
+
+  // Hooks SIEMPRE al inicio
+  useEffect(() => {
+    if (puedeVerLogs) {
+      getDatos();
+    }
+  }, [puedeVerLogs, getDatos]);
+
+  // Ahora sí retornar condicional
+  if (!puedeVerLogs) return <NoPermiso />;
+
+
+onClick={() => { setShowReinitModal(true); setShow(false); }}

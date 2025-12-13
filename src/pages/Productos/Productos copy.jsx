@@ -1,44 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Toast, ToastContainer } from "react-bootstrap";
 import UploadModal from "../../components/Productos/UploadModal/UploadModal";
+import { useToast } from "../../context/ToastContext";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/Modals/AddProductoModal/AddProductoModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { useProductos } from "../../context/ProductosContext.jsx";
-import { useToast } from "../../context/ToastContext";
 import { confirmarAccion } from "../../utils/alerts.js";
 import "./Productos.scss";
 
 export default function Productos() {
-  const {
-    registroProductos,
-    loading,
-    anioAnterior,
-    refreshProductos,
-    subirArchivo,
-    replaceArchivo,
-    deleteProducto,
-  } = useProductos();
 
+  const { registroProductos, loading, anioAnterior, refreshProductos, subirArchivo, replaceArchivo, deleteProducto  } = useProductos();
   const { showToast } = useToast();
-
   const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSelectModal, setShowSelectModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const [selectedProducto, setSelectedProducto] = useState(null);
-  const [productoOrigen, setProductoOrigen] = useState(null);
-
   const [archivo, setArchivo] = useState(null);
   const [anioSeleccionado, setAnioSeleccionado] = useState("");
-  const [showTitle, setShowTitle] = useState("");
+  const [showTitle, setshowTitle] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productoOrigen, setProductoOrigen] = useState(null);
 
-  /* =============================
-     Posición FAB
-  ============================== */
+
+
   useEffect(() => {
     const savedPos = localStorage.getItem("btnAddProductoPos");
     if (savedPos) setBtnPos(JSON.parse(savedPos));
@@ -48,28 +36,29 @@ export default function Productos() {
     const btnWidth = 45;
     const btnHeight = 45;
     const padding = 10;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    let left = e.clientX - btnWidth / 2;
-    let top = e.clientY - btnHeight / 2;
+    let newLeft = e.clientX - btnWidth / 2;
+    let newTop = e.clientY - btnHeight / 2;
+    if (newLeft < padding) newLeft = padding;
+    if (newTop < padding) newTop = padding;
+    if (newLeft + btnWidth > viewportWidth - padding)
+      newLeft = viewportWidth - btnWidth - padding;
+    if (newTop + btnHeight > viewportHeight - padding)
+      newTop = viewportHeight - btnHeight - padding;
 
-    left = Math.max(padding, Math.min(left, window.innerWidth - btnWidth - padding));
-    top = Math.max(padding, Math.min(top, window.innerHeight - btnHeight - padding));
-
-    const newPos = { top, left, right: "auto" };
+    const newPos = { top: newTop, left: newLeft, right: "auto" };
     setBtnPos(newPos);
     localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
   };
 
-  /* =============================
-     Carga inicial
-  ============================== */
+  // ✅ carga inicial
   useEffect(() => {
-    refreshProductos();
+    refreshProductos(); // ahora lo hace el contexto
   }, [refreshProductos]);
 
-  /* =============================
-     Abrir modal upload
-  ============================== */
+  // abrir modal subir/replace
   const handleUpload = (producto) => {
     setSelectedProducto(producto);
     setArchivo(null);
@@ -77,30 +66,47 @@ export default function Productos() {
     setShowUploadModal(true);
   };
 
-  /* =============================
-     FUNCIÓN CENTRAL 🔥
-  ============================== */
-  const manejarArchivo = async ({
-    tipo,              // "subir" | "reemplazar"
-    productoIds,
-    anio,
-    file,
-    replaceOnlyThis,
-    nombreProducto,
-  }) => {
-    const accion =
-      tipo === "reemplazar"
-        ? () =>
-            replaceArchivo(
-              productoIds[0],
-              anio,
-              file,
-              replaceOnlyThis,
-              nombreProducto
-            )
-        : () => subirArchivo(productoIds, anio, file);
+  // confirm del UploadModal
+  const handleUploadConfirm = async (anio, aplicaVarios, file, replaceOnlyThis) => {
+    setShowUploadModal(false);
+    setAnioSeleccionado(anio);
+    setArchivo(file);
 
-    const r = await accion();
+
+    if (aplicaVarios) {
+      // 👉 solo abrir el modal, NO subir nada todavía
+      setProductoOrigen(selectedProducto);
+      setShowSelectModal(true);
+    } else {
+      if (selectedProducto && selectedProducto.tieneArchivo) {
+        const r = await replaceArchivo(selectedProducto.id, anio, file, replaceOnlyThis, selectedProducto.nombre);
+        console.log("📥 Backend response (replaceArchivo):", r);
+        showToast(`${r.mensaje}`, `${r.ok ? "success" : "danger"}`, 3000, "Productos");
+      } else {
+        await manejarSubidaConConfirmacion({productoIds: [selectedProducto.id], anio, file, nombreProducto: selectedProducto.nombre,});
+      }
+    }
+
+  };
+
+  // confirm del SelectProductosModal (varios)
+  const handleSelectProductos = async (selectedIds) => {
+    setShowSelectModal(false);
+
+    if (!archivo || !anioSeleccionado) return;
+
+    await manejarSubidaConConfirmacion({
+      productoIds: selectedIds,
+      anio: anioSeleccionado,
+      file: archivo,
+      nombreProducto: "productos seleccionados",
+    });
+  };
+
+
+
+  const manejarSubidaConConfirmacion = async ({productoIds, anio, file}) => {
+    const r = await subirArchivo(productoIds, anio, file);
 
     if (r.existe) {
       const confirmar = await confirmarAccion({
@@ -110,82 +116,17 @@ export default function Productos() {
         textoCancelar: "❌ Cancelar",
       });
 
-      if (!confirmar) {
-        showToast(
-          "❌ Operación cancelada por el usuario",
-          "warning",
-          3000,
-          "Productos"
-        );
-        return;
+      if (confirmar) {
+        const r2 = await subirArchivo(productoIds, anio, file, true);
+        showToast(r2.mensaje, r2.ok ? "success" : "danger", 3000, "Productos");
+      } else {
+        showToast("❌ Operación cancelada por el usuario", "warning", 3000, "Productos");
       }
-
-      const r2 =
-        tipo === "reemplazar"
-          ? await replaceArchivo(
-              productoIds[0],
-              anio,
-              file,
-              true,
-              nombreProducto
-            )
-          : await subirArchivo(productoIds, anio, file, true);
-
-      showToast(r2.mensaje, r2.ok ? "success" : "danger", 3000, "Productos");
-      return;
-    }
-
-    showToast(r.mensaje, r.ok ? "success" : "danger", 3000, "Productos");
-  };
-
-  /* =============================
-     Confirm UploadModal
-  ============================== */
-  const handleUploadConfirm = async (anio, aplicaVarios, file, replaceOnlyThis) => {
-    setShowUploadModal(false);
-    setArchivo(file);
-    setAnioSeleccionado(anio);
-
-    if (aplicaVarios) {
-      setProductoOrigen(selectedProducto);
-      setShowSelectModal(true);
-      return;
-    }
-
-    if (selectedProducto.tieneArchivo) {
-      await manejarArchivo({
-        tipo: "reemplazar",
-        productoIds: [selectedProducto.id],
-        anio,
-        file,
-        replaceOnlyThis,
-        nombreProducto: selectedProducto.nombre,
-      });
     } else {
-      await manejarArchivo({
-        tipo: "subir",
-        productoIds: [selectedProducto.id],
-        anio,
-        file,
-      });
+      showToast(r.mensaje, r.ok ? "success" : "danger", 3000, "Productos");
     }
   };
 
-  /* =============================
-     Confirm SelectProductosModal
-  ============================== */
-  const handleSelectProductos = async (selectedIds) => {
-    setShowSelectModal(false);
-
-    if (!archivo || !anioSeleccionado) return;
-
-    await manejarArchivo({
-      tipo: "subir",
-      productoIds: selectedIds,
-      anio: anioSeleccionado,
-      file: archivo,
-    });
-  };
 
   return (
     <>
@@ -193,14 +134,10 @@ export default function Productos() {
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
 
+          {/* FAB solo < 992px (ya lo limitaste en SCSS) */}
           <Button
             className="btn-add-producto fab-move"
-            style={{
-              top: btnPos.top,
-              left: btnPos.left,
-              right: btnPos.right,
-              position: "fixed",
-            }}
+            style={{ top: btnPos.top, left: btnPos.left, right: btnPos.right, position: "fixed" }}
             draggable
             onDragEnd={handleDragEnd}
             onClick={() => setShowAddModal(true)}
@@ -213,40 +150,39 @@ export default function Productos() {
         <Row>
           {registroProductos.map((prod) => (
             <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
+
               <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
                 <Card.Body>
+
                   <button
                     type="button"
                     className="btn-close position-absolute top-0 end-0 m-2"
+                    aria-label="borrar"
                     onClick={() => {
                       setSelectedProducto(prod);
                       setShowDeleteModal(true);
                     }}
-                  />
+                  ></button>
+
 
                   <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
                   <Card.Text>{prod.descripcion}</Card.Text>
 
                   {prod.tieneArchivo ? (
                     <>
-                      <p className="mb-2">
+                      <p className="mb-2 hector">
                         <small>
                           Archivo ({prod.archivoInfo?.anio}):{" "}
-                          <a
-                            href={prod.archivoInfo?.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={prod.archivoInfo?.link} target="_blank" rel="noopener noreferrer">
                             {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
                           </a>
                         </small>
                       </p>
-
                       <Button
                         variant="warning"
                         size="sm"
                         onClick={() => {
-                          setShowTitle("Remplazar archivo");
+                          setshowTitle("Remplazar archivo");
                           handleUpload(prod);
                         }}
                       >
@@ -258,7 +194,7 @@ export default function Productos() {
                       variant="primary"
                       size="sm"
                       onClick={() => {
-                        setShowTitle("Subir Archivo");
+                        setshowTitle("Subir Archivo");
                         handleUpload(prod);
                       }}
                     >
@@ -267,6 +203,8 @@ export default function Productos() {
                   )}
                 </Card.Body>
               </Card>
+
+
             </Col>
           ))}
         </Row>
@@ -284,9 +222,10 @@ export default function Productos() {
           show={showSelectModal}
           onClose={() => setShowSelectModal(false)}
           onConfirm={handleSelectProductos}
-          productoOrigen={productoOrigen}
+          productoOrigen={productoOrigen}   // ✅ nuevo prop
           productos={registroProductos}
         />
+
 
         <AddProductoModal
           show={showAddModal}
@@ -294,23 +233,26 @@ export default function Productos() {
           onProductoAgregado={() => setShowAddModal(false)}
         />
 
-        <ConfirmActionModal
-          show={showDeleteModal}
-          onHide={() => setShowDeleteModal(false)}
-          title="Eliminar Producto"
-          message={
-            <>
-              ¿Seguro que deseas eliminar el producto{" "}
-              <strong>{selectedProducto?.nombre}</strong>?
-            </>
-          }
-          confirmLabel="Eliminar"
-          confirmVariant="danger"
-          onConfirm={() => deleteProducto(selectedProducto.id)}
-        />
+      <ConfirmActionModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        title="Eliminar Producto"
+        message={
+          <>
+            ¿Seguro que deseas eliminar el producto{" "}
+            <strong>{selectedProducto?.nombre}</strong>?
+          </>
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={() => deleteProducto(selectedProducto.id)}
+
+      />
+
 
         <LoadingOverlay show={loading} />
       </Container>
+
     </>
   );
 }

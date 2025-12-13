@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import { useRolesAdmin } from "../../context/admin/RolesAdminContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
+import FormErrorList from "../../components/FormErrorList/FormErrorList";
+import { useFormValidator } from "../../hooks/useFormValidator";
+import { normalizeField } from "../../utils/formValidator";
 
 
 const RolesAdminPanel = () => {
   const {roles, funcionesDisponibles, getDatos, addDato, updateDato, deleteDato, loading,} = useRolesAdmin();
+  const { errors, validateField, validateForm, clearErrors, clearError } = useFormValidator();
 
   const [showModal, setShowModal] = useState(false);
   const [nuevoRol, setNuevoRol] = useState("");
@@ -33,12 +37,26 @@ const RolesAdminPanel = () => {
    * 🧩 Crear o actualizar rol
    ******************************/
   const handleGuardarRol = async () => {
-    if (!nuevoRol.trim()) return alert("Debe ingresar un nombre para el rol");
+    clearErrors();
+
+    const camposAValidar = {
+      rolPermisos: permisosSeleccionados,
+    };
+
+    if (!rolEditando) {
+      camposAValidar.rolNombre = nuevoRol;
+    }
+
+    const isValid = validateForm(camposAValidar);
+
+    if (!isValid) return;
+
+    const nombreNormalizado = normalizeField(nuevoRol);
 
     if (rolEditando) {
       await updateDato(rolEditando.rol, permisosSeleccionados);
     } else {
-      await addDato(nuevoRol, permisosSeleccionados);
+      await addDato(nombreNormalizado, permisosSeleccionados);
     }
 
     setShowModal(false);
@@ -47,13 +65,15 @@ const RolesAdminPanel = () => {
     setRolEditando(null);
   };
 
+
   /******************************
    * ⚙️ Editar permisos de rol existente
    ******************************/
   const handleEditarPermisos = (rol) => {
     setRolEditando(rol);
     setNuevoRol(rol.rol);
-    setPermisosSeleccionados(rol.permisos || []);
+    setPermisosSeleccionados((rol.permisos || []).map(p => p.trim()));
+
     setShowModal(true);
   };
 
@@ -62,20 +82,25 @@ const RolesAdminPanel = () => {
    * ✅ Manejo de checkboxes
    ******************************/
   const togglePermiso = (permiso) => {
-    setPermisosSeleccionados((prev) =>
-      prev.includes(permiso)
-        ? prev.filter((p) => p !== permiso)
-        : [...prev, permiso]
-    );
+    const updated = permisosSeleccionados.includes(permiso)
+      ? permisosSeleccionados.filter((p) => p !== permiso)
+      : [...permisosSeleccionados, permiso];
+
+    setPermisosSeleccionados(updated);
+    validateField("rolPermisos", updated);
   };
 
+
   const seleccionarTodos = () => {
-    if (permisosSeleccionados.length === funcionesDisponibles.length) {
-      setPermisosSeleccionados([]);
-    } else {
-      setPermisosSeleccionados(funcionesDisponibles);
-    }
+    const updated =
+      permisosSeleccionados.length === funcionesDisponibles.length
+        ? []
+        : funcionesDisponibles;
+
+    setPermisosSeleccionados(updated);
+    validateField("rolPermisos", updated);
   };
+
 
   // Ahora sí retornar condicional
   if (!puedeVerRoles) return <NoPermiso />;
@@ -167,16 +192,25 @@ const RolesAdminPanel = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
+
+          {/* 🔥 MOSTRAR ERRORES DEL FORMULARIO */}
+          <FormErrorList errors={errors} />
+
           {!rolEditando && (
             <Form.Group className="mb-3">
               <Form.Label>Nombre del Rol</Form.Label>
               <Form.Control
                 type="text"
                 value={nuevoRol}
-                onChange={(e) => setNuevoRol(e.target.value)}
-                placeholder="Ejemplo: contador, revisor, supervisor..."
+                onChange={(e) => {
+                  setNuevoRol(e.target.value);
+                  clearError("rolNombre");
+                }}
+                onBlur={(e) => validateField("rolNombre", e.target.value)}
+                placeholder="Ejemplo: Contador, Revisor, Supervisor..."
               />
             </Form.Group>
+
           )}
 
           <div className="d-flex justify-content-between align-items-center mb-2">

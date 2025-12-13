@@ -86,6 +86,63 @@ export const validators = {
     return "";
   },
 
+
+  // ====== ADD USUARIOS ======
+
+  correo: (value) => {
+    if (!value || !value.trim()) return "El correo es obligatorio.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "El correo no es válido.";
+    return "";
+  },
+
+  nombreUsuario: (value) => {
+    if (!value || !value.trim()) return "El nombre es obligatorio.";
+
+    if (value.length > 50) return "El nombre no debe superar los 50 caracteres.";
+
+    // Solo letras y espacios
+    if (!/^[a-zA-ZÁÉÍÓÚáéíóúñÑ\s]+$/.test(value))
+      return "El nombre solo puede contener letras.";
+
+    return "";
+  },
+
+
+  rol: (value) => {
+    if (!value || value.trim() === "") return "Debe seleccionar un rol.";
+    return "";
+  },
+
+  // ====== ROLES ======
+
+  rolNombre: (value) => {
+    if (!value || !value.trim()) {
+      return "El nombre del rol es obligatorio.";
+    }
+    // Solo letras y espacios
+    if (!/^[a-zA-ZÁÉÍÓÚáéíóúñÑ\s]+$/.test(value)) {
+      return "El nombre del rol solo puede contener letras.";
+    }
+    if (value.trim().length < 3) {
+      return "El nombre del rol debe tener al menos 3 caracteres.";
+    }
+    if (value.trim().length > 30) {
+      return "El nombre del rol no debe superar los 30 caracteres.";
+    }
+    return "";
+  },
+
+  rolPermisos: (arr) => {
+    if (!arr || arr.length === 0) {
+      return "Debe seleccionar al menos un permiso.";
+    }
+    return "";
+  },
+
+
+
+
+
 };
 
 

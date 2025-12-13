@@ -1,44 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useUsuariosAdmin } from "../../context/admin/UsuariosAdminContext";
 import { useAuth } from "../../context/AuthContext";
-import {
-  Button,
-  Form,
-  Table,
-  Spinner,
-  Modal,
-  Badge,
-  Row,
-  Col,
-  Card,
-} from "react-bootstrap";
+import { Button, Form, Table, Spinner, Modal, Badge, Row, Col, Card,} from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
+import FormErrorList from "../../components/FormErrorList/FormErrorList";
+import { useFormValidator } from "../../hooks/useFormValidator";
+import { normalizeField } from "../../utils/formValidator";
 import "./Styles/UsuariosAdminPanel.scss";
 
 const UsuariosAdminPanel = () => {
-  const {
-    usuarios,
-    rolesDisponibles,
-    rolesErrorPermisos,
-    getDatos,
-    addDato,
-    updateDato,
-    toggleActivo,
-    deleteDato,
-    loading,
-  } = useUsuariosAdmin();
+  const { usuarios, rolesDisponibles, rolesErrorPermisos, getDatos, addDato, updateDato, toggleActivo, deleteDato, loading } = useUsuariosAdmin();
+  const { errors, validateField, validateForm, clearErrors, clearError } = useFormValidator();
 
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
+
   const [nuevoUsuario, setNuevoUsuario] = useState({
     correo: "",
-    nombre: "",
+    nombreUsuario: "",
     rol: "",
   });
+
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -55,30 +41,45 @@ const UsuariosAdminPanel = () => {
   // Guardar usuario (crear / editar)
   // --------------------------------------
   const handleGuardarUsuario = async () => {
-    if (!nuevoUsuario.correo || !nuevoUsuario.nombre || !nuevoUsuario.rol) {
-      return alert("Todos los campos son obligatorios.");
-    }
+    clearErrors();
+
+    const isValid = validateForm({
+      correo: nuevoUsuario.correo,
+      nombreUsuario: nuevoUsuario.nombreUsuario,
+      rol: nuevoUsuario.rol,
+    });
+
+    if (!isValid) return;
+
+    const payload = {
+      correo: nuevoUsuario.correo.toLowerCase(),
+      nombre: normalizeField(nuevoUsuario.nombreUsuario),
+      rol: nuevoUsuario.rol,
+    };
 
     if (usuarioEditando) {
-      await updateDato(usuarioEditando.correo, nuevoUsuario);
+      await updateDato(usuarioEditando.correo, payload);
     } else {
-      await addDato(nuevoUsuario);
+      await addDato(payload);
     }
 
     setShowModal(false);
     setUsuarioEditando(null);
-    setNuevoUsuario({ correo: "", nombre: "", rol: "" });
+    setNuevoUsuario({ correo: "", nombreUsuario: "", rol: "" });
   };
+
 
   const handleEditarUsuario = (usuario) => {
     setUsuarioEditando(usuario);
     setNuevoUsuario({
       correo: usuario.correo,
-      nombre: usuario.nombre,
+      nombreUsuario: usuario.nombre,
       rol: usuario.rol,
     });
+
     setShowModal(true);
   };
+
 
   const handleToggleActivo = async (usuario) => {
     await toggleActivo(usuario.correo, !usuario.activo);
@@ -257,15 +258,23 @@ const UsuariosAdminPanel = () => {
         </Modal.Header>
 
         <Modal.Body>
+
+          {/* 🔥 MOSTRAR ERRORES DEL FORMULARIO */}
+          <FormErrorList errors={errors} />
+
           <Form>
+
             <Form.Group className="mb-3">
               <Form.Label>Correo</Form.Label>
               <Form.Control
                 type="email"
                 value={nuevoUsuario.correo}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, correo: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase();
+                  setNuevoUsuario({ ...nuevoUsuario, correo: value });
+                  clearError("correo");
+                }}
+                onBlur={(e) => validateField("correo", e.target.value)}
                 disabled={usuarioEditando}
               />
             </Form.Group>
@@ -274,32 +283,14 @@ const UsuariosAdminPanel = () => {
               <Form.Label>Nombre completo</Form.Label>
               <Form.Control
                 type="text"
-                value={nuevoUsuario.nombre}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })
-                }
+                value={nuevoUsuario.nombreUsuario}
+                onChange={(e) => {
+                  setNuevoUsuario({ ...nuevoUsuario, nombreUsuario: e.target.value });
+                  clearError("nombreUsuario");
+                }}
+                onBlur={(e) => validateField("nombreUsuario", e.target.value)}
               />
             </Form.Group>
-
-
-
-
-            {/* <Form.Group>
-              <Form.Label>Rol</Form.Label>
-              <Form.Select
-                value={nuevoUsuario.rol}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
-                }
-              >
-                <option value="">Seleccionar rol...</option>
-                {rolesDisponibles.map((r, i) => (
-                  <option key={i} value={r.rol}>
-                    {r.rol}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group> */}
 
 
             <Form.Group className="mb-3">
@@ -314,9 +305,11 @@ const UsuariosAdminPanel = () => {
               ) : (
                 <Form.Select
                   value={nuevoUsuario.rol}
-                  onChange={(e) =>
-                    setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value });
+                    clearError("rol");
+                  }}
+                  onBlur={(e) => validateField("rol", e.target.value)}
                 >
                   <option value="">Seleccionar rol...</option>
                   {rolesDisponibles.map((r, i) => (

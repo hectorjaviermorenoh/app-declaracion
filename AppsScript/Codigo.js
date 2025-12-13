@@ -1135,7 +1135,8 @@ function addRol(data, usuario) {
 
   try {
     const roles = leerJSON(JSON_ROLES) || [];
-    const nuevoRol = normalizarTexto(data?.rol || "").trim();
+    // const nuevoRol = normalizarTexto(data?.rol || "").trim();
+    const nuevoRol = data?.rol;
     const permisosIniciales = Array.isArray(data?.permisos)
       ? data.permisos
       : [];
