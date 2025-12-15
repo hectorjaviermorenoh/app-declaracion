@@ -135,6 +135,37 @@ function AddFacturaModal({ onClose, onSaved }) {
 
 
           {/* ********************************************* */}
+            {/* // ... dentro del return de AddFacturaModal.jsx ... */}
+
+          <label>Archivo / Factura</label>
+          <div className="d-flex gap-2">
+            {/* Input oculto para manejar la lógica */}
+            <input
+              type="file"
+              id="fileInput"
+              accept="image/*"
+              capture="camera" // Esto activa la cámara directamente en móviles
+              className="d-none"
+              onChange={handleFile}
+            />
+
+            {/* Botón visual que imita la función de escáner */}
+            <button
+              type="button"
+              className="btn btn-outline-info w-100 d-flex align-items-center justify-content-center gap-2"
+              onClick={() => document.getElementById('fileInput').click()}
+            >
+              <i className="bi bi-camera"></i> Escanear Factura
+            </button>
+          </div>
+
+          {/* Feedback de que el archivo fue cargado */}
+          {form.archivo && (
+            <small className="text-success d-block mt-1">
+              ✅ Listo para subir: {form.archivo.name}
+            </small>
+          )}
+          {/* ********************************************* */}
 
           <label>Año</label>
           <input
