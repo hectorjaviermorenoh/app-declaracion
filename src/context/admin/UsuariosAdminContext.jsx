@@ -42,7 +42,6 @@ export const UsuariosAdminProvider = ({ children }) => {
       const response = await apiGet("getUsuarios");
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
-        showToast(response.mensaje || "📜 Usuarios cargados correctamente.", "info", 2000, "UsuariosAdmin");
       } else {
         showToast(response.mensaje || "⚠️ No se pudieron cargar los usuarios.", "warning", 4000, "UsuariosAdmin");
       }

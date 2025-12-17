@@ -36,7 +36,6 @@ export const RolesAdminProvider = ({ children }) => {
       const response = await apiGet("getRoles");
       if (response.status === "ok") {
         setRoles(response.data || []);
-        showToast(response.mensaje || "📜 Roles cargados correctamente", "info", 2000, "RolesAdmin");
       } else {
         showToast(response.mensaje || "⚠️ No se pudieron cargar los roles.", "warning", 4000, "RolesAdmin");
       }

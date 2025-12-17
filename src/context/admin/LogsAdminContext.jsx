@@ -21,8 +21,6 @@ export function LogsAdminProvider({ children }) {
       const response = await apiGet("getLogs");
       if (response.status === "ok") {
         setLogs(response.logs || []);
-        showToast(response.mensaje || "📜 Logs cargados correctamente", "info", 2000, "LogsAdmin");
-        // return response.logs;
       } else {
         showToast(response.mensaje || "⚠️ No se pudieron cargar los logs.", "warning", 4000, "LogsAdmin");
         // return [];

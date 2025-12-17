@@ -19,7 +19,6 @@ export const ConfigAdminProvider = ({ children }) => {
       const response = await apiGet("getConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
-        showToast(response.mensaje || "⚙️ Configuración cargada correctamente", "info", 2000, "ConfigAdmin");
       } else {
         showToast(response.mensaje || "⚠️ Error al obtener configuración", "warning", 4000, "ConfigAdmin");
       }

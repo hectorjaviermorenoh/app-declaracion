@@ -11,12 +11,11 @@ export function DatosTributariosProvider({ children }) {
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🟢 Cargar todos los datos tributarios 579 230 1327 const roles = leerJSON(JSON_ROLES);
+  // 🟢 Cargar todos los datos tributarios const roles = leerJSON(JSON_ROLES);
   const getDatos = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiGet("getDatosTributarios");
-      console.log("datosTributarios 23", data)
       if (data.status === "ok") {
         setDatos(data.data || []);
         return { ok: true, mensaje: "Datos cargados correctamente" };
