@@ -21,7 +21,7 @@ export const validators = {
 
   descripcion: (value) => {
     if (!value) return "";
-    if (value.length > 50) {
+    if (value.length > 100) {
       return "La descripción no debe superar los 50 caracteres.";
     }
     return "";
