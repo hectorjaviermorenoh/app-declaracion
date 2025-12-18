@@ -36,3 +36,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 
+/* 👇 REGISTRO DEL SERVICE WORKER (PWA) */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/app-declaracion/service-worker.js")
+      .then(() => console.log("✅ Service Worker registrado"))
+      .catch((err) => console.error("❌ Error SW:", err));
+  });
+}
+
+

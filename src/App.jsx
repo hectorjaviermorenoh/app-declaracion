@@ -1,6 +1,7 @@
 import React from 'react'
 import { Container } from 'react-bootstrap'
 import { Routes, Route } from 'react-router-dom'
+import InstallPWA from "./components/InstallPWA/InstallPWA";
 import Home from './pages/Home/Home'
 import AppNavbar from './components/Navbar/Navbar'
 import Productos from "./pages/Productos/Productos";
@@ -25,6 +26,7 @@ function App() {
           <Route path="/admin" element={<DashboardAdmin />} />
         </Routes>
       </Container>
+      <InstallPWA />
     </>
   )
 }

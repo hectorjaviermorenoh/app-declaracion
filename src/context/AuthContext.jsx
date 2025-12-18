@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
       // ✅ ÉXITO: El backend nos da nuestro token propio y datos de usuario
       const { token: tokenPropio, user: userInfo } = data;
 
-      showToast(`👋 Bienvenido ${userInfo.nombre}`, "success", 3000, "Autenticación 105");
+      showToast(`👋 Bienvenido hjm ${userInfo.nombre}`, "success", 3000, "Autenticación");
 
       // Guardamos el token PROPIO
       setAuthToken(tokenPropio);
@@ -133,7 +133,7 @@ export function AuthProvider({ children }) {
       navigate("/", { replace: true }); // replace evita volver atrás con el navegador
     }
 
-    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación 134");
+    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación");
 
   }, [navigate, showToast ]);
 
@@ -225,7 +225,7 @@ export function AuthProvider({ children }) {
         const decoded = JSON.parse(payloadStr);
 
         if (decoded.exp * 1000 < Date.now()) {
-          showToast("⚠️ Token expirado localmente. Cerrando sesión...", "warning", 4000, "Autenticación 247");
+          showToast("⚠️ Token expirado localmente. Cerrando sesión...", "warning", 4000, "Autenticación");
           logout();
         }
       } catch (err) {
