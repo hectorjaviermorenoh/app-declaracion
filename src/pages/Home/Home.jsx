@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import "./Home.scss";
 
 
 export default function Home() {
   const { login, authenticated, loading } = useAuth();
   const navigate = useNavigate();
-
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -34,8 +34,7 @@ export default function Home() {
       container.innerHTML = "";
 
       window.google.accounts.id.initialize({
-        client_id:
-          "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: (response) => {
           const token = response.credential;
           setIsLoggingIn(true);
@@ -79,7 +78,7 @@ export default function Home() {
    ***************************************************/
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="home-wrapper">
         <div className="text-center">
           <div className="spinner-border text-primary mb-3" role="status" />
           <p className="text-secondary">Verificando sesión...</p>
@@ -92,7 +91,7 @@ export default function Home() {
 
   if (isLoggingIn && !authenticated) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="home-wrapper">
         <div className="text-center">
           <div className="spinner-border text-success mb-3" role="status" />
           <p className="text-success">Iniciando sesión, un momento...</p>
@@ -105,7 +104,7 @@ export default function Home() {
    * 🎨 UI principal (login)
    ***************************************************/
   return (
-    <div className="container d-flex flex-column justify-content-center align-items-center vh-100">
+    <div className="home-wrapper">
       <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
         <h3 className="mb-3 fw-bold">Bienvenido</h3>
         <p className="text-muted mb-4">
