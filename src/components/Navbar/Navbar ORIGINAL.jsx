@@ -26,8 +26,6 @@ function AppNavbar() {
 
 
   // ---------------- Estados de UI ----------------
-
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [newAlias, setNewAlias] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [aliasToDelete, setAliasToDelete] = useState(null);
@@ -103,29 +101,8 @@ function AppNavbar() {
               aria-labelledby="offcanvasNavbarLabel-expand-lg"
               placement="end"
             >
-
-              <Offcanvas.Header closeButton className="offcanvas-header-user">
-                {user ? (
-                  <div className="offcanvas-user-header">
-                    <img
-                      src={user.picture || "https://via.placeholder.com/48"}
-                      alt={user.nombre || user.correo}
-                      className="offcanvas-user-avatar"
-                    />
-                    <div className="offcanvas-user-info">
-                      <div className="offcanvas-user-name">
-                        {user.nombre || "Usuario"}
-                      </div>
-                      <div className="offcanvas-user-email">
-                        {user.correo}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <Offcanvas.Title id="offcanvasNavbarLabel-expand-lg">
-                    Menú
-                  </Offcanvas.Title>
-                )}
+              <Offcanvas.Header closeButton>
+                <Offcanvas.Title id="offcanvasNavbarLabel-expand-lg">Menú</Offcanvas.Title>
               </Offcanvas.Header>
 
               <Offcanvas.Body>
@@ -137,32 +114,25 @@ function AppNavbar() {
                   <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>Add Facturas</Nav.Link>
                   <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
 
-                  <NavDropdown title="Más" id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
+                  <NavDropdown title="Más" id="nav-dropdown">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
-                    <NavDropdown.Divider />
-                    <NavDropdown.Item onClick={() => setShowModal(true)} as={Link} to="/admin">Configurar Backend</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Donaciones</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>
                   </NavDropdown>
 
-                  {/* MAS */}
+                  {/* Botón de 3 puntos verticales */}
                   <Nav.Link
-                    className="Navbar-NavLink-Mas nav-link-more"
-                    onClick={() => {
-                      setShow(false);
-                      setShowMoreMenu(true);
-                    }}
+                    onClick={() => setShowModal(true)}
+                    title="Configurar Backend"
+                    aria-label="Configurar Backend"
                   >
-                    <span>Más</span>
-                    <span className="arrow">›</span>
+                    ⋮
                   </Nav.Link>
 
-
-
                   {user && (
-                    <div className="navbar-session-Dropdown-desktop d-flex align-items-center ms-3">
+                    <div className="d-flex align-items-center ms-3">
                       <Dropdown align="end">
                         <Dropdown.Toggle
                           as="div"
@@ -198,7 +168,7 @@ function AppNavbar() {
                               logout();
                               navigate("/");
                             }}
-                            className=" text-danger text-center fw-semibold d-flex align-items-center justify-content-center gap-1"
+                            className="text-danger text-center fw-semibold d-flex align-items-center justify-content-center gap-1"
                           >
                             <BoxArrowRight size={16} /> Cerrar sesión
                           </Dropdown.Item>
@@ -209,90 +179,12 @@ function AppNavbar() {
 
                 </Nav>
               </Offcanvas.Body>
-
-              {/* Cerrar sesión – solo móvil */}
-              {user && (
-                <div className="offcanvas-logout-mobile romeo">
-                  <button
-                    className="offcanvas-logout-btn julieta"
-                    onClick={() => {
-                      setShow(false);
-                      logout();
-                      navigate("/");
-                    }}
-                  >
-                    <BoxArrowRight size={18} />
-                    <span>Cerrar sesión</span>
-                  </button>
-                </div>
-              )}
-
             </Navbar.Offcanvas>
 
 
 
           </Container>
         </Navbar>
-
-      {/* ========== OFFCANVAS MAS (NIVEL 2) ========== */}
-      <Offcanvas
-        placement="end"
-        show={showMoreMenu}
-        onHide={() => setShowMoreMenu(false)}
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              setShowMoreMenu(false);
-              setShow(true);
-            }}
-          >
-            ← Más opciones
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-
-        <Offcanvas.Body>
-          <Nav className="flex-column">
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/admin");
-              }}
-            >
-              Admin & Config
-            </Nav.Link>
-
-            <Nav.Link
-              onClick={() => {
-                setShowModal(true);
-                navigate("/admin");
-              }}
-            >
-              Configurar Backend
-            </Nav.Link>
-
-
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/about");
-              }}
-            >
-              Donaciones
-            </Nav.Link>
-
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/about");
-              }}
-            >
-              Acerca de
-            </Nav.Link>
-          </Nav>
-        </Offcanvas.Body>
-      </Offcanvas>
 
         {/* Modal confirmación eliminación */}
         <Modal show={!!aliasToDelete} onHide={() => setAliasToDelete(null)} centered>
@@ -310,7 +202,13 @@ function AppNavbar() {
           </Modal.Footer>
         </Modal>
 
-
+        {/* <AddProductoModal
+          show={showAddModal}
+          onHide={() => setShowAddModal(false)}
+          onProductoAgregado={() => {
+            setShowAddModal(false);
+          }}
+        /> */}
 
         <ReinitModal
           show={showReinitModal}

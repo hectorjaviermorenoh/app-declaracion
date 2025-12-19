@@ -169,6 +169,8 @@ $hover-bg: #f1f1f1;
       text-overflow: ellipsis;
     }
   }
+
+
 }
 
 
@@ -184,7 +186,7 @@ $hover-bg: #f1f1f1;
     font-size: 1rem;
     padding: 0.75rem 1rem;
     font-weight: 400;
-    line-height: 1.5rem;
+    line-height: 0.8rem;
 
     &:hover {
       background-color: $hover-bg;
@@ -201,10 +203,10 @@ $hover-bg: #f1f1f1;
     // Bootstrap variables (forma correcta)
     --bs-offcanvas-width: 88vw;
 
-    height: 60vh !important;
+    // height: 60vh !important;
     width: 80% !important;
     max-width: 80% !important;
-    max-height: 60vh;
+    max-height: 45vh;
     top: 11% !important;
     bottom: 0 !important;
     border-radius: 18px 18px 18px 18px;
@@ -221,5 +223,162 @@ $hover-bg: #f1f1f1;
 
   }
 
+  /* =====================================================
+    OFFCANVAS HEADER CON USUARIO (SOLO MÓVIL)
+    ===================================================== */
+  @media (max-width: 768px) {
+
+    .offcanvas-header-user {
+      // padding: 0.75rem 1rem;
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid #e6e6e6;
+    }
+
+    .offcanvas-user-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .offcanvas-user-avatar {
+      // width: 44px;
+      // height: 44px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .offcanvas-user-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .offcanvas-user-name {
+      font-weight: 600;
+      // font-size: 0.95rem;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .offcanvas-user-email {
+      // font-size: 0.8rem;
+      font-size: 0.75rem;
+      color: #6c757d;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  /* =====================================================
+    OFFCANVAS – LOGOUT SOLO MÓVIL (AL FINAL)
+    ===================================================== */
+  @media (max-width: 768px) {
+
+    .offcanvas-logout-mobile {
+      margin-top: auto; /* 🔑 lo empuja al final */
+      padding-top: 1rem;
+      border-top: 1px solid #e6e6e6;
+    }
+
+    .offcanvas-logout-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #dc3545;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .offcanvas-logout-btn:hover {
+      background-color: rgba(220, 53, 69, 0.08);
+    }
+  }
+
+  @media (min-width: 992px) {
+
+    .offcanvas-logout-mobile {
+      display: none;
+    }
+
+    .Navbar-NavLink-Mas {
+      display: none;
+    }
+
+  }
+
+
+  /* =====================================================
+    OCULTAR AVATAR / DROPDOWN DE USUARIO EN OFFCANVAS (MÓVIL)
+    ===================================================== */
+  @media (max-width: 768px) {
+
+    /* Contenedor del dropdown de usuario dentro del Nav */
+    .navbar-session-Dropdown-desktop {
+      display: none !important;
+    }
+
+
+  }
+
+  @media (max-width: 768px) {
+
+    /* Contenedor del dropdown de usuario dentro del Nav */
+    .Navbar-NavLink-Mas {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .Navbar-NavDropdown-Mas-Desktop {
+      display: none;
+
+    }
+
+  }
+
+
+
+
+
+
 }
+
+
+@media (max-width: 768px) {
+  .offcanvas {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+    background-color: #fff;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .offcanvas .nav-link {
+      color: #00253D !important;
+      font-family: "Roboto", sans-serif !important;
+      font-size: 1rem;
+      padding: 0.75rem 0.5rem;
+      font-weight: 300;
+      line-height: 0.6rem;
+  }
+}
+
+@media (min-width: 992px) {
+    .navbar-expand-lg .navbar-nav .dropdown-menu {
+        margin-left: -2rem !important;
+    }
+}
+
+
 
