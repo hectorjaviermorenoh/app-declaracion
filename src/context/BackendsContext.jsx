@@ -53,6 +53,7 @@ export function BackendsProvider({ children }) {
     const newBackend = {
       id: crypto.randomUUID(),
       alias: alias.trim(),
+      // url: url.trim().charAt(0).toLowerCase() + url.trim().slice(1),
       url: url.trim().charAt(0).toLowerCase() + url.trim().slice(1),
       avatar,
     };
