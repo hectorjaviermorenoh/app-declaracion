@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
 
     const handleFail = (mensaje, tipo = "danger") => {
       console.log(mensaje);
-      showToast(mensaje, tipo, 4000, "Autenticación 73");
+      showToast(mensaje, tipo, 4000, "Autenticación");
       logout(); // 👈 Llama a logout para limpiar
       onComplete();
     };
@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
       // ✅ ÉXITO: El backend nos da nuestro token propio y datos de usuario
       const { token: tokenPropio, user: userInfo } = data;
 
-      showToast(`👋 Bienvenido hjm ${userInfo.nombre}`, "success", 3000, "Autenticación");
+      showToast(`👋 Bienvenido ${userInfo.nombre}`, "success", 3000, "Autenticación");
 
       // Guardamos el token PROPIO
       setAuthToken(tokenPropio);
