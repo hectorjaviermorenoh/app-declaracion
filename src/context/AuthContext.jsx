@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBackends } from "./BackendsContext";
 // import { jwtDecode } from "jwt-decode";
 import { useToast } from "../context/ToastContext";
+import { confirmarAccion } from "../utils/alerts.js";
 
 // 📦 Clave para persistir sesión
 const STORAGE_KEY = "auth_session";
@@ -71,15 +72,29 @@ export function AuthProvider({ children }) {
 
     const handleFail = (mensaje, tipo = "danger") => {
       console.log(mensaje);
-      showToast(mensaje, tipo, 4000, "Autenticación");
+      showToast(mensaje, tipo, 10000, "Autenticación");
       logout(); // 👈 Llama a logout para limpiar
       onComplete();
     };
 
     if (!backendUrl) {
-      handleFail("⚠️ No hay backend activo. No se puede autenticar.", "warning");
+      const confirmar = await confirmarAccion({
+        titulo: "Backend no configurado",
+        mensaje: "No hay un backend activo para realizar la autenticación. Dirígete a la opción «Más», en la parte superior derecha, o al menú hamburguesa y selecciona «Configurar Backend».",
+        textoConfirmar: "✅ Aceptar",
+        textoCancelar: "❌ Cancelar",
+        icono: "info"
+      });
+
+      if (!confirmar || confirmar) {
+        handleFail("❌ Operación cancelada por el usuario", "warning");
+        return;
+      }
+
       return;
     }
+
+
 
     try {
       // 🔒 Intercambiar el token de Google por un token de sesión propio
