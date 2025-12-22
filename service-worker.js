@@ -1,4 +1,6 @@
-const CACHE_NAME = "app-declaracion-v1";
+// const CACHE_NAME = "app-declaracion-v3";
+const CACHE_VERSION = "__BUILD_TIME__";
+const CACHE_NAME = `app-declaracion-${CACHE_VERSION}`;
 
 /* Archivos básicos que queremos disponibles */
 const URLS_TO_CACHE = [
@@ -10,37 +12,32 @@ const URLS_TO_CACHE = [
 /* Instalación */
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(URLS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // ⬅️ fuerza nuevo SW
 });
 
 /* Activación */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
+            return caches.delete(cache); // ⬅️ borra caches viejos
           }
         })
-      );
-    })
+      )
+    )
   );
-  self.clients.claim();
+  self.clients.claim(); // ⬅️ toma control inmediato
 });
 
 /* Intercepción de peticiones */
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request);
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
