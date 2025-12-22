@@ -8,7 +8,4 @@ export default defineConfig({
     historyApiFallback: true, // 👈 clave para que no rompa al recargar en rutas
     port: 5174,
   },
-  define: {
-    __BUILD_TIME__: JSON.stringify(Date.now()) // 👈 Actualiza la version
-  },
 });

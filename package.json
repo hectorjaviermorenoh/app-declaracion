@@ -9,8 +9,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "vite build && gh-pages -d dist"
+    "predeploy": "sh scripts/update-sw-version.sh",
+    "deploy": "npm run predeploy && vite build && gh-pages -d dist"
   },
   "dependencies": {
     "axios": "^1.11.0",
