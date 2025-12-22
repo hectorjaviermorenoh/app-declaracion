@@ -3,7 +3,7 @@
 # timestamp como versión
 VERSION=$(date +%s)
 
-SW_FILE="public/service-worker.js"
+SW_FILE="../public/service-worker.js"
 
 # Reemplaza la versión
 sed -i.bak "s/const CACHE_VERSION = \".*\";/const CACHE_VERSION = \"v$VERSION\";/" $SW_FILE
