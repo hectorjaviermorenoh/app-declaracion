@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# timestamp como versión
-VERSION=$(date +%s)
+# Fecha y hora en formato: DDMMYYHHMMam/pm
+VERSION=$(date +"%d%m%y%I%M%p" | tr '[:upper:]' '[:lower:]')
 
 SW_FILE="../public/service-worker.js"
 
