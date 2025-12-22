@@ -1,23 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useBackends } from "../../context/BackendsContext";
 import "./Home.scss";
 
 
 export default function Home() {
+
   const { login, authenticated, loading } = useAuth();
+  const { activeBackend } = useBackends();
   const navigate = useNavigate();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [backendPrompted, setBackendPrompted] = useState(false);
 
   /***************************************************
    * 🔄 Si ya está autenticado → ir a productos
    ***************************************************/
+
   useEffect(() => {
-    if (!loading && authenticated) {
-      navigate("/productos");
+    if (loading) return;
+
+    if (authenticated && !activeBackend && !backendPrompted) {
+      setBackendPrompted(true);
+      window.dispatchEvent(new CustomEvent("backend:open-config"));
+      return;
     }
-  }, [authenticated, loading, navigate]);
+
+    if (authenticated && activeBackend) {
+      navigate("/productos", { replace: true });
+    }
+  }, [authenticated, loading, activeBackend, backendPrompted, navigate]);
+
 
   /***************************************************
    * 🚀 Renderizar botón de Google con reintentos

@@ -24,7 +24,7 @@ export default function Productos() {
 
   const { showToast } = useToast();
 
-  const [btnPos, setBtnPos] = useState({ top: 80, left: null, right: 20 });
+  const [setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSelectModal, setShowSelectModal] = useState(false);
@@ -43,23 +43,9 @@ export default function Productos() {
   useEffect(() => {
     const savedPos = localStorage.getItem("btnAddProductoPos");
     if (savedPos) setBtnPos(JSON.parse(savedPos));
-  }, []);
+  }, [setBtnPos]);
 
-  // const handleDragEnd = (e) => {
-  //   const btnWidth = 45;
-  //   const btnHeight = 45;
-  //   const padding = 10;
 
-  //   let left = e.clientX - btnWidth / 2;
-  //   let top = e.clientY - btnHeight / 2;
-
-  //   left = Math.max(padding, Math.min(left, window.innerWidth - btnWidth - padding));
-  //   top = Math.max(padding, Math.min(top, window.innerHeight - btnHeight - padding));
-
-  //   const newPos = { top, left, right: "auto" };
-  //   setBtnPos(newPos);
-  //   localStorage.setItem("btnAddProductoPos", JSON.stringify(newPos));
-  // };
 
   /* =============================
      Carga inicial
@@ -194,22 +180,6 @@ export default function Productos() {
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
 
-          {/* <Button
-            className="btn-add-producto fab-move"
-            style={{
-              top: btnPos.top,
-              left: btnPos.left,
-              right: btnPos.right,
-              position: "fixed",
-            }}
-            draggable
-            onDragEnd={handleDragEnd}
-            onClick={() => setShowAddModal(true)}
-            title="Adicionar Producto"
-          >
-            +
-          </Button> */}
-          
         </div>
 
         <Row>

@@ -1,35 +1,44 @@
 import React, { useState} from "react";
-import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas } from "react-bootstrap";
+import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, Modal, Button, Form, Toast, ToastContainer } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
-
-
-import { useBackends } from "../../context/BackendsContext.jsx";
+// import AddProductoModal from "../Modals/AddProductoModal/AddProductoModal";
 import ReinitModal from "../ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
+import { useBackends } from "../../context/BackendsContext.jsx";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
+// import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Navbar.scss";
 
-function AppNavbar({ onOpenBackend }) {
+function AppNavbar() {
 
-  const { activeBackend, } = useBackends();
+  const { backends, activeBackend, addBackend, deleteBackend, setActiveBackend } = useBackends();
   const { getDatos } = useDatosTributarios(); // 👈 accede al refresco
   const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
   const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
+
   const { showToast } = useToast();
+
+
 
   // ---------------- Estados de UI ----------------
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [newAlias, setNewAlias] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [aliasToDelete, setAliasToDelete] = useState(null);
+
   const { user, logout } = useAuth();
 
+  const [showModal, setShowModal] = useState(false);
   // const [showAddModal, setShowAddModal] = useState(false);
   const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [loadingOverlay, setLoadingOverlay] = useState(false);
 
   const navigate = useNavigate();
@@ -37,7 +46,13 @@ function AppNavbar({ onOpenBackend }) {
 
   const handleClose = () => setShow(false);
 
+
     // ---------------- Funciones ----------------
+  const handleDeleteBackend = (alias) => {
+    deleteBackend(alias);
+    setAliasToDelete(null);
+    showToast(`✅ Backend "${alias}" eliminado`, "success", 3000, "Navbar");
+  };
 
   const handleToggle = () => {
     if (location.pathname === "/datos-tributarios") {
@@ -58,7 +73,7 @@ function AppNavbar({ onOpenBackend }) {
                 <div
                   className="backend-circle ms-2"
                   title={`Backend: ${activeBackend.alias}`}
-                  onClick={onOpenBackend}
+                  onClick={() => setShowModal(true)} // abre modal de gestión
                 >
                   {activeBackend.alias.slice(0, 2).toUpperCase()}
                 </div>
@@ -117,6 +132,7 @@ function AppNavbar({ onOpenBackend }) {
                 <Nav
                   className="justify-content-end flex-grow-1 pe-3"
                 >
+                  {/* <Nav.Link onClick={() => { setShowAddModal(true); setShow(false); }}>Add Producto</Nav.Link> */}
                   <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>Productos</Nav.Link>
                   <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>Add Facturas</Nav.Link>
                   <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
@@ -124,7 +140,7 @@ function AppNavbar({ onOpenBackend }) {
                   <NavDropdown title="Más" id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                     <NavDropdown.Divider />
-                    <NavDropdown.Item onClick={onOpenBackend}>Configurar Backend</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => setShowModal(true)} as={Link} to="/admin">Configurar Backend</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Donaciones</NavDropdown.Item>
                     <NavDropdown.Divider />
@@ -249,8 +265,8 @@ function AppNavbar({ onOpenBackend }) {
 
             <Nav.Link
               onClick={() => {
-                setShow(false);
-                onOpenBackend()
+                setShowModal(true);
+                navigate("/admin");
               }}
             >
               Configurar Backend
@@ -278,6 +294,24 @@ function AppNavbar({ onOpenBackend }) {
         </Offcanvas.Body>
       </Offcanvas>
 
+        {/* Modal confirmación eliminación */}
+        <Modal show={!!aliasToDelete} onHide={() => setAliasToDelete(null)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Eliminar Backend</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            ¿Seguro que deseas eliminar la configuración <strong>{aliasToDelete}</strong>?
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setAliasToDelete(null)}>Cancelar</Button>
+            <Button variant="danger" onClick={() => handleDeleteBackend(aliasToDelete)}>
+              Eliminar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+
+
         <ReinitModal
           show={showReinitModal}
           onHide={() => setShowReinitModal(false)}
@@ -297,6 +331,90 @@ function AppNavbar({ onOpenBackend }) {
 
         />
 
+        {/* Modal gestión de Backends */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Configurar Backends</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {backends.length === 0 ? (
+              <p>No hay backends configurados.</p>
+            ) : (
+              <ul className="list-group">
+                {backends.map((b) => (
+                  <li
+                    key={b.alias}
+                    className={`list-group-item d-flex justify-content-between align-items-center ${activeBackend?.alias === b.alias ? "active" : ""}`}
+                  >
+                    <span>{b.alias}</span>
+                    <div>
+                      <Button size="sm" variant="success" onClick={() => setActiveBackend(b.alias)}>
+                        Usar
+                      </Button>{" "}
+                      <Button size="sm" variant="danger" onClick={() => setAliasToDelete(b.alias)}>
+                        Eliminar
+                      </Button>
+
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <hr />
+            <h6
+              style={{ cursor: "pointer", color: "#0d6efd" }}
+              onClick={() => setShowAddForm((prev) => !prev)}
+            >
+              {showAddForm ? "➖ Cancelar" : "➕ Agregar nuevo Backend"}
+            </h6>
+
+            {showAddForm && (
+              <Form>
+                <Form.Group className="mb-2">
+                  <Form.Label>Alias</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Ej: Cliente1"
+                    value={newAlias}
+                    onChange={(e) => setNewAlias(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-2">
+                  <Form.Label>URL</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="http://localhost:8080"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                  />
+                </Form.Group>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+
+                    try {
+                      addBackend(newAlias, newUrl);
+                      showToast(`✅ Backend "${newAlias}" agregado`, "success", 3000, "Navbar");
+                      setNewAlias("");
+                      setNewUrl("");
+                      setShowAddForm(false); // ocultar form después de guardar
+                    } catch (err) {
+                      showToast(`❌ ${err.message}`, "success", 3000, "Navbar");
+                    }
+
+                  }}
+                >
+                  Guardar
+                </Button>
+              </Form>
+            )}
+
+
+
+
+          </Modal.Body>
+        </Modal>
 
         <LoadingOverlay show={loadingOverlay} />
 

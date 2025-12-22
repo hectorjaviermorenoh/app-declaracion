@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBackends } from "./BackendsContext";
-// import { jwtDecode } from "jwt-decode";
 import { useToast } from "../context/ToastContext";
 import { confirmarAccion } from "../utils/alerts.js";
 
@@ -80,19 +79,31 @@ export function AuthProvider({ children }) {
     if (!backendUrl) {
       const confirmar = await confirmarAccion({
         titulo: "Backend no configurado",
-        mensaje: "No hay un backend activo para realizar la autenticación. Dirígete a la opción «Más», en la parte superior derecha, o al menú hamburguesa y selecciona «Configurar Backend».",
-        textoConfirmar: "✅ Aceptar",
+        mensaje:
+          "No hay un backend activo para realizar la autenticación. Dirígete a la opción «Más», en la parte superior derecha, o al menú hamburguesa y selecciona «Configurar Backend».",
+        textoConfirmar: "✅ Abrir Administración de Backends",
         textoCancelar: "❌ Cancelar",
-        icono: "info"
+        icono: "info",
       });
 
-      if (!confirmar || confirmar) {
-        handleFail("❌ Operación cancelada por el usuario", "warning");
+      // 🟥 Usuario canceló
+      if (!confirmar) {
+        showToast(
+          "❌ Operación cancelada por el usuario",
+          "warning",
+          4000,
+          "Autenticación"
+        );
+        onComplete(); // 🔑 libera loading
         return;
       }
 
+      // 🟩 Usuario aceptó → abrir modal
+      window.dispatchEvent(new CustomEvent("backend:open-config"));
+      onComplete(); // 🔑 libera loading
       return;
     }
+
 
 
 
@@ -128,7 +139,7 @@ export function AuthProvider({ children }) {
       persistSession(tokenPropio, userInfo); // 👈 Persistimos el token propio
 
       onComplete();
-      navigate("/productos");
+      // navigate("/productos");
 
     } catch (err) {
       console.error("Error en login (intercambio de token):", err);
