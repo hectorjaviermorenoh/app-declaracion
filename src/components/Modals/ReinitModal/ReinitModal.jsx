@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import "./ReinitModal.scss";
 
-export default function ReinitModal({ show, onHide, onConfirm }) {
+export default function ReinitModal({ show, onHide, onConfirm, loading }) {
   const [confirmText, setConfirmText] = useState("");
-  const [borrarCarpetas, setBorrarCarpetas] = useState(true);
+  const [borrarCarpetas, setBorrarCarpetas] = useState(false);
 
   const handleSubmit = () => {
     onConfirm(confirmText, borrarCarpetas);
     setConfirmText(""); // limpiar
-    setBorrarCarpetas(true);
+    setBorrarCarpetas(false);
   };
 
   return (
@@ -35,7 +36,7 @@ export default function ReinitModal({ show, onHide, onConfirm }) {
             label="Borrar también las carpetas de archivos"
             checked={borrarCarpetas}
             onChange={(e) => setBorrarCarpetas(e.target.checked)}
-            className="mt-2"
+            className="mt-2 modal-reinit-checkbox"
           />
         </Form>
       </Modal.Body>
@@ -46,7 +47,13 @@ export default function ReinitModal({ show, onHide, onConfirm }) {
           disabled={confirmText !== "INICIALIZAR"}
           onClick={handleSubmit}
         >
-          Reinicializar
+          {loading ? (
+            <>
+              <Spinner as="span" animation="border" size="sm" /> Inicializando...
+            </>
+          ) : (
+            "Reinicializar"
+          )}
         </Button>
       </Modal.Footer>
     </Modal>

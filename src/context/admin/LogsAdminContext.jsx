@@ -58,8 +58,6 @@ export function LogsAdminProvider({ children }) {
   }, [showToast, getDatos]);
 
 
-
-
   // Valor expuesto al resto de la app
   return (
     <LogsAdminContext.Provider

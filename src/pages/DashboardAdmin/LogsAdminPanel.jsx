@@ -54,7 +54,7 @@ export function LogsAdminPanel() {
           {logs.length > 0 ? (
             logs.map((log, i) => (
               <tr key={i}>
-                <td>{new Date(log.fecha).toLocaleString()}</td>
+                <td>{log.fecha}</td>
                 <td>{log.accion}</td>
                 <td>{log.usuario}</td>
                 <td>
@@ -81,7 +81,7 @@ export function LogsAdminPanel() {
             <div className="log-card" key={i}>
               <div className="log-header">
                 <h6>{log.accion}</h6>
-                <span>{new Date(log.fecha).toLocaleString()}</span>
+                <span>{log.fecha}</span>
               </div>
               <div className="log-body">
                 <p>

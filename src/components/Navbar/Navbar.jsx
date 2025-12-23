@@ -5,7 +5,7 @@ import { useToast } from "../../context/ToastContext";
 
 
 import { useBackends } from "../../context/BackendsContext.jsx";
-import ReinitModal from "../ReinitModal/ReinitModal";
+import ReinitModal from "../Modals/ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useProductos } from "../../context/ProductosContext.jsx";

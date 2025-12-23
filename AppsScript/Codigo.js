@@ -718,7 +718,8 @@ function registrarLog(accion, usuario, detalle) {
   try {
     let logs = leerJSON(JSON_LOGS);
     const nuevoLog = {
-      fecha: new Date().toISOString(),
+      // fecha: new Date().toISOString(),
+      fecha: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss"),
       accion,
       usuario: usuario || "desconocido",
       detalle: detalle || {}

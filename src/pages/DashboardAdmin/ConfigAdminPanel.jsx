@@ -5,7 +5,7 @@ import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/Confi
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
 import { useToast } from "../../context/ToastContext";
-import ReinitModal from "../../components/ReinitModal/ReinitModal";
+import ReinitModal from "../../components/Modals/ReinitModal/ReinitModal";
 import "./Styles/ConfigAdminPanel.scss";
 
 
@@ -272,17 +272,6 @@ export const ConfigAdminPanel = () => {
       <ReinitModal
         show={showReinitModal}
         onHide={() => setShowReinitModal(false)}
-        // onConfirm={async (confirmText, borrarCarpetas) => {
-        //   if (confirmText !== "INICIALIZAR") return;
-        //   setShowReinitModal(false);
-
-        //   try {
-        //     const resp = await reinicializarSistemaForzado(confirmText, borrarCarpetas);
-        //     showToast(resp.mensaje, resp.ok ? "success" : "danger", 3000);
-        //   } finally {
-        //       // setLoadingOverlay(false);
-        //   }
-        // }}
         onConfirm={async (confirmText, borrarCarpetas) => {
           if (confirmText !== "INICIALIZAR") return;
 
@@ -296,6 +285,7 @@ export const ConfigAdminPanel = () => {
             setShowReinitModal(false);
           }
         }}
+        loading={loading}
       />
     </div>
   );
