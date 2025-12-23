@@ -10,7 +10,7 @@ const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
-const TOKEN_SECRET = "528138845199053779904519";
+const ZEICHENSCHLUESSEL = "528138845199053779904519";
 
 /******************************
  * CONSTANTE DE CONFIGURACIONES INICIALES
@@ -48,21 +48,18 @@ const ROLES_INICIALES = [
 const FUNCIONES_LOGICA_NEGOCIO = [
   // --- GET ---
   "getConfig",
-  "getFuncionesLogicaNegocio",
   "getRoles",
   "getUsuarios",
-  "getProductos",
   "getDatosTributarios",
   "getLogs",
   "getProductosPorArchivo",
   "getTotalesFacturas",
 
   // --- POST ---
-  "inicializarForzado",
+  
   "subirArchivo",
+  "replaceArchivo",
   "subirArchivoFacturas",
-  "setConfig",
-  "limpiarLogsAntiguos",
   "addRol",
   "updateRol",
   "deleteRol",
@@ -71,12 +68,14 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "deleteUsuario",
   "addProducto",
   "deleteProducto",
-  "replaceArchivo",
   "addDatoTributario",
   "updateDatoTributario",
   "deleteDatoTributario",
   "moveDatoTributario",
-  "generarBackupZIP"
+  "setConfig",
+  "generarBackupZIP",
+  "limpiarLogsAntiguos",
+  "inicializarForzado",
 ];
 
 // ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
@@ -93,12 +92,11 @@ const FUNCIONES_GENERALES = [
   "normalizarNombreArchivo",
   "toggleUsuarioActivo",
   "inicializarSistema",
-  "getArchivosPorAnio"
+  "getArchivosPorAnio",
+  "getFuncionesLogicaNegocio",
+  "getProductos",
 
 ];
-
-
-
 
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
@@ -356,7 +354,7 @@ function generarTokenPropio(usuarioInfo) {
 
   // Creamos la firma
   // computeHmacSha256Signature necesita el payloadB64 como String, lo cual es correcto
-  const signature = Utilities.computeHmacSha256Signature(payloadB64, TOKEN_SECRET); 
+  const signature = Utilities.computeHmacSha256Signature(payloadB64, ZEICHENSCHLUESSEL); 
 
   // Codificamos la firma (Byte[] -> Base64WebSafe)
   const signatureB64 = Utilities.base64EncodeWebSafe(signature); // ✅ CORREGIDO 2
@@ -384,7 +382,7 @@ function verificarTokenPropio(token) {
     
     // 1. Verificar la firma
     const signature = Utilities.base64DecodeWebSafe(signatureB64);
-    const expectedSignature = Utilities.computeHmacSha256Signature(payloadB64, TOKEN_SECRET);
+    const expectedSignature = Utilities.computeHmacSha256Signature(payloadB64, ZEICHENSCHLUESSEL);
     
     // Comparación segura de los bytes de la firma
     if (signature.length !== expectedSignature.length || !signature.every((byte, i) => byte === expectedSignature[i])) {
@@ -1314,7 +1312,6 @@ function getUsuarios() {
   }
 }
 
-
 function addUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1324,17 +1321,19 @@ function addUsuario(data, usuario) {
     const { correo, nombre, rol } = data;
     const correoEjecutor = usuario?.correo || "sistema";
 
-    if (!correo || !nombre || !rol)
+    if (!correo || !nombre || !rol) {
       return respuestaJSON({
         status: "error",
         mensaje: "⚠️ Todos los campos son obligatorios (correo, nombre, rol).",
       });
+    }
 
-    if (usuarios.some((u) => u.correo.toLowerCase() === correo.toLowerCase()))
+    if (usuarios.some(u => u.correo.toLowerCase() === correo.toLowerCase())) {
       return respuestaJSON({
         status: "error",
         mensaje: `⚠️ Ya existe un usuario con el correo "${correo}".`,
       });
+    }
 
     const nuevoUsuario = {
       correo,
@@ -1343,22 +1342,48 @@ function addUsuario(data, usuario) {
       activo: true,
     };
 
+    // 1️⃣ Agregar al JSON
     usuarios.push(nuevoUsuario);
     guardarJSON(JSON_USUARIOS, usuarios);
 
+    // 2️⃣ Asignar permiso (CRÍTICO)
+    const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
+    if (!carpetas.hasNext()) {
+      throw crearError("CarpetaNoEncontradaError", `No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
+    }
+
+    const carpeta = carpetas.next();
+
+    try {
+      carpeta.addEditor(correo);
+    } catch (e) {
+      // 🔄 ROLLBACK
+      const usuariosRollback = usuarios.filter(u => u.correo !== correo);
+      guardarJSON(JSON_USUARIOS, usuariosRollback);
+
+      const err = new Error(`No se pudo asignar permiso al usuario "${correo}"`);
+      err.name = "PermisoNoAsignadoError";
+      err.originalError = e;
+      throw err;
+    }
+
     registrarLog("addUsuario", correoEjecutor, `Usuario creado: ${correo}`);
+
     return respuestaJSON({
       status: "ok",
       mensaje: `✅ Usuario "${correo}" creado correctamente.`,
       datos: usuarios,
     });
+
   } catch (err) {
     manejarError(err, "addUsuario", usuario?.correo);
+
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al crear el usuario.",
-      detalle: err,
+      detalle: err.message || err,
     });
+
   } finally {
     lock.releaseLock();
   }
@@ -1475,6 +1500,32 @@ function deleteUsuario(data, usuario) {
     const nuevosUsuarios = usuarios.filter((u) => u.correo !== correo);
     guardarJSON(JSON_USUARIOS, nuevosUsuarios);
 
+    const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
+    if (carpetas.hasNext()) {
+      const carpeta = carpetas.next();
+
+      try {
+        carpeta.removeEditor(correo);
+      } catch (e) {
+        if (e.message?.includes("No such user")) {
+          const err = new Error(
+            `El usuario "${correo}" no tenía permisos en la carpeta`
+          );
+          err.name = "PermisoInexistenteError";
+
+          // 📝 Se registra el warning, pero NO se interrumpe el flujo
+          manejarError(err, "deleteUsuario", usuario?.correo);
+        } else {
+          throw e; // otros errores sí son críticos
+        }
+      }
+
+    } else {
+      const err = new Error(`No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
+      err.name = "CarpetaNoEncontradaError";
+      throw err;
+    }
+
     registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
     return respuestaJSON({
       status: "ok",
@@ -1486,7 +1537,7 @@ function deleteUsuario(data, usuario) {
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al eliminar usuario.",
-      detalle: err,
+      detalle: String(err.message || err)
     });
   } finally {
     lock.releaseLock();
