@@ -2,13 +2,20 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useProductos } from "../../context/ProductosContext.jsx";
+import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import "./Contador.scss";
 
 function Contador() {
 
   const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
 
-  const { loading, fetchArchivosPorAnio  } = useProductos();
+  const { loading, fetchArchivosPorAnio, deleteRegistroProducto } = useProductos();
+
+  const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
+  const [registros, setRegistros] = useState([]);
+
+    const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -138,6 +145,23 @@ function Contador() {
   }
 
 
+  const handleDelete = async () => {
+    if (!registroSeleccionado) return;
+    const resp = await deleteRegistroProducto(registroSeleccionado.registroId);
+
+    if (resp.ok) {
+      setArchivos((prev) =>
+        prev.filter(
+          (a) => a.registroId !== registroSeleccionado.registroId
+        )
+      );
+    }
+    setShowDeleteModal(false);
+    setRegistroSeleccionado(null);
+  };
+
+
+
   return (
     <div className="contador-container">
       <div className="container mt-4">
@@ -239,6 +263,8 @@ function Contador() {
                       </th>
 
                       <th>Descripción</th>
+
+                      <th className="th-acciones"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,6 +278,29 @@ function Contador() {
                         <td>{a.nombreProducto}</td>
                         <td>{a.tipo || "-"}</td>
                         <td>{a.descripcion || "-"}</td>
+                        <td className="acciones">
+                          <i
+                            className="bi bi-pencil-square accion-icon"
+                            title="Editar"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRegistroSeleccionado(a);
+                              setShowEditModal(true);
+                              // futuro modal editar
+                            }}
+                          ></i>
+
+                          <i
+                            className="bi bi-x-circle accion-icon text-danger"
+                            title="Eliminar"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRegistroSeleccionado(a);
+                              setShowDeleteModal(true);
+                            }}
+                          ></i>
+                        </td>
+
                       </tr>
                     ))}
                   </tbody>
@@ -305,7 +354,26 @@ function Contador() {
 
         )}
       </div>
+
+      <ConfirmActionModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        title="Eliminar factura"
+        message={
+          <>
+            ¿Seguro que deseas eliminar el producto nombre {" "}
+            <strong>{registroSeleccionado?.nombreProducto}</strong> entidad{" "}
+            <strong>{registroSeleccionado?.entidad}</strong>?
+          </>
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={handleDelete}
+      />
+
     </div>
+
+
   );
 }
 

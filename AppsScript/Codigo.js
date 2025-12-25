@@ -59,6 +59,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   
   "subirArchivo",
   "replaceArchivo",
+  "deleteRegistroProducto",
   "subirArchivoFacturas",
   "addRol",
   "updateRol",
@@ -966,6 +967,8 @@ function doPost(e) {
         return deleteProducto(data.id, usuario);
       case "replaceArchivo":
         return replaceArchivo(data, usuario);
+      case "deleteRegistroProducto":
+        return deleteRegistroProducto(data, usuario);
       case "inicializarSistema":
         return inicializarSistemaSeguro(data, usuario);
       case "addDatoTributario":
@@ -1277,10 +1280,7 @@ function deleteRol(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
 // Usuarios
-
 function getUsuarios() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1544,7 +1544,6 @@ function deleteUsuario(data, usuario) {
     lock.releaseLock();
   }
 }
-
 // Productos
 function addProducto(data, usuario) {
   const lock = LockService.getScriptLock();
@@ -1946,6 +1945,164 @@ function replaceArchivo(data, usuario) {
     lock.releaseLock();
   }
 }
+
+function deleteRegistroProducto(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const registroId = data.id;
+
+    if (!registroId) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "ID de registro no proporcionado"
+      });
+    }
+
+    // Leer bddatos.json
+    const datos = leerJSON(JSON_BDD_DATOS);
+
+    // Buscar registro
+    const index = datos.findIndex(r => r.registroId === registroId);
+    if (index === -1) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "Registro no encontrado"
+      });
+    }
+
+    const registro = datos[index];
+    const { nombreArchivo, fileId, productoId, anio } = registro;
+
+    // Contar cuántos registros usan el mismo archivo
+    const usosArchivo = datos.filter(
+      r => r.nombreArchivo === nombreArchivo
+    ).length;
+
+    let archivoEliminado = false;
+
+    // Si es el único uso, eliminar archivo en Drive
+    if (usosArchivo === 1 && fileId) {
+      try {
+        DriveApp.getFileById(fileId).setTrashed(true);
+        archivoEliminado = true;
+      } catch (e) {
+        Logger.log("⚠️ Error eliminando archivo en Drive: " + e);
+      }
+    }
+
+    // Eliminar registro del JSON
+    datos.splice(index, 1);
+    guardarJSON(JSON_BDD_DATOS, datos);
+
+    // Log
+    registrarLog("deleteRegistroProducto", correoEjecutor, {
+      registroId,
+      nombreArchivo,
+      fileId,
+      archivoEliminado
+    });
+
+    // Respuesta al frontend
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Registro eliminado correctamente",
+      eliminado: {
+        registroId,
+        nombreArchivo,
+        fileId,
+        productoId,
+        anio,
+        archivoEliminado
+      }
+    });
+
+  } catch (e) {
+    Logger.log(e);
+    return respuestaJSON({
+      status: "error",
+      mensaje: e.message || "Error eliminando registro"
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function editRegistroProducto(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const correoEjecutor = usuario?.correo || "sistema";
+    const registroId = data.id;
+
+    if (!registroId) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "ID de registro no proporcionado"
+      });
+    }
+
+    // Leer bddatos.json
+    const datos = leerJSON(JSON_BDD_DATOS);
+
+    // Buscar registro
+    const index = datos.findIndex(r => r.registroId === registroId);
+    if (index === -1) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "Registro no encontrado"
+      });
+    }
+
+    const registroActual = datos[index];
+
+    // 🔹 Actualizar SOLO campos editables
+    const registroEditado = {
+      ...registroActual,
+      entidad: data.entidad ?? registroActual.entidad,
+      nombreProducto: data.nombreProducto ?? registroActual.nombreProducto,
+      descripcion: data.descripcion ?? registroActual.descripcion,
+      tipo: data.tipo ?? registroActual.tipo,
+      anio: data.anio ?? registroActual.anio,
+      fechaEdicion: new Date().toISOString()
+    };
+
+    // Reemplazar registro
+    datos[index] = registroEditado;
+
+    // Guardar JSON
+    guardarJSON(JSON_BDD_DATOS, datos);
+
+    // Log
+    registrarLog("editRegistroProducto", correoEjecutor, {
+      registroId,
+      antes: registroActual,
+      despues: registroEditado
+    });
+
+    // Respuesta al frontend
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "Registro editado correctamente",
+      registro: registroEditado
+    });
+
+  } catch (e) {
+    return respuestaJSON({
+      status: "error",
+      mensaje: e.message || "Error editando el registro"
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+
 function getArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
@@ -1974,7 +2131,6 @@ function getArchivosPorAnio(anio) {
   return respuestaJSON({ status: "ok", anio, archivos: resultado });
   
 }
-
 function getProductos() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2008,9 +2164,6 @@ function getProductos() {
     lock.releaseLock();
   }
 }
-
-
-
 function getFacturasPorAnio(anio) {
   let data = leerJSON(JSON_BDD_FACTURAS);
 
@@ -2115,9 +2268,6 @@ function deleteFactura(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
 function getProductosPorArchivo(fileId) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);

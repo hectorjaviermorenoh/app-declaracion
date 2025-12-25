@@ -157,4 +157,31 @@
   }
 
 
+  .th-acciones {
+    width: 80px;
+    text-align: center;
+  }
+
+  .acciones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .accion-icon {
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .accion-icon:hover {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+
+
+
 }
+
+

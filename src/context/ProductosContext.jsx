@@ -251,6 +251,40 @@ export function ProductosProvider({ children }) {
     refreshProductos();
   }, [refreshProductos]);
 
+  const deleteRegistroProducto = useCallback(
+    async (registroId) => {
+
+      setLoadingProductos(true);
+
+      try {
+        const data = await apiPost("deleteRegistroProducto", {id: registroId,});
+
+        if (data?.status === "ok") {
+          const { eliminado } = data;
+          showToast(`✅ ${data.mensaje}`, "success", 3000, "ProductoContext");
+          return {
+            ok: true,
+            eliminado,
+          };
+        }
+
+        showToast(`❌ ${data?.mensaje || "No se pudo eliminar el registro"}`,"error",3000,"ProductoContext");
+
+        return { ok: false };
+
+      } catch (e) {
+        console.error(e);
+        showToast("❌ Error eliminando registro","error",3000,"ProductoContext");
+        return { ok: false };
+
+      } finally {
+        setLoadingProductos(false);
+      }
+    },
+    [showToast]
+  );
+
+
 
   return (
     <ProductosContext.Provider
@@ -264,6 +298,7 @@ export function ProductosProvider({ children }) {
         fetchArchivosPorAnio,
         addProducto,
         deleteProducto,
+        deleteRegistroProducto,
         loading: loadingProductos, // ← YA FUNCIONA
       }}
     >

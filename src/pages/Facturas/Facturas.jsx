@@ -24,6 +24,7 @@ function Facturas() {
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+
   useEffect(() => {
     fetchFacturasPorAnio(anio).then(setFacturas);
   }, [anio, fetchFacturasPorAnio]);
