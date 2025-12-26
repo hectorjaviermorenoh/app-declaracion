@@ -2497,16 +2497,17 @@ function getLogs() {
     lock.releaseLock();
   }
 }
+
 function limpiarLogsAntiguos(usuario) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // Esperar hasta 30 segundos
+  lock.waitLock(30000);
 
   try {
-    let logs = leerJSON(JSON_LOGS);
+    let logs = leerJSON(JSON_LOGS) || [];
     const correoEjecutor = usuario?.correo || "sistema";
 
-    // Si hay 10 o menos, no hacemos nada
-    if (!logs || logs.length <= 10) {
+    // Si hay 10 o menos, no hacer nada
+    if (logs.length <= 10) {
       return respuestaJSON({
         status: "ok",
         mensaje: "No se eliminaron logs. Hay 10 o menos registros.",
@@ -2514,17 +2515,12 @@ function limpiarLogsAntiguos(usuario) {
       });
     }
 
-    // 🕒 Ordenar los logs del más reciente al más antiguo
-    logs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-    // 📦 Conservar los 10 más recientes
-    const logsConservados = logs.slice(0, 10);
+    // 🔥 CONSERVAR LOS ÚLTIMOS 10 (los de abajo)
+    const logsConservados = logs.slice(-10);
     const eliminados = logs.length - logsConservados.length;
 
-    // 💾 Guardar de nuevo
     guardarJSON(JSON_LOGS, logsConservados);
 
-    // 📘 Registrar acción en logs (opcional)
     registrarLog("limpiarLogsAntiguos", correoEjecutor, {
       eliminados,
       totalFinal: logsConservados.length
@@ -2532,16 +2528,19 @@ function limpiarLogsAntiguos(usuario) {
 
     return respuestaJSON({
       status: "ok",
-      mensaje: `🧹 ${eliminados} logs eliminados, se conservaron los 10 más recientes.`,
+      mensaje: `🧹 ${eliminados} logs eliminados, se conservaron los últimos 10.`,
       totalFinal: logsConservados.length
     });
 
   } catch (error) {
-    return manejarError(error, "limpiarLogsAntiguos", Session.getActiveUser().getEmail());
+    return manejarError(error, "limpiarLogsAntiguos", correoEjecutor);
   } finally {
     lock.releaseLock();
   }
 }
+
+
+
 
 
 
