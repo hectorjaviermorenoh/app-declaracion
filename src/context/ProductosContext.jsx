@@ -254,7 +254,7 @@ export function ProductosProvider({ children }) {
   const deleteRegistroProducto = useCallback(
     async (registroId) => {
 
-      setLoadingProductos(true);
+      // setLoadingProductos(true);
 
       try {
         const data = await apiPost("deleteRegistroProducto", {id: registroId,});
@@ -278,11 +278,41 @@ export function ProductosProvider({ children }) {
         return { ok: false };
 
       } finally {
-        setLoadingProductos(false);
+        // setLoadingProductos(false);
       }
     },
     [showToast]
   );
+
+  const editRegistroProducto = useCallback(
+    async (payload) => {
+      // setLoadingProductos(true);
+
+      try {
+        const data = await apiPost("editRegistroProducto", payload);
+
+        if (data?.status === "ok") {
+          showToast(`✅ ${data.mensaje}`,"success",3000,"Archivos");
+          return {
+            ok: true,
+            registro: data.registro
+          };
+        }
+        showToast(`❌ ${data?.mensaje || "No se pudo editar el registro"}`,"error",3000,"Archivos");
+        return { ok: false };
+
+      } catch (e) {
+        console.error(e);
+        showToast("❌ Error editando el registro","error",3000,"Archivos");
+        return { ok: false };
+
+      } finally {
+        // setLoadingProductos(false);
+      }
+    },
+    [showToast]
+  );
+
 
 
 
@@ -299,6 +329,7 @@ export function ProductosProvider({ children }) {
         addProducto,
         deleteProducto,
         deleteRegistroProducto,
+        editRegistroProducto,
         loading: loadingProductos, // ← YA FUNCIONA
       }}
     >

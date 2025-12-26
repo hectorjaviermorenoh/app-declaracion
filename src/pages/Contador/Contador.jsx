@@ -3,6 +3,8 @@ import { Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
+import EditRegistroProducto from "../../components/Modals/EditRegistroProductoModal/EditRegistroProductoModal";
+
 import "./Contador.scss";
 
 function Contador() {
@@ -10,11 +12,8 @@ function Contador() {
   const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
 
   const { loading, fetchArchivosPorAnio, deleteRegistroProducto } = useProductos();
-
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
-  const [registros, setRegistros] = useState([]);
-
-    const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const navigate = useNavigate();
@@ -184,12 +183,6 @@ function Contador() {
             })}
           </select>
         </div>
-
-        {/* {loading ? (
-          <p>Cargando...</p>
-        ) : filteredArchivos.length === 0 ? (
-          <p>No hay archivos para este año.</p>
-        ) : ( */}
 
         {loading ? (
           <div className="Contador-Loading-CargandoContador">
@@ -370,6 +363,22 @@ function Contador() {
         confirmVariant="danger"
         onConfirm={handleDelete}
       />
+
+      <EditRegistroProducto
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        registro={registroSeleccionado}
+        onUpdated={(registroActualizado) => {
+          setArchivos((prev) =>
+            prev.map((a) =>
+              a.registroId === registroActualizado.registroId
+                ? { ...a, ...registroActualizado }
+                : a
+            )
+          );
+        }}
+      />
+
 
     </div>
 

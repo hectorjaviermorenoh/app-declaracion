@@ -60,6 +60,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "subirArchivo",
   "replaceArchivo",
   "deleteRegistroProducto",
+  "editRegistroProducto",
   "subirArchivoFacturas",
   "addRol",
   "updateRol",
@@ -969,6 +970,8 @@ function doPost(e) {
         return replaceArchivo(data, usuario);
       case "deleteRegistroProducto":
         return deleteRegistroProducto(data, usuario);
+      case "editRegistroProducto":
+        return editRegistroProducto(data, usuario);
       case "inicializarSistema":
         return inicializarSistemaSeguro(data, usuario);
       case "addDatoTributario":
@@ -2037,7 +2040,7 @@ function editRegistroProducto(data, usuario) {
 
   try {
     const correoEjecutor = usuario?.correo || "sistema";
-    const registroId = data.id;
+    const registroId = data.registroId;
 
     if (!registroId) {
       return respuestaJSON({

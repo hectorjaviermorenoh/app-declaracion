@@ -69,6 +69,17 @@ export const validators = {
     return "";
   },
 
+  nombreProducto: (value) => {
+    if (!value || !value.trim()) {
+      return "El nombre del producto es obligatorio.";
+    }
+    // No permite caracteres especiales
+    if (!/^[a-zA-Z0-9ÁÉÍÓÚáéíóúñÑ\s]+$/.test(value)) {
+      return "El nombre no puede contener caracteres especiales.";
+    }
+    return "";
+  },
+
   entidadProducto: (value) => {
     if (!value || !value.trim()) {
       return "La entidad del producto es obligatoria.";
