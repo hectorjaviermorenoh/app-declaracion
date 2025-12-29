@@ -14,14 +14,13 @@ export const ConfigAdminProvider = ({ children }) => {
    * ⚙️ Obtener configuración
    *******************************/
   const getConfig = useCallback(async () => {
+
     setLoading(true);
     try {
       const response = await apiGet("getConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
-      } else {
-        showToast(response.mensaje || "⚠️ Error al obtener configuración", "warning", 4000, "ConfigAdmin");
-      }
+      } 
     } catch (err) {
       console.error("❌ getConfig error:", err);
       showToast("❌ Error al obtener configuración del servidor", "danger", 4000, "ConfigAdmin");
@@ -74,7 +73,7 @@ export const ConfigAdminProvider = ({ children }) => {
       return response;
     } catch (err) {
       console.error("❌ reinicializarSistemaForzado error:", err);
-      showToast("❌ Error de conexión al intentar reinicializar el sistema", "danger", 4000, "ConfigAdmin");
+      showToast( `❌ Reinicializar Sistema ${err}`, "danger", 20000, "ConfigAdmin");
       return { status: "error", mensaje: err.message };
     } finally {
       setLoading(false);

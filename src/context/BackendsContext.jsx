@@ -67,9 +67,23 @@ export function BackendsProvider({ children }) {
     if (activeBackend?.alias === alias) setActiveBackend(null);
   };
 
+  // const setActiveByAlias = (alias) => {
+  //   const backend = backends.find((b) => b.alias === alias);
+  //   if (backend) setActiveBackend(backend);
+  // };
+
   const setActiveByAlias = (alias) => {
     const backend = backends.find((b) => b.alias === alias);
-    if (backend) setActiveBackend(backend);
+
+    if (backend && activeBackend?.alias !== backend.alias) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      setActiveBackend(backend);
+
+      // En lugar de navigate + reload, puedes forzar la carga en la raíz:
+      window.location.href = window.location.origin + window.location.pathname;
+    }
   };
 
   return (

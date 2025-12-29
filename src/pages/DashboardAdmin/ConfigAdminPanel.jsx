@@ -4,7 +4,6 @@ import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
-import { useToast } from "../../context/ToastContext";
 import ReinitModal from "../../components/Modals/ReinitModal/ReinitModal";
 import "./Styles/ConfigAdminPanel.scss";
 
@@ -17,10 +16,7 @@ export const ConfigAdminPanel = () => {
   const [nuevoTipo, setNuevoTipo] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tipoAEliminar, setTipoAEliminar] = useState("");
-
   const [showReinitModal, setShowReinitModal] = useState(false);
-  const { showToast } = useToast();
-  // const [show, setShow] = useState(false);
 
   const { puede } = usePermisos();
   const puedeVerConfig = puede("getConfig");
@@ -73,18 +69,6 @@ export const ConfigAdminPanel = () => {
     setShowConfirmModal(false);
     setTipoAEliminar("");
   };
-
-  /*******************************
-   * 💾 Guardar configuración
-   *******************************/
-  // const handleGuardarConfig = async () => {
-  //   const nuevaConfig = {
-  //     CARPETA_PRINCIPAL: config.CARPETA_PRINCIPAL,
-  //     TAMANO_MAX_MB: Number(tamanoMax),
-  //     TIPOS_PERMITIDOS: tiposPermitidos,
-  //   };
-  //   await updateConfig(nuevaConfig);
-  // };
 
   const handleGuardarConfig = async () => {
     setLoadingGuardar(true);
@@ -274,12 +258,10 @@ export const ConfigAdminPanel = () => {
         onHide={() => setShowReinitModal(false)}
         onConfirm={async (confirmText, borrarCarpetas) => {
           if (confirmText !== "INICIALIZAR") return;
-
           setLoadingReinit(true);
-
           try {
             const resp = await reinicializarSistemaForzado(confirmText, borrarCarpetas);
-            showToast(resp.mensaje, resp.ok ? "success" : "danger", 3000);
+            console.log("reinicialización del sistema", resp.mensaje, resp.ok)
           } finally {
             setLoadingReinit(false);
             setShowReinitModal(false);

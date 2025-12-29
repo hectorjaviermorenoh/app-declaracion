@@ -23,7 +23,7 @@ export const UsuariosAdminProvider = ({ children }) => {
       } else {
         setRolesDisponibles([]); // ← dejar vacío
         setRolesErrorPermisos(true); // ← marcar que falló por permisos
-        showToast(response.mensaje || "⚠️ No se pudieron cargar los roles.", "warning", 4000, "UsuariosAdmin");
+        console.warn(response.mensaje, "UsuariosAdmin");
       }
     } catch (err) {
       console.error("❌ Error al cargar roles:", err);
@@ -43,15 +43,14 @@ export const UsuariosAdminProvider = ({ children }) => {
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
       } else {
-        showToast(response.mensaje || "⚠️ No se pudieron cargar los usuarios.", "warning", 4000, "UsuariosAdmin");
+        console.warn(response.mensaje, "UsuariosAdmin");
       }
     } catch (err) {
       console.error("❌ getUsuarios error:", err);
-      showToast("❌ Error de conexión al cargar usuarios.", "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, []);
 
   /*******************************
    * ➕ Crear nuevo usuario

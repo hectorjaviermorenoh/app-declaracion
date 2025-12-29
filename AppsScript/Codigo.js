@@ -17,6 +17,7 @@ const ZEICHENSCHLUESSEL = "528138845199053779904519";
  ******************************/
 const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
+  CARPETA_PRINCIPA_ID: "1A2B3C4D5E6F_ID_PROPIO_DE_USUARIO",
   TAMANO_MAX_MB: 10,
   TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt", "xlsx"]
 };
@@ -346,8 +347,9 @@ function generarTokenPropio(usuarioInfo) {
     
     // 💡 Tiempos de vida (iat = issued at, exp = expiration)
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
-    // exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
+    // exp: Math.floor(Date.now() / 1000) + (1 * 60) // 👈 Válido por 3 minutos
+    // exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
+    exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
   };
   
   // Codificamos el payload (String -> Byte[] -> Base64WebSafe)
@@ -2538,13 +2540,4 @@ function limpiarLogsAntiguos(usuario) {
     lock.releaseLock();
   }
 }
-
-
-
-
-
-
-
-
-
 

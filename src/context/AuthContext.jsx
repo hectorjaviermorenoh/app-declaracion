@@ -191,7 +191,7 @@ export function AuthProvider({ children }) {
       } else {
         // El backend rechazó el token (expirado, inválido)
         if (authenticated) {
-          showToast(data.mensaje || "⚠️ Tu sesión ha expirado.", "warning", 4000, "Autenticación");
+          console.log(data.mensaje || "⚠️ Tu sesión ha expirado.");
         }
         logout();
         return false;
@@ -200,7 +200,7 @@ export function AuthProvider({ children }) {
       // Error de red o similar
       console.log("auth184 (verifyToken)", err.message);
       showToast("⚠️ Error de conexión. No se pudo verificar la sesión.", "warning", 4000, "Autenticación");
-      logout(); // Asumimos lo peor y cerramos sesión
+      logout();
       return false;
     }
   }, [authToken, activeBackend, logout, showToast, authenticated]);
@@ -251,7 +251,8 @@ export function AuthProvider({ children }) {
         const decoded = JSON.parse(payloadStr);
 
         if (decoded.exp * 1000 < Date.now()) {
-          showToast("⚠️ Token expirado localmente. Cerrando sesión...", "warning", 4000, "Autenticación");
+          // showToast("⚠️ Token expirado localmente. Cerrando sesión...", "warning", 4000, "Autenticación");
+          console.log("⚠️ Token expirado localmente. Cerrando sesión...")
           logout();
         }
       } catch (err) {
