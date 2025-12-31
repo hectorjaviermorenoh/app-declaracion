@@ -17,9 +17,8 @@ const ZEICHENSCHLUESSEL = "528138845199053779904519";
  ******************************/
 const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
-  CARPETA_PRINCIPA_ID: "1A2B3C4D5E6F_ID_PROPIO_DE_USUARIO",
   TAMANO_MAX_MB: 10,
-  TIPOS_PERMITIDOS: ["pdf", "jpg", "png", "docx", "txt", "xlsx"]
+  TIPOS_PERMITIDOS: ["pdf", "jpg", "jpeg", "png", "docx", "txt", "xlsx"]
 };
 
 const DATOS_TRIBUTARIOS_INICIALES = [
@@ -33,10 +32,48 @@ const DATOS_TRIBUTARIOS_INICIALES = [
 ];
 
 const ROLES_INICIALES = [
-    {
+  {
     "rol": "administrador",
     "permisos": [
       "*"
+    ]
+  },
+  {
+    "rol": "Contador",
+    "permisos": [
+      "getDatosTributarios",
+      "getProductosPorArchivo",
+      "subirArchivo",
+      "replaceArchivo",
+      "subirArchivoFacturas",
+      "addProducto",
+      "deleteProducto",
+      "addDatoTributario",
+      "updateDatoTributario",
+      "deleteDatoTributario",
+      "moveDatoTributario",
+      "getFacturasPorAnio",
+      "updateFactura",
+      "deleteFactura",
+    ]
+  },
+  {
+    "rol": "Declarante",
+    "permisos": [
+      "getDatosTributarios",
+      "getProductosPorArchivo",
+      "subirArchivo",
+      "replaceArchivo",
+      "subirArchivoFacturas",
+      "addProducto",
+      "deleteProducto",
+      "addDatoTributario",
+      "updateDatoTributario",
+      "deleteDatoTributario",
+      "moveDatoTributario",
+      "getFacturasPorAnio",
+      "updateFactura",
+      "deleteFactura",
     ]
   }
 ];
@@ -54,15 +91,17 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "getDatosTributarios",
   "getLogs",
   "getProductosPorArchivo",
-  "getTotalesFacturas",
+  "getFacturasPorAnio",
+
 
   // --- POST ---
-  
-  "subirArchivo",
+    "subirArchivo",
   "replaceArchivo",
   "deleteRegistroProducto",
   "editRegistroProducto",
   "subirArchivoFacturas",
+  "updateFactura",
+  "deleteFactura",
   "addRol",
   "updateRol",
   "deleteRol",
@@ -75,7 +114,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "updateDatoTributario",
   "deleteDatoTributario",
   "moveDatoTributario",
-  "setConfig",
+  "updateConfig",
   "generarBackupZIP",
   "limpiarLogsAntiguos",
   "inicializarForzado",
@@ -90,7 +129,7 @@ const FUNCIONES_GENERALES = [
   "manejarError",
   "leerJSON",
   "guardarJSON",
-  "obtenerOCrearCarpeta",
+  "obtenerOCrearCarpetaRaiz",
   "normalizarTexto",
   "normalizarNombreArchivo",
   "toggleUsuarioActivo",
@@ -101,47 +140,184 @@ const FUNCIONES_GENERALES = [
 
 ];
 
+// function obtenerOCrearCarpetaRaiz() {
+//   // const nombreCarpeta = CARPETA_PRINCIPAL; // "declaracion"
+//   const nombreCarpeta = "declaracion_HECT";
+
+//   // const correoAdmin = Session.getActiveUser().getEmail();
+//   // const nombreCarpeta = `${CARPETA_PRINCIPAL}_${correoAdmin.split("@")[0].replace(/[^a-zA-Z]/g, "").substring(0, 4).toUpperCase()}`;
+
+//   Logger.log("carpeta" + " " + nombreCarpeta);
+  
+//   // 1. Buscamos carpetas con ese nombre que estén DIRECTAMENTE en la raíz del usuario actual
+//   const root = DriveApp.getRootFolder();
+//   const carpetas = root.getFoldersByName(nombreCarpeta);
+  
+//   let carpetaDestino;
+
+//   if (carpetas.hasNext()) {
+//     // Si existe una en SU raíz, usamos esa
+//     carpetaDestino = carpetas.next();
+//   } else {
+//     // 2. Si no existe en su propia raíz, la creamos de cero
+//     // Esto garantiza que Joaquin sea el DUEÑO de esta nueva carpeta
+//     carpetaDestino = DriveApp.createFolder(nombreCarpeta);
+//     console.log("Nueva carpeta creada en el Drive personal.");
+//   }
+
+//   return carpetaDestino;
+// }
+
+
+function obtenerOCrearCarpetaRaiz() {
+  const root = DriveApp.getRootFolder();
+  let nombreCarpeta;
+
+  // 1. Obtener email de forma segura
+  // Intentamos EffectiveUser si ActiveUser falla
+  const correo = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail();
+
+  const prefijoUsuario = correo.split("@")[0]
+                            .replace(/[^a-zA-Z]/g, "")
+                            .substring(0, 4)
+                            .toUpperCase();
+                            
+  nombreCarpeta = `${CARPETA_PRINCIPAL}_${prefijoUsuario}`.trim();
+  
+
+  Logger.log("Buscando carpeta: '" + nombreCarpeta + "'");
+  
+  // 2. Buscar en la raíz
+  const carpetas = root.getFoldersByName(nombreCarpeta);
+  let carpetaDestino;
+
+  if (carpetas.hasNext()) {
+    carpetaDestino = carpetas.next();
+    Logger.log("✅ Carpeta encontrada: " + carpetaDestino.getId());
+  } else {
+    // 3. Crear usando el objeto root directamente
+    carpetaDestino = root.createFolder(nombreCarpeta);
+    Logger.log("🆕 Carpeta creada: " + nombreCarpeta);
+  }
+
+  return carpetaDestino;
+}
+
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
  ******************************/
+// original
+// function inicializarSistema() {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     // 1️⃣ Crear carpeta principal SOLO en el Drive del usuario
+//     const carpetaPrincipal = obtenerOCrearCarpetaRaiz();
+//     const carpetaPrincipalId = carpetaPrincipal.getId();
+
+//     const correoAdmin = Session.getActiveUser().getEmail();
+
+//     // 2️⃣ Construir configuración con el ID REAL de la carpeta
+//     const configInicialConId = {
+//       ...CONFIG_INICIAL,
+//       CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
+//       CARPETA_PRINCIPAL_ID: carpetaPrincipalId
+//     };
+
+//     // 3️⃣ Crear configuracion.json si no existe
+//     // crearArchivoJSONSiNoExiste(
+//     //   carpetaPrincipal,
+//     //   JSON_CONFIGURACION,
+//     //   configInicialConId
+//     // );
+
+//     // ⚠️ SIEMPRE sincronizar configuración
+//     guardarORecrearJSON(
+//       carpetaPrincipal,
+//       JSON_CONFIGURACION,
+//       configInicialConId
+//     );
+
+//     // 4️⃣ Crear usuarios.json
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_USUARIOS, [
+//       {
+//         correo: correoAdmin,
+//         nombre: "Administrador",
+//         rol: "administrador",
+//         activo: true
+//       }
+//     ]);
+
+//     // 5️⃣ Archivos base
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_PRODUCTOS, []);
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_DATOS, []);
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_FACTURAS, []);
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_LOGS, []);
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
+//     crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_ROLES, ROLES_INICIALES);
+
+//     Logger.log("✅ Sistema inicializado correctamente");
+//     Logger.log(`📂 Carpeta principal ID: ${carpetaPrincipalId}`);
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 function inicializarSistema() {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+  lock.waitLock(30000);
 
   try {
-    // 1. Crear carpeta principal si no existe
-    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
-
-    // 2. Crear JSON de configuración si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_CONFIGURACION, CONFIG_INICIAL);
-
     const correoAdmin = Session.getActiveUser().getEmail();
 
-    // 3. Crear JSON de usuarios si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_USUARIOS, [
-      { correo: correoAdmin, nombre: "Administrador", rol: "administrador", activo: true }
-    ]);
+    // 1️⃣ Crear carpeta principal con nombre aleatorio para independencia total
+    // Usamos el prefijo definido para que cada usuario tenga su carpeta única
+    const nombreUnico = `${CARPETA_PRINCIPAL}_${correoAdmin.split("@")[0].replace(/[^a-zA-Z]/g, "").substring(0, 4).toUpperCase()}`;
 
-    // 4. Crear JSON de productos si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_PRODUCTOS, []);
+    // const nombreUnico = CARPETA_PRINCIPAL + "_" + Math.random().toString(36).substring(2, 10);
 
-    // 5. Crear JSON de bddatos si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_DATOS, []);
+    const carpetaPrincipal = DriveApp.getRootFolder().createFolder(nombreUnico);
+    const carpetaPrincipalId = carpetaPrincipal.getId();
 
-    // 6. Crear JSON de bddatos si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_BDD_FACTURAS, []);
 
-    // 7. Crear JSON de logs si no existe
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_LOGS, []);
+    // 2️⃣ Construir configuración con el ID REAL
+    const configInicialConId = {
+      ...CONFIG_INICIAL,
+      CARPETA_PRINCIPAL: nombreUnico,
+      CARPETA_PRINCIPAL_ID: carpetaPrincipalId
+    };
 
-    // 8. Crear datos tributarios con valores iniciales
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
+    // 3️⃣ Guardar configuración
+    guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, configInicialConId);
 
-    // 9. Crear Roles con valores iniciales
-    crearArchivoJSONSiNoExiste(carpetaPrincipal, JSON_ROLES, ROLES_INICIALES);
+    // 4️⃣ Crear archivos base
+    const archivosAInicializar = [
+      { nombre: JSON_USUARIOS, datos: [{ correo: correoAdmin, nombre: "Administrador", rol: "administrador", activo: true }] },
+      { nombre: JSON_PRODUCTOS, datos: [] },
+      { nombre: JSON_BDD_DATOS, datos: [] },
+      { nombre: JSON_BDD_FACTURAS, datos: [] },
+      { nombre: JSON_LOGS, datos: [] },
+      { nombre: JSON_DATOS_TRIBUTARIOS, datos: DATOS_TRIBUTARIOS_INICIALES },
+      { nombre: JSON_ROLES, datos: ROLES_INICIALES }
+    ];
 
-    Logger.log("✅ Sistema inicializado correctamente");
+    archivosAInicializar.forEach(item => {
+      crearArchivoJSONSiNoExiste(carpetaPrincipal, item.nombre, item.datos);
+    });
 
+    // 5️⃣ AUTO-PROTECCIÓN (Opcional)
+    // Si el administrador es el mismo dueño del script, no hace falta ocultárselos a él mismo,
+    // pero si inicializas para otro, aquí podrías llamar a la lógica de ocultar.
+
+    Logger.log("✅ Sistema inicializado correctamente con ID: " + carpetaPrincipalId);
+    
+    return { status: "ok", id: carpetaPrincipalId, nombre: nombreUnico };
+
+  } catch (e) {
+    Logger.log("❌ Error en inicialización: " + e.message);
+    throw e;
   } finally {
     lock.releaseLock();
   }
@@ -175,73 +351,112 @@ function inicializarSistemaSeguro(data) {
     correo
   });
 }
-/******************************
- * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
- ******************************/
 
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
  ******************************/
+
 function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
+  lock.waitLock(30000);
 
-  const correoEjecutor = correoAdmin?.correo || "sistema"; // 👈 quién ejecuta la acción
+  const correoEjecutor = correoAdmin?.correo || "sistema";
 
   try {
-    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    // 1️⃣ Leer configuración actual
+    const config = leerJSON(JSON_CONFIGURACION);
+
+    const usuariosActuales = leerJSON(JSON_USUARIOS) || [];
+    const propietario = usuariosActuales[0];
+
+    if (correoEjecutor !== propietario.correo) {
+      throw new Error("Solo el propietario del sistema puede reinicializarlo");
+    }
+
+    if (usuariosActuales.length === 0) {
+      throw new Error("usuarios.json está vacío. No se puede determinar el propietario.");
+    }
+
+    if (!config.CARPETA_PRINCIPAL_ID) {
+      throw new Error("CARPETA_PRINCIPAL_ID no está definido en configuracion.json");
+    }
+
+    // 2️⃣ Obtener carpeta por ID (NO por nombre)
+    const carpetaPrincipal = DriveApp.getFolderById(config.CARPETA_PRINCIPAL_ID);
+
+    // 3️⃣ Limpieza controlada
+    // let resultadoLimpieza = null;
+    // if (borrarCarpetas) {
+    //   resultadoLimpieza = limpiarCarpetasPorId(carpetaPrincipal);
+    // }
 
     let resultadoLimpieza = null;
     if (borrarCarpetas) {
       resultadoLimpieza = limpiarCarpetas(); // devuelve objeto {mensaje: "..."}
     }
 
-    // 1️⃣ Sobrescribir configuración
-    guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, CONFIG_INICIAL);
+    // 4️⃣ Reescribir configuración (manteniendo ID)
+    guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, {
+      ...CONFIG_INICIAL,
+      CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
+      CARPETA_PRINCIPAL_ID: carpetaPrincipal.getId()
+    });
 
-    // 2️⃣ Sobrescribir usuarios con el correo enviado
+    
+
+    // 5️⃣ Reescribir usuarios
+    // guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
+    //   {
+    //     correo: correoAdmin?.correo,
+    //     nombre: "Administrador",
+    //     rol: "administrador",
+    //     activo: true
+    //   }
+    // ]);
+
     guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
-      { correo: correoAdmin?.correo, nombre: "Administrador", rol: "administrador", activo: true }
+      {
+        ...propietario,
+        activo: true
+      }
     ]);
 
-    // 3️⃣ Vaciar productos, bddatos y logs
+    // 6️⃣ Vaciar datos
     guardarORecrearJSON(carpetaPrincipal, JSON_PRODUCTOS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_DATOS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_BDD_FACTURAS, []);
     guardarORecrearJSON(carpetaPrincipal, JSON_LOGS, []);
-
-    // 4️⃣ Crear datos tributarios con valores iniciales
     guardarORecrearJSON(carpetaPrincipal, JSON_DATOS_TRIBUTARIOS, DATOS_TRIBUTARIOS_INICIALES);
+    guardarORecrearJSON(carpetaPrincipal, JSON_ROLES, ROLES_INICIALES);
 
-    // 5️⃣ Registrar acción en logs
+    // 7️⃣ Registrar log
     registrarLog("inicializarSistemaForzado", correoEjecutor, {
       mensaje: "🔁 Sistema reinicializado forzadamente",
       correoAdmin: correoAdmin?.correo,
       borrarCarpetas,
-      limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas",
+      limpieza: resultadoLimpieza?.mensaje || "Sin borrar carpetas",
       fecha: new Date().toISOString()
     });
-
-    Logger.log(`✅ Sistema reinicializado forzadamente por ${correoEjecutor}`);
 
     return {
       status: "ok",
       mensaje: "✅ Sistema reinicializado correctamente",
       correo: correoAdmin?.correo,
-      limpieza: resultadoLimpieza ? resultadoLimpieza.mensaje : "Sin borrar carpetas"
+      limpieza: resultadoLimpieza?.mensaje || "Sin borrar carpetas"
     };
 
   } catch (err) {
-    // 🚨 En caso de error, también registramos en logs
     registrarLog("ERROR_inicializarSistemaForzado", correoEjecutor, {
       mensaje: err.message,
       stack: err.stack
     });
     throw err;
+
   } finally {
     lock.releaseLock();
   }
 }
+
 
 
 /******************************
@@ -254,6 +469,8 @@ function esAdmin(correo) {
   });
   return user && user.rol === "administrador";
 }
+
+
 function verificarTokenYAutorizar(token) {
   const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
@@ -298,6 +515,9 @@ function verificarTokenYAutorizar(token) {
     return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
+
+
+
 function validarPermiso(usuario, accion) {
   // 🚫 Usuario no autenticado
   if (!usuario || !usuario.autorizado) return false;
@@ -477,7 +697,7 @@ function manejarError(err, contexto, usuario) {
 
 function generarBackupZIP(usuario) {
   try {
-    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const carpetaPrincipal = obtenerOCrearCarpetaRaiz();
     const fecha = new Date();
 
     const nombreZip = `Backup_Declaracion_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}.zip`;
@@ -526,14 +746,21 @@ function generarBackupZIP(usuario) {
 /******************************
  * FUNCIONES AUXILIARES
  ******************************/
-function obtenerOCrearCarpeta(nombre) {
-  const carpetas = DriveApp.getFoldersByName(nombre);
-  return carpetas.hasNext() ? carpetas.next() : DriveApp.createFolder(nombre);
-}
+
+// function obtenerOCrearCarpeta(nombre) {
+//   const carpetas = DriveApp.getFoldersByName(nombre);
+//   return carpetas.hasNext() ? carpetas.next() : DriveApp.createFolder(nombre);
+// }
+
+
 function obtenerOCrearCarpetaEn(carpetaPadre, nombre) {
   let carpetas = carpetaPadre.getFoldersByName(nombre);
   return carpetas.hasNext() ? carpetas.next() : carpetaPadre.createFolder(nombre);
 }
+
+
+
+
 function crearArchivoJSONSiNoExiste(carpeta, nombreArchivo, contenidoInicial) {
   const archivos = carpeta.getFilesByName(nombreArchivo);
   if (!archivos.hasNext()) {
@@ -548,7 +775,7 @@ function guardarJSON(nombreArchivo, contenido) {
   lock.waitLock(30000); // espera hasta 30s
 
   try {
-    const carpeta = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const carpeta = obtenerOCrearCarpetaRaiz();
     const archivos = carpeta.getFilesByName(nombreArchivo);
     if (!archivos.hasNext()) throw new Error(`Archivo no encontrado: ${nombreArchivo}`);
     const archivo = archivos.next();
@@ -567,7 +794,7 @@ function leerJSON(nombreArchivo) {
   lock.waitLock(30000); // 🔒 Lock aplicado
 
   try {
-    const carpeta = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const carpeta = obtenerOCrearCarpetaRaiz();
     const archivos = carpeta.getFilesByName(nombreArchivo);
     if (!archivos.hasNext()) throw new Error(`Archivo no encontrado: ${nombreArchivo}`);
     const archivo = archivos.next();
@@ -642,12 +869,13 @@ function validarArchivo(archivoBlob, config) {
 
   return { ok: true, extension };
 }
-function guardarArchivoEnDrive(config, archivoBlob, anio, subcarpeta, usarExistente) {
+
+function guardarArchivoEnDrive(archivoBlob, anio, subcarpeta, usarExistente) {
   const nombrePascal = normalizarNombreArchivo(archivoBlob.getName());
   const extension = archivoBlob.getName().split(".").pop().toLowerCase();
   const nuevoNombre = `${nombrePascal}.${extension}`;
 
-  const carpetaPrincipal = obtenerOCrearCarpeta(config.CARPETA_PRINCIPAL);
+  const carpetaPrincipal = obtenerOCrearCarpetaRaiz();
   const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, anio);
   const carpetaDestino = subcarpeta
     ? obtenerOCrearCarpetaEn(carpetaAnio, subcarpeta)
@@ -736,20 +964,26 @@ function registrarLog(accion, usuario, detalle) {
     lock.releaseLock();
   }
 }
-function limpiarCarpetas() {
-  const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
-  const subcarpetas = carpetaPrincipal.getFolders();
-  const archivos = carpetaPrincipal.getFiles();
 
-  // Borrar subcarpetas (años, etc.)
+
+function limpiarCarpetas() {
+  const config = leerJSON(JSON_CONFIGURACION);
+
+  if (!config?.CARPETA_PRINCIPAL_ID) {
+    throw new Error("CARPETA_PRINCIPAL_ID no definido en configuracion.json");
+  }
+
+  const carpetaPrincipal = DriveApp.getFolderById(config.CARPETA_PRINCIPAL_ID);
+  const subcarpetas = carpetaPrincipal.getFolders();
+
+  // 🗑️ Borrar solo subcarpetas
   while (subcarpetas.hasNext()) {
-    const carpeta = subcarpetas.next();
-    carpeta.setTrashed(true); // Manda a papelera
+    subcarpetas.next().setTrashed(true);
   }
 
   return { mensaje: "🗑️ Carpetas borradas correctamente" };
-
 }
+
 
 /******************************
  * MÉTODO DOGET
@@ -1318,6 +1552,7 @@ function getUsuarios() {
   }
 }
 
+
 function addUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1328,107 +1563,79 @@ function addUsuario(data, usuario) {
     const correoEjecutor = usuario?.correo || "sistema";
 
     if (!correo || !nombre || !rol) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "⚠️ Todos los campos son obligatorios (correo, nombre, rol).",
-      });
+      return respuestaJSON({ status: "error", mensaje: "⚠️ Campos obligatorios faltantes." });
     }
 
     if (usuarios.some(u => u.correo.toLowerCase() === correo.toLowerCase())) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ Ya existe un usuario con el correo "${correo}".`,
-      });
+      return respuestaJSON({ status: "error", mensaje: `⚠️ El usuario "${correo}" ya existe.` });
     }
 
-    const nuevoUsuario = {
-      correo,
-      nombre,
-      rol,
-      activo: true,
-    };
+    const config = leerJSON(JSON_CONFIGURACION);
+    const carpetaId = config.CARPETA_PRINCIPAL_ID;
+    const carpeta = DriveApp.getFolderById(carpetaId);
 
-    // 1️⃣ Agregar al JSON
+    // 1️⃣ Otorgar permiso de LECTOR a la CARPETA (Silencioso v3)
+    try {
+      Drive.Permissions.create({
+        'role': 'reader', 
+        'type': 'user',
+        'emailAddress': correo
+      }, carpetaId, { 'sendNotificationEmail': false });
+    } catch (e) {
+      throw new Error("Error al asignar carpeta: " + e.message);
+    }
+
+    // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
+    Utilities.sleep(2000); // Aumentamos a 2 segundos por seguridad
+
+    // 3️⃣ PROTECCIÓN: Quitar acceso a los JSON
+    const archivosProtegidos = [
+      JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
+      JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
+      JSON_LOGS, JSON_DATOS_TRIBUTARIOS
+    ];
+
+    archivosProtegidos.forEach(nombreArchivo => {
+      const archivos = carpeta.getFilesByName(nombreArchivo);
+      while (archivos.hasNext()) { // Usamos while por si hay duplicados
+        const archivo = archivos.next();
+        const archivoId = archivo.getId();
+        
+        try {
+          // MÉTODO DEFINITIVO: 
+          // Intentamos remover al usuario usando DriveApp (más sencillo para 'readers')
+          // Si no funciona, usamos el borrado por lista de permisos.
+          archivo.removeViewer(correo); 
+          
+          // Refuerzo con API Avanzada
+          const permissions = Drive.Permissions.list(archivoId).permissions;
+          permissions.forEach(p => {
+            if (p.emailAddress?.toLowerCase() === correo.toLowerCase()) {
+              Drive.Permissions.delete(archivoId, p.id);
+            }
+          });
+        } catch (e) {
+          console.warn(`Intento de ocultar ${nombreArchivo}: ${e.message}`);
+        }
+      }
+    });
+
+    // 4️⃣ Guardar en base de datos
+    const nuevoUsuario = { correo, nombre, rol, activo: true };
     usuarios.push(nuevoUsuario);
     guardarJSON(JSON_USUARIOS, usuarios);
 
-    // 2️⃣ Asignar permiso (CRÍTICO)
-    const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
-    if (!carpetas.hasNext()) {
-      throw crearError("CarpetaNoEncontradaError", `No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
-    }
-
-    const carpeta = carpetas.next();
-
-    try {
-      carpeta.addEditor(correo);
-    } catch (e) {
-      // 🔄 ROLLBACK
-      const usuariosRollback = usuarios.filter(u => u.correo !== correo);
-      guardarJSON(JSON_USUARIOS, usuariosRollback);
-
-      const err = new Error(`No se pudo asignar permiso al usuario "${correo}"`);
-      err.name = "PermisoNoAsignadoError";
-      err.originalError = e;
-      throw err;
-    }
-
-    registrarLog("addUsuario", correoEjecutor, `Usuario creado: ${correo}`);
+    registrarLog("addUsuario", correoEjecutor, { usuarioCreado: correo, rol, nivel: "reader" });
 
     return respuestaJSON({
       status: "ok",
-      mensaje: `✅ Usuario "${correo}" creado correctamente.`,
+      mensaje: `✅ Usuario "${correo}" creado como lector. Archivos protegidos.`,
       datos: usuarios,
     });
 
   } catch (err) {
     manejarError(err, "addUsuario", usuario?.correo);
-
-    return respuestaJSON({
-      status: "error",
-      mensaje: "❌ Error al crear el usuario.",
-      detalle: err.message || err,
-    });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function updateUsuario(data, usuario) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const usuarios = leerJSON(JSON_USUARIOS) || [];
-    const { correo, nombre, rol } = data;
-    const correoEjecutor = usuario?.correo || "sistema";
-
-    const index = usuarios.findIndex((u) => u.correo === correo);
-    if (index === -1)
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
-      });
-
-    usuarios[index].nombre = nombre || usuarios[index].nombre;
-    usuarios[index].rol = rol || usuarios[index].rol;
-
-    guardarJSON(JSON_USUARIOS, usuarios);
-    registrarLog("updateUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
-
-    return respuestaJSON({
-      status: "ok",
-      mensaje: `✅ Usuario "${correo}" actualizado correctamente.`,
-      datos: usuarios,
-    });
-  } catch (err) {
-    manejarError(err, "updateUsuario", usuario?.correo);
-    return respuestaJSON({
-      status: "error",
-      mensaje: "❌ Error al actualizar usuario.",
-      detalle: err,
-    });
+    return respuestaJSON({ status: "error", mensaje: "❌ Error al crear el usuario.", detalle: err.message });
   } finally {
     lock.releaseLock();
   }
@@ -1662,7 +1869,7 @@ function subirArchivoProducto(e, isMultipart, usuario) {
         ? e.parameter.usarExistente === "true" 
         : (JSON.parse(e.postData.contents).usarExistente === true);
 
-    const resultadoDrive = guardarArchivoEnDrive(config, archivoBlob, anio, null, usarExistente);
+    const resultadoDrive = guardarArchivoEnDrive(archivoBlob, anio, null, usarExistente);
 
     if (!resultadoDrive.ok) {
         return respuestaJSON({
@@ -1788,7 +1995,7 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
         ? e.parameter.usarExistente === "true" 
         : (JSON.parse(e.postData.contents).usarExistente === true);
 
-    const resultadoDrive = guardarArchivoEnDrive(config, archivoBlob, anio, "facturas", usarExistente);
+    const resultadoDrive = guardarArchivoEnDrive(archivoBlob, anio, "facturas", usarExistente);
 
     if (!resultadoDrive.ok) {
         return respuestaJSON({
@@ -1895,7 +2102,7 @@ function replaceArchivo(data, usuario) {
       nombreNormalizado
     );
 
-    const carpetaPrincipal = obtenerOCrearCarpeta(CARPETA_PRINCIPAL);
+    const carpetaPrincipal = obtenerOCrearCarpetaRaiz();
     const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, data.anio);
     let file = carpetaAnio.createFile(archivoBlob);
 
