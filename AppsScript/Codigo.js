@@ -1641,6 +1641,46 @@ function addUsuario(data, usuario) {
   }
 }
 
+function updateUsuario(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const usuarios = leerJSON(JSON_USUARIOS) || [];
+    const { correo, nombre, rol } = data;
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const index = usuarios.findIndex((u) => u.correo === correo);
+    if (index === -1)
+      return respuestaJSON({
+        status: "error",
+        mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
+      });
+
+    usuarios[index].nombre = nombre || usuarios[index].nombre;
+    usuarios[index].rol = rol || usuarios[index].rol;
+
+    guardarJSON(JSON_USUARIOS, usuarios);
+    registrarLog("updateUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: `✅ Usuario "${correo}" actualizado correctamente.`,
+      datos: usuarios,
+    });
+  } catch (err) {
+    manejarError(err, "updateUsuario", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al actualizar usuario.",
+      detalle: err,
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
 function toggleUsuarioActivo(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
