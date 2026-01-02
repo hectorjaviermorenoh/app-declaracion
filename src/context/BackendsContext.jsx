@@ -83,14 +83,14 @@ export function BackendsProvider({ children }) {
 
   //     // En lugar de navigate + reload, puedes forzar la carga en la raíz:
   //     window.location.href = window.location.origin + window.location.pathname;
+
   //   }
   // };
-  
+
   const setActiveByAlias = (alias) => {
     const backend = backends.find((b) => b.alias === alias);
 
     if (backend && activeBackend?.alias !== backend.alias) {
-      // 1. Limpiar sesión
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
@@ -99,13 +99,40 @@ export function BackendsProvider({ children }) {
       const updatedConfig = { backends, active: backend };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConfig));
 
-      // 3. Pequeña pausa (delay) para que el SO del celular confirme la escritura
-      // y luego forzar la limpieza de caché de la URL
+
+
+      setActiveBackend(backend);
+
       setTimeout(() => {
         window.location.replace(window.location.origin + window.location.pathname);
       }, 100);
+
+      // En lugar de navigate + reload, puedes forzar la carga en la raíz:
+      // window.location.href = window.location.origin + window.location.pathname;
+
     }
   };
+
+  // const setActiveByAlias = (alias) => {
+  //   const backend = backends.find((b) => b.alias === alias);
+
+  //   if (backend && activeBackend?.alias !== backend.alias) {
+  //     // 1. Limpiar sesión
+  //     localStorage.removeItem("token");
+  //     localStorage.removeItem("user");
+
+  //     // 2. Actualizar el backend de forma inmediata en el objeto de persistencia
+  //     // Esto asegura que aunque el estado de React no termine de cambiar, el storage ya tiene la info
+  //     const updatedConfig = { backends, active: backend };
+  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConfig));
+
+  //     // 3. Pequeña pausa (delay) para que el SO del celular confirme la escritura
+  //     // y luego forzar la limpieza de caché de la URL
+  //     setTimeout(() => {
+  //       window.location.replace(window.location.origin + window.location.pathname);
+  //     }, 100);
+  //   }
+  // };
 
   return (
     <BackendsContext.Provider
