@@ -20,7 +20,7 @@ export const ConfigAdminProvider = ({ children }) => {
       const response = await apiGet("getConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
-      } 
+      }
     } catch (err) {
       console.error("❌ getConfig error:", err);
       showToast("❌ Error al obtener configuración del servidor", "danger", 4000, "ConfigAdmin");
@@ -57,7 +57,7 @@ export const ConfigAdminProvider = ({ children }) => {
   const reinicializarSistemaForzado = async (confirmar, borrarCarpetas = false) => {
     setLoading(true);
     try {
-      const response = await apiPost("inicializarForzado", {
+      const response = await apiPost("inicializarSistemaForzado", {
         confirmar,           // debe ser "INICIALIZAR"
         borrarCarpetas,      // true o false
       });

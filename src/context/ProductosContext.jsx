@@ -173,7 +173,7 @@ export function ProductosProvider({ children }) {
           },
         };
 
-        const data = await apiPost("subirArchivo", payload);
+        const data = await apiPost("subirArchivoProducto", payload);
 
         if (data.status === "ok") {
           await refreshProductos();
