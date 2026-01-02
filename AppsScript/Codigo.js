@@ -1578,6 +1578,87 @@ function toggleUsuarioActivo(data, usuario) {
     lock.releaseLock();
   }
 }
+// function deleteUsuario(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     const usuarios = leerJSON(JSON_USUARIOS) || [];
+//     const { correo } = data;
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     if (correo === correoEjecutor) {
+//       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario" });
+//     }
+
+//     if (!correo)
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: "⚠️ Debe especificar el correo del usuario a eliminar.",
+//       });
+
+//     const usuarioAEliminar = usuarios.find((u) => u.correo === correo);
+//     if (!usuarioAEliminar)
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
+//       });
+
+//     if (usuarioAEliminar.rol === "administrador")
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: "🚫 No se puede eliminar un usuario con rol administrador.",
+//       });
+
+//     const nuevosUsuarios = usuarios.filter((u) => u.correo !== correo);
+//     guardarJSON(JSON_USUARIOS, nuevosUsuarios);
+
+//      const carpetas = obtenerOCrearCarpetaRaiz();
+
+//     // const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
+//     if (carpetas.hasNext()) {
+//       const carpeta = carpetas.next();
+
+//       try {
+//         carpeta.removeEditor(correo);
+//       } catch (e) {
+//         if (e.message?.includes("No such user")) {
+//           const err = new Error(
+//             `El usuario "${correo}" no tenía permisos en la carpeta`
+//           );
+//           err.name = "PermisoInexistenteError";
+
+//           // 📝 Se registra el warning, pero NO se interrumpe el flujo
+//           manejarError(err, "deleteUsuario", usuario?.correo);
+//         } else {
+//           throw e; // otros errores sí son críticos
+//         }
+//       }
+
+//     } else {
+//       const err = new Error(`No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
+//       err.name = "CarpetaNoEncontradaError";
+//       throw err;
+//     }
+
+//     registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: `🗑️ Usuario "${correo}" eliminado correctamente.`,
+//       datos: nuevosUsuarios,
+//     });
+//   } catch (err) {
+//     manejarError(err, "deleteUsuario", usuario?.correo);
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "❌ Error al eliminar usuario.",
+//       detalle: String(err.message || err)
+//     });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 function deleteUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1587,64 +1668,67 @@ function deleteUsuario(data, usuario) {
     const { correo } = data;
     const correoEjecutor = usuario?.correo || "sistema";
 
-    if (correo === correoEjecutor) {
+    // 1️⃣ Validaciones previas
+    if (correo?.toLowerCase() === correoEjecutor.toLowerCase()) {
       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario" });
     }
 
-    if (!correo)
-      return respuestaJSON({
-        status: "error",
-        mensaje: "⚠️ Debe especificar el correo del usuario a eliminar.",
-      });
-
-    const usuarioAEliminar = usuarios.find((u) => u.correo === correo);
-    if (!usuarioAEliminar)
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ No se encontró el usuario "${correo}".`,
-      });
-
-    if (usuarioAEliminar.rol === "administrador")
-      return respuestaJSON({
-        status: "error",
-        mensaje: "🚫 No se puede eliminar un usuario con rol administrador.",
-      });
-
-    const nuevosUsuarios = usuarios.filter((u) => u.correo !== correo);
-    guardarJSON(JSON_USUARIOS, nuevosUsuarios);
-
-    const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
-    if (carpetas.hasNext()) {
-      const carpeta = carpetas.next();
-
-      try {
-        carpeta.removeEditor(correo);
-      } catch (e) {
-        if (e.message?.includes("No such user")) {
-          const err = new Error(
-            `El usuario "${correo}" no tenía permisos en la carpeta`
-          );
-          err.name = "PermisoInexistenteError";
-
-          // 📝 Se registra el warning, pero NO se interrumpe el flujo
-          manejarError(err, "deleteUsuario", usuario?.correo);
-        } else {
-          throw e; // otros errores sí son críticos
-        }
-      }
-
-    } else {
-      const err = new Error(`No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
-      err.name = "CarpetaNoEncontradaError";
-      throw err;
+    if (!correo) {
+      return respuestaJSON({ status: "error", mensaje: "⚠️ Debe especificar el correo." });
     }
 
+    const usuarioAEliminar = usuarios.find((u) => u.correo.toLowerCase() === correo.toLowerCase());
+    if (!usuarioAEliminar) {
+      return respuestaJSON({ status: "error", mensaje: `⚠️ No se encontró el usuario "${correo}".` });
+    }
+
+    if (usuarioAEliminar.rol === "administrador") {
+      return respuestaJSON({ status: "error", mensaje: "🚫 No se puede eliminar administradores." });
+    }
+
+    // 2️⃣ Obtener el ID de la carpeta desde la configuración (Más seguro que buscar por nombre)
+    const config = leerJSON(JSON_CONFIGURACION);
+    const carpetaId = config?.CARPETA_PRINCIPAL_ID;
+
+    if (!carpetaId) {
+      throw new Error("No se pudo obtener el ID de la carpeta principal desde la configuración.");
+    }
+
+    // 3️⃣ ELIMINAR PERMISOS EN DRIVE (Lógica Robusta v3)
+    try {
+      // Listamos los permisos de la carpeta para encontrar el ID del permiso del usuario
+      const response = Drive.Permissions.list(carpetaId);
+      const permissions = response.permissions;
+
+      const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
+
+      if (permiso) {
+        // Eliminamos el permiso específico
+        Drive.Permissions.delete(carpetaId, permiso.id);
+        console.log(`✅ Permiso revocado en Drive para: ${correo}`);
+      } else {
+        // Si no aparece en la lista, intentamos el método tradicional por si acaso
+        const carpeta = DriveApp.getFolderById(carpetaId);
+        carpeta.removeViewer(correo);
+        carpeta.removeEditor(correo);
+      }
+    } catch (e) {
+      // Registramos el error pero no detenemos la eliminación del JSON
+      console.warn(`Aviso al quitar permisos de Drive: ${e.message}`);
+    }
+
+    // 4️⃣ Actualizar base de datos JSON
+    const nuevosUsuarios = usuarios.filter((u) => u.correo.toLowerCase() !== correo.toLowerCase());
+    guardarJSON(JSON_USUARIOS, nuevosUsuarios);
+
     registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
+    
     return respuestaJSON({
       status: "ok",
-      mensaje: `🗑️ Usuario "${correo}" eliminado correctamente.`,
+      mensaje: `🗑️ Usuario "${correo}" eliminado y permisos de carpeta revocados.`,
       datos: nuevosUsuarios,
     });
+
   } catch (err) {
     manejarError(err, "deleteUsuario", usuario?.correo);
     return respuestaJSON({
@@ -1656,6 +1740,8 @@ function deleteUsuario(data, usuario) {
     lock.releaseLock();
   }
 }
+
+
 // Productos
 function addProducto(data, usuario) {
   const lock = LockService.getScriptLock();
