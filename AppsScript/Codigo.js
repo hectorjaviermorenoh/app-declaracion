@@ -139,6 +139,11 @@ const FUNCIONES_GENERALES = [
   "getProductos",
 
 ];
+
+// PROTECCIÓN: Quitar acceso a los JSON al crear usuario o toggleUsuario
+const ARCHIVOS_PROTEGIDOS = [JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, JSON_LOGS, JSON_DATOS_TRIBUTARIOS];
+
+
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
  ******************************/
@@ -1450,16 +1455,16 @@ function addUsuario(data, usuario) {
     }
 
     // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
-    Utilities.sleep(2000); // Aumentamos a 2 segundos por seguridad
+    Utilities.sleep(5000); // Aumentamos a 2 segundos por seguridad
 
     // 3️⃣ PROTECCIÓN: Quitar acceso a los JSON
-    const archivosProtegidos = [
-      JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
-      JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
-      JSON_LOGS, JSON_DATOS_TRIBUTARIOS
-    ];
+    // const archivosProtegidos = [
+    //   JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
+    //   JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
+    //   JSON_LOGS, JSON_DATOS_TRIBUTARIOS
+    // ];
 
-    archivosProtegidos.forEach(nombreArchivo => {
+    ARCHIVOS_PROTEGIDOS.forEach(nombreArchivo => {
       const archivos = carpeta.getFilesByName(nombreArchivo);
       while (archivos.hasNext()) { // Usamos while por si hay duplicados
         const archivo = archivos.next();
@@ -1542,6 +1547,280 @@ function updateUsuario(data, usuario) {
     lock.releaseLock();
   }
 }
+
+
+
+// toggle original
+// function toggleUsuarioActivo(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     const usuarios = leerJSON(JSON_USUARIOS) || [];
+//     const { correo, activo } = data;
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     const index = usuarios.findIndex((u) => u.correo === correo);
+//     if (index === -1)
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
+//       });
+
+//     usuarios[index].activo = Boolean(activo);
+//     guardarJSON(JSON_USUARIOS, usuarios);
+
+//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} correctamente.`,
+//       datos: usuarios,
+//     });
+//   } catch (err) {
+//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "❌ Error al cambiar el estado del usuario.",
+//       detalle: err,
+//     });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+// toggle mejorado
+// function toggleUsuarioActivo(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     const usuarios = leerJSON(JSON_USUARIOS) || [];
+//     const { correo, activo } = data; // 'activo' es true o false
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
+//     if (index === -1) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
+//       });
+//     }
+
+//     // 1️⃣ Actualizar estado en el JSON
+//     usuarios[index].activo = Boolean(activo);
+//     guardarJSON(JSON_USUARIOS, usuarios);
+
+//     // 2️⃣ Obtener ID de la carpeta desde configuración
+//     const config = leerJSON(JSON_CONFIGURACION);
+//     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
+//     if (!carpetaId) throw new Error("ID de carpeta no encontrado en configuración.");
+
+//     // 3️⃣ Sincronizar permisos con Google Drive
+//     if (activo === true) {
+//       // --- LÓGICA DE ACTIVACIÓN (Añadir permiso Lector) ---
+//       try {
+//         Drive.Permissions.create({
+//           'role': 'reader',
+//           'type': 'user',
+//           'emailAddress': correo
+//         }, carpetaId, { 'sendNotificationEmail': false });
+        
+//         // Opcional: Ejecutar aquí la lógica de ocultar archivos JSON si es necesario
+//         Logger.log(`✅ Permisos de lectura restaurados para: ${correo}`);
+//       } catch (e) {
+//         throw new Error("Error al asignar carpeta: " + e.message);
+//       }
+
+//       // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
+//       Utilities.sleep(2000); // Aumentamos a 2 segundos por seguridad
+
+//       // 3️⃣ PROTECCIÓN: Quitar acceso a los JSON
+//       const archivosProtegidos = [
+//         JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
+//         JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
+//         JSON_LOGS, JSON_DATOS_TRIBUTARIOS
+//       ];
+
+//       archivosProtegidos.forEach(nombreArchivo => {
+//         const archivos = carpeta.getFilesByName(nombreArchivo);
+//         while (archivos.hasNext()) { // Usamos while por si hay duplicados
+//           const archivo = archivos.next();
+//           const archivoId = archivo.getId();
+          
+//           try {
+//             // MÉTODO DEFINITIVO: 
+//             // Intentamos remover al usuario usando DriveApp (más sencillo para 'readers')
+//             // Si no funciona, usamos el borrado por lista de permisos.
+//             archivo.removeViewer(correo); 
+            
+//             // Refuerzo con API Avanzada
+//             const permissions = Drive.Permissions.list(archivoId).permissions;
+//             permissions.forEach(p => {
+//               if (p.emailAddress?.toLowerCase() === correo.toLowerCase()) {
+//                 Drive.Permissions.delete(archivoId, p.id);
+//               }
+//             });
+//           } catch (e) {
+//             console.warn(`Intento de ocultar ${nombreArchivo}: ${e.message}`);
+//           }
+//         }
+//       });
+
+
+
+//     } else {
+//       // --- LÓGICA DE DESACTIVACIÓN (Quitar todo permiso) ---
+//       try {
+//         const response = Drive.Permissions.list(carpetaId);
+//         const permissions = response.permissions;
+
+//         const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
+
+//       if (permiso) {
+//         // Eliminamos el permiso específico
+//         Drive.Permissions.delete(carpetaId, permiso.id);
+//       } else {
+//         // Si no aparece en la lista, intentamos el método tradicional por si acaso
+//         const carpeta = DriveApp.getFolderById(carpetaId);
+//         carpeta.removeViewer(correo);
+//         carpeta.removeEditor(correo);
+//       }
+      
+//       } catch (e) {
+//         throw new Error("Aviso: No se pudo eliminar el permiso (quizás no tenía): " + e.message);
+//       }
+//     }
+
+//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
+
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} y permisos sincronizados.`,
+//       datos: usuarios,
+//     });
+//   } catch (err) {
+//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "❌ Error al cambiar el estado del usuario.",
+//       detalle: err,
+//     });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+// function toggleUsuarioActivo(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     const usuarios = leerJSON(JSON_USUARIOS) || [];
+//     const { correo, activo } = data; // 'activo' es true o false
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
+//     if (index === -1) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
+//       });
+//     }
+
+//     // 1️⃣ Actualizar estado en el JSON
+//     usuarios[index].activo = Boolean(activo);
+//     guardarJSON(JSON_USUARIOS, usuarios);
+
+//     // 2️⃣ Obtener ID de la carpeta desde configuración
+//     const config = leerJSON(JSON_CONFIGURACION);
+//     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
+//     if (!carpetaId) throw new Error("ID de carpeta no encontrado en configuración.");
+
+//     // 3️⃣ Sincronizar permisos con Google Drive
+//     if (activo === true) {
+//       // --- LÓGICA DE ACTIVACIÓN ---
+//       try {
+//         Drive.Permissions.create({
+//           'role': 'reader',
+//           'type': 'user',
+//           'emailAddress': correo
+//         }, carpetaId, { 'sendNotificationEmail': false });
+        
+//         Logger.log(`✅ Permisos de lectura restaurados para: ${correo}`);
+//       } catch (e) {
+//         // Si el permiso ya existe, Google dará error, lo ignoramos para continuar con la protección
+//         throw new Error("Aviso al crear permiso: " + e.message);
+//       }
+
+//       // Espera para propagación
+//       Utilities.sleep(2000); 
+
+//       // --- PROTECCIÓN DE ARCHIVOS JSON ---
+//       // IMPORTANTE: Definimos el objeto carpeta que faltaba
+//       const carpeta = DriveApp.getFolderById(carpetaId);
+//       const archivosProtegidos = [
+//         JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
+//         JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
+//         JSON_LOGS, JSON_DATOS_TRIBUTARIOS
+//       ];
+
+//       archivosProtegidos.forEach(nombreArchivo => {
+//         const archivos = carpeta.getFilesByName(nombreArchivo);
+//         while (archivos.hasNext()) {
+//           const archivo = archivos.next();
+//           const archivoId = archivo.getId();
+//           try {
+//             // Quitamos visibilidad
+//             archivo.removeViewer(correo); 
+            
+//             // Refuerzo con API v3 para eliminar cualquier rastro
+//             const permissions = Drive.Permissions.list(archivoId).permissions;
+//             const pUser = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
+//             if (pUser) {
+//               Drive.Permissions.delete(archivoId, pUser.id);
+//             }
+//           } catch (e) {
+//             console.warn(`Ocultando ${nombreArchivo}: ${e.message}`);
+//           }
+//         }
+//       });
+
+//     } else {
+//       // --- LÓGICA DE DESACTIVACIÓN (Quitar todo permiso) ---
+//       try {
+//         const response = Drive.Permissions.list(carpetaId);
+//         const permissions = response.permissions;
+//         const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
+
+//         if (permiso) {
+//           Drive.Permissions.delete(carpetaId, permiso.id);
+//           Logger.log(`🚫 Acceso revocado a carpeta para: ${correo}`);
+//         }
+//       } catch (e) {
+//         throw new Error("No se pudo eliminar el permiso: " + e.message);
+//       }
+//     }
+
+//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
+
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} y permisos sincronizados.`,
+//       datos: usuarios,
+//     });
+
+//   } catch (err) {
+//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "❌ Error al cambiar el estado del usuario.",
+//       detalle: err.message || String(err),
+//     });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 function toggleUsuarioActivo(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1550,34 +1829,114 @@ function toggleUsuarioActivo(data, usuario) {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
     const { correo, activo } = data;
     const correoEjecutor = usuario?.correo || "sistema";
+    let driveStatus = "";
 
-    const index = usuarios.findIndex((u) => u.correo === correo);
-    if (index === -1)
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
-      });
+    const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
+    if (index === -1) return respuestaJSON({ status: "error", mensaje: "Usuario no encontrado." });
 
+    // 1️⃣ Actualizar estado en el JSON
     usuarios[index].activo = Boolean(activo);
     guardarJSON(JSON_USUARIOS, usuarios);
 
-    registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
+    const config = leerJSON(JSON_CONFIGURACION);
+    const carpetaId = config?.CARPETA_PRINCIPAL_ID;
+
+    if (activo === true) {
+      // --- LÓGICA DE ACTIVACIÓN ---
+      try {
+        // Intentar crear con v3, si falla intentar v2
+        try {
+          Drive.Permissions.create({
+            'role': 'reader',
+            'type': 'user',
+            'emailAddress': correo
+          }, carpetaId, { 'sendNotificationEmail': false });
+        } catch(e) {
+          Drive.Permissions.insert({
+            'role': 'reader',
+            'type': 'user',
+            'value': correo
+          }, carpetaId, { 'sendNotificationEmail': false });
+        }
+        driveStatus = "Permisos activados.";
+      } catch (e) {
+        driveStatus = "Ya tenía permisos o error: " + e.message;
+      }
+
+      Utilities.sleep(5000);
+      const carpeta = DriveApp.getFolderById(carpetaId);
+
+      // const archivosProtegidos = [JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, JSON_LOGS, JSON_DATOS_TRIBUTARIOS];
+
+      let archivosOcultados = 0;
+
+      ARCHIVOS_PROTEGIDOS.forEach(n => {
+        const file = carpeta.getFilesByName(n);
+        if (file.hasNext()) {
+          const f = file.next();
+          try { f.removeViewer(correo); } catch(e){}
+        }
+        archivosOcultados++;
+      });
+      // driveStatus += " Archivos protegidos.";
+      driveStatus += ` Se protegieron ${archivosOcultados} archivos.`;
+
+    } else {
+      // --- LÓGICA DE DESACTIVACIÓN (Corrección de .delete vs .remove) ---
+      try {
+        // Intentamos listar los permisos (v2 usa 'items', v3 usa 'permissions')
+        const response = Drive.Permissions.list(carpetaId);
+        const listaPermisos = response.permissions || response.items || [];
+        
+        const permiso = listaPermisos.find(p => 
+          (p.emailAddress && p.emailAddress.toLowerCase() === correo.toLowerCase()) ||
+          (p.value && p.value.toLowerCase() === correo.toLowerCase())
+        );
+
+        if (permiso) {
+          // Intentar borrar con método v3 (.delete) o v2 (.remove)
+          if (Drive.Permissions.remove) {
+            Drive.Permissions.remove(carpetaId, permiso.id); // v2
+            driveStatus = "Permiso revocado (v2).";
+          } else {
+            Drive.Permissions.delete(carpetaId, permiso.id); // v3
+            driveStatus = "Permiso revocado (v3).";
+          }
+        } else {
+          // Plan B: DriveApp si no se encuentra en la lista
+          const carpeta = DriveApp.getFolderById(carpetaId);
+          carpeta.removeViewer(correo);
+          carpeta.removeEditor(correo);
+          driveStatus = "Revocado mediante DriveApp.";
+        }
+      } catch (e) {
+        driveStatus = "Error crítico al revocar: " + e.message;
+      }
+    }
+
+    registrarLog("toggleUsuarioActivo", correoEjecutor, {
+      usuarioAfectado: correo,
+      nuevoEstado: activo ? "Activado" : "Desactivado",
+      resultadoDrive: driveStatus
+    });
+
     return respuestaJSON({
       status: "ok",
-      mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} correctamente.`,
-      datos: usuarios,
+      mensaje: `Usuario ${activo ? "activado" : "desactivado"}.`,
+      detalleDrive: driveStatus,
+      datos: usuarios
     });
+
   } catch (err) {
     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
-    return respuestaJSON({
-      status: "error",
-      mensaje: "❌ Error al cambiar el estado del usuario.",
-      detalle: err,
-    });
+    return respuestaJSON({ status: "error", detalle: err.message });
   } finally {
     lock.releaseLock();
   }
 }
+
+
+
 // function deleteUsuario(data, usuario) {
 //   const lock = LockService.getScriptLock();
 //   lock.waitLock(30000);
