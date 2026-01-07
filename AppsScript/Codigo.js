@@ -1,4 +1,8 @@
 /******************************
+ * Version 0601261140pm
+ ******************************/
+
+/******************************
  * CONFIGURACIÓN INICIAL
  ******************************/
 const CARPETA_PRINCIPAL = "declaracion";
@@ -16,7 +20,7 @@ const ZEICHENSCHLUESSEL = "528138845199053779904519";
  * CONSTANTE DE CONFIGURACIONES INICIALES
  ******************************/
 const CONFIG_INICIAL = {
-  CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
+  CARPETA_PRINCIPAL: "",
   TAMANO_MAX_MB: 10,
   TIPOS_PERMITIDOS: ["pdf", "jpg", "jpeg", "png", "docx", "txt", "xlsx"]
 };
@@ -158,8 +162,6 @@ function inicializarSistema() {
     // Usamos el prefijo definido para que cada usuario tenga su carpeta única
     const nombreUnico = `${CARPETA_PRINCIPAL}_${correoAdmin.split("@")[0].replace(/[^a-zA-Z]/g, "").substring(0, 4).toUpperCase()}`;
 
-    // const nombreUnico = CARPETA_PRINCIPAL + "_" + Math.random().toString(36).substring(2, 10);
-
     const carpetaPrincipal = DriveApp.getRootFolder().createFolder(nombreUnico);
     const carpetaPrincipalId = carpetaPrincipal.getId();
 
@@ -265,11 +267,6 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     const carpetaPrincipal = DriveApp.getFolderById(config.CARPETA_PRINCIPAL_ID);
 
     // 3️⃣ Limpieza controlada
-    // let resultadoLimpieza = null;
-    // if (borrarCarpetas) {
-    //   resultadoLimpieza = limpiarCarpetasPorId(carpetaPrincipal);
-    // }
-
     let resultadoLimpieza = null;
     if (borrarCarpetas) {
       resultadoLimpieza = limpiarCarpetas(); // devuelve objeto {mensaje: "..."}
@@ -278,21 +275,9 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     // 4️⃣ Reescribir configuración (manteniendo ID)
     guardarORecrearJSON(carpetaPrincipal, JSON_CONFIGURACION, {
       ...CONFIG_INICIAL,
-      CARPETA_PRINCIPAL: CARPETA_PRINCIPAL,
+      CARPETA_PRINCIPAL: config?.CARPETA_PRINCIPAL || `${CARPETA_PRINCIPAL}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       CARPETA_PRINCIPAL_ID: carpetaPrincipal.getId()
     });
-
-    
-
-    // 5️⃣ Reescribir usuarios
-    // guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
-    //   {
-    //     correo: correoAdmin?.correo,
-    //     nombre: "Administrador",
-    //     rol: "administrador",
-    //     activo: true
-    //   }
-    // ]);
 
     guardarORecrearJSON(carpetaPrincipal, JSON_USUARIOS, [
       {
@@ -336,6 +321,7 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     lock.releaseLock();
   }
 }
+
 /******************************
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
@@ -2587,6 +2573,81 @@ function deleteRegistroProducto(data, usuario) {
     lock.releaseLock();
   }
 }
+
+// funcion original ok
+// function editRegistroProducto(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     const correoEjecutor = usuario?.correo || "sistema";
+//     const registroId = data.registroId;
+
+//     if (!registroId) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: "ID de registro no proporcionado"
+//       });
+//     }
+
+//     // Leer bddatos.json
+//     const datos = leerJSON(JSON_BDD_DATOS);
+
+//     // Buscar registro
+//     const index = datos.findIndex(r => r.registroId === registroId);
+//     if (index === -1) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: "Registro no encontrado"
+//       });
+//     }
+
+//     const registroActual = datos[index];
+
+//     // 🔹 Actualizar SOLO campos editables
+//     const registroEditado = {
+//       ...registroActual,
+//       entidad: data.entidad ?? registroActual.entidad,
+//       nombreProducto: data.nombreProducto ?? registroActual.nombreProducto,
+//       descripcion: data.descripcion ?? registroActual.descripcion,
+//       tipo: data.tipo ?? registroActual.tipo,
+//       anio: data.anio ?? registroActual.anio,
+//       fechaEdicion: new Date().toISOString()
+//     };
+
+//     // Reemplazar registro
+//     datos[index] = registroEditado;
+
+//     // Guardar JSON
+//     guardarJSON(JSON_BDD_DATOS, datos);
+
+//     // Log
+//     registrarLog("editRegistroProducto", correoEjecutor, {
+//       registroId,
+//       antes: registroActual,
+//       despues: registroEditado
+//     });
+
+//     // Respuesta al frontend
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: "Registro editado correctamente",
+//       registro: registroEditado
+//     });
+
+//   } catch (e) {
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: e.message || "Error editando el registro"
+//     });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+
+
+// funcionando cambio de link
 function editRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2596,27 +2657,60 @@ function editRegistroProducto(data, usuario) {
     const registroId = data.registroId;
 
     if (!registroId) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "ID de registro no proporcionado"
-      });
+      return respuestaJSON({ status: "error", mensaje: "ID de registro no proporcionado" });
     }
 
-    // Leer bddatos.json
     const datos = leerJSON(JSON_BDD_DATOS);
-
-    // Buscar registro
     const index = datos.findIndex(r => r.registroId === registroId);
+    
     if (index === -1) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "Registro no encontrado"
-      });
+      return respuestaJSON({ status: "error", mensaje: "Registro no encontrado" });
     }
 
-    const registroActual = datos[index];
+    let registroActual = { ...datos[index] }; // Clonamos para mantener el estado "antes"
+    const fileIdAnterior = registroActual.fileId;
+    
+    let nuevoFileId = fileIdAnterior;
+    let nuevoLink = registroActual.link;
+    let huboCambioDeArchivo = false;
 
-    // 🔹 Actualizar SOLO campos editables
+    // --- LÓGICA DE RE-VINCULACIÓN ---
+    try {
+      const carpetaRaizUsuario = obtenerOCrearCarpetaRaiz();
+      const anioBusqueda = String(data.anio || registroActual.anio);
+      const subcarpetasAnio = carpetaRaizUsuario.getFoldersByName(anioBusqueda);
+      
+      if (subcarpetasAnio.hasNext()) {
+        const carpetaAño = subcarpetasAnio.next();
+        const archivosCandidatos = carpetaAño.getFilesByName(registroActual.nombreArchivo);
+        
+        if (archivosCandidatos.hasNext()) {
+          const archivoEncontrado = archivosCandidatos.next();
+          nuevoFileId = archivoEncontrado.getId();
+          nuevoLink = archivoEncontrado.getUrl();
+          
+          if (nuevoFileId !== fileIdAnterior) {
+            huboCambioDeArchivo = true;
+          }
+        }
+      }
+    } catch (err) {
+      // Si falla la búsqueda, mantenemos los datos que ya teníamos
+    }
+
+    // 🔹 Crear el objeto editado
+    // const registroEditado = {
+    //   ...registroActual,
+    //   entidad: data.entidad ?? registroActual.entidad,
+    //   nombreProducto: data.nombreProducto ?? registroActual.nombreProducto,
+    //   descripcion: data.descripcion ?? registroActual.descripcion,
+    //   tipo: data.tipo ?? registroActual.tipo,
+    //   anio: data.anio ?? registroActual.anio,
+    //   fileId: nuevoFileId,
+    //   link: nuevoLink,
+    //   fechaEdicion: new Date().toISOString()
+    // };
+
     const registroEditado = {
       ...registroActual,
       entidad: data.entidad ?? registroActual.entidad,
@@ -2624,38 +2718,52 @@ function editRegistroProducto(data, usuario) {
       descripcion: data.descripcion ?? registroActual.descripcion,
       tipo: data.tipo ?? registroActual.tipo,
       anio: data.anio ?? registroActual.anio,
-      fechaEdicion: new Date().toISOString()
+      fileId: nuevoFileId,
+      link: nuevoLink
     };
 
-    // Reemplazar registro
-    datos[index] = registroEditado;
 
-    // Guardar JSON
+    // Reemplazar en la base de datos
+    datos[index] = registroEditado;
     guardarJSON(JSON_BDD_DATOS, datos);
 
-    // Log
-    registrarLog("editRegistroProducto", correoEjecutor, {
+    // --- LÓGICA DE LOG PERSONALIZADA ---
+    let infoLog = {
       registroId,
       antes: registroActual,
       despues: registroEditado
-    });
+    };
 
-    // Respuesta al frontend
+    // Solo añadimos los detalles de link si hubo un cambio real de ID
+    if (huboCambioDeArchivo) {
+      infoLog.cambioLink = {
+        mensaje: "Se detectó y vinculó una copia nueva del archivo",
+        idAnterior: fileIdAnterior,
+        idNuevo: nuevoFileId
+      };
+    }
+
+    registrarLog("editRegistroProducto", correoEjecutor, infoLog);
+
     return respuestaJSON({
       status: "ok",
-      mensaje: "Registro editado correctamente",
+      mensaje: huboCambioDeArchivo 
+        ? "Registro editado y archivo re-vinculado." 
+        : "Registro editado correctamente.",
       registro: registroEditado
     });
 
   } catch (e) {
-    return respuestaJSON({
-      status: "error",
-      mensaje: e.message || "Error editando el registro"
-    });
+    return respuestaJSON({ status: "error", mensaje: e.message });
   } finally {
     lock.releaseLock();
   }
 }
+
+
+
+
+
 function getArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
@@ -2727,6 +2835,59 @@ function getFacturasPorAnio(anio) {
     data: filtrado,
   });
 }
+
+
+
+
+
+// funciona original ok sin cambio de link
+// function updateFactura(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     let bddatos = leerJSON(JSON_BDD_FACTURAS);
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     const { registroId, entidad, descripcion, valor, metodoPago } = data;
+
+//     if (!registroId) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: "❌ Se requiere el registroId para actualizar la factura."
+//       });
+//     }
+
+//     const index = bddatos.findIndex(f => f.registroId === registroId);
+//     if (index === -1) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `❌ No se encontró la factura con ID ${registroId}.`
+//       });
+//     }
+
+//     // --- Actualizar campos ---
+//     if (entidad !== undefined) bddatos[index].entidad = entidad;
+//     if (descripcion !== undefined) bddatos[index].descripcion = descripcion;
+//     if (valor !== undefined) bddatos[index].valor = Number(valor);
+//     if (metodoPago !== undefined) bddatos[index].metodoPago = metodoPago;
+
+//     guardarJSON(JSON_BDD_FACTURAS, bddatos);
+
+//     registrarLog("updateFactura", correoEjecutor, { registroId });
+
+//     return respuestaJSON({
+//       status: "ok",
+//       mensaje: "✅ Factura actualizada correctamente.",
+//       datos: bddatos[index]
+//     });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+// funcion con cambio de link
 function updateFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2734,44 +2895,103 @@ function updateFactura(data, usuario) {
   try {
     let bddatos = leerJSON(JSON_BDD_FACTURAS);
     const correoEjecutor = usuario?.correo || "sistema";
-
-    const { registroId, entidad, descripcion, valor, metodoPago } = data;
+    const registroId = data.registroId;
 
     if (!registroId) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "❌ Se requiere el registroId para actualizar la factura."
-      });
+      return respuestaJSON({ status: "error", mensaje: "❌ Se requiere el registroId." });
     }
 
     const index = bddatos.findIndex(f => f.registroId === registroId);
     if (index === -1) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `❌ No se encontró la factura con ID ${registroId}.`
-      });
+      return respuestaJSON({ status: "error", mensaje: "❌ Factura no encontrada." });
     }
 
-    // --- Actualizar campos ---
-    if (entidad !== undefined) bddatos[index].entidad = entidad;
-    if (descripcion !== undefined) bddatos[index].descripcion = descripcion;
-    if (valor !== undefined) bddatos[index].valor = Number(valor);
-    if (metodoPago !== undefined) bddatos[index].metodoPago = metodoPago;
+    // 1. Guardar estado anterior para el log
+    const registroActual = { ...bddatos[index] };
+    const fileIdAnterior = registroActual.fileId;
+    
+    let nuevoFileId = fileIdAnterior;
+    let nuevoLink = registroActual.link;
+    let huboCambioDeArchivo = false;
 
+    // 2. Lógica de re-vinculación (Raíz > Año > facturas > Archivo)
+    try {
+      const carpetaRaizUsuario = obtenerOCrearCarpetaRaiz();
+      const anioBusqueda = String(registroActual.anio);
+      const subcarpetasAnio = carpetaRaizUsuario.getFoldersByName(anioBusqueda);
+      
+      if (subcarpetasAnio.hasNext()) {
+        const carpetaAño = subcarpetasAnio.next();
+        // Buscar la subcarpeta "facturas"
+        const subcarpetasFacturas = carpetaAño.getFoldersByName("facturas");
+        
+        if (subcarpetasFacturas.hasNext()) {
+          const carpetaFacturas = subcarpetasFacturas.next();
+          const archivos = carpetaFacturas.getFilesByName(registroActual.nombreArchivo);
+          
+          if (archivos.hasNext()) {
+            const archivoEncontrado = archivos.next();
+            nuevoFileId = archivoEncontrado.getId();
+            nuevoLink = archivoEncontrado.getUrl();
+            
+            if (nuevoFileId !== fileIdAnterior) {
+              huboCambioDeArchivo = true;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Si hay error en Drive, mantenemos lo que tenemos
+    }
+
+    // 3. Actualizar campos en el objeto
+    const registroEditado = {
+      ...registroActual,
+      entidad: data.entidad ?? registroActual.entidad,
+      descripcion: data.descripcion ?? registroActual.descripcion,
+      valor: data.valor !== undefined ? Number(data.valor) : registroActual.valor,
+      metodoPago: data.metodoPago ?? registroActual.metodoPago,
+      fileId: nuevoFileId,
+      link: nuevoLink
+    };
+
+    bddatos[index] = registroEditado;
     guardarJSON(JSON_BDD_FACTURAS, bddatos);
 
-    registrarLog("updateFactura", correoEjecutor, { registroId });
+    // 4. Lógica de Log
+    let infoLog = {
+      registroId,
+      antes: registroActual,
+      despues: registroEditado
+    };
+
+    if (huboCambioDeArchivo) {
+      infoLog.cambioLink = {
+        mensaje: "Link de factura actualizado (nueva copia detectada en subcarpeta facturas)",
+        idAnterior: fileIdAnterior,
+        idNuevo: nuevoFileId
+      };
+    }
+
+    registrarLog("updateFactura", correoEjecutor, infoLog);
 
     return respuestaJSON({
       status: "ok",
-      mensaje: "✅ Factura actualizada correctamente.",
-      datos: bddatos[index]
+      mensaje: huboCambioDeArchivo 
+        ? "✅ Factura y link actualizados correctamente." 
+        : "✅ Factura actualizada correctamente.",
+      datos: registroEditado
     });
 
+  } catch (error) {
+    return respuestaJSON({ status: "error", mensaje: "Error: " + error.message });
   } finally {
     lock.releaseLock();
   }
 }
+
+
+
 function deleteFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);

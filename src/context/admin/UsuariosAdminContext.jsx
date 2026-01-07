@@ -144,7 +144,7 @@ export const UsuariosAdminProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("❌ deleteUsuario error:", err);
-      showToast(`❌ Error al eliminar el usuario "${correo}".`, "danger", 4000, "UsuariosAdmin");
+      showToast(`❌ Error al eliminar el usuario "${correo}" "${err}".`, "danger", 10000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }

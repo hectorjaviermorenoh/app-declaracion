@@ -1,15 +1,15 @@
 import React, { useState} from "react";
 import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useToast } from "../../context/ToastContext";
+// import { useToast } from "../../context/ToastContext";
 
 
 import { useBackends } from "../../context/BackendsContext.jsx";
 import ReinitModal from "../Modals/ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
-import { useProductos } from "../../context/ProductosContext.jsx";
-import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
+// import { useProductos } from "../../context/ProductosContext.jsx";
+// import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
 import "./Navbar.scss";
@@ -18,9 +18,9 @@ function AppNavbar({ onOpenBackend }) {
 
   const { activeBackend, } = useBackends();
   const { getDatos } = useDatosTributarios(); // 👈 accede al refresco
-  const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
-  const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
-  const { showToast } = useToast();
+  // const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
+  // const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
+  // const { showToast } = useToast();
 
   // ---------------- Estados de UI ----------------
 
@@ -28,9 +28,9 @@ function AppNavbar({ onOpenBackend }) {
   const { user, logout } = useAuth();
 
   // const [showAddModal, setShowAddModal] = useState(false);
-  const [showReinitModal, setShowReinitModal] = useState(false);
+  // const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
-  const [loadingOverlay, setLoadingOverlay] = useState(false);
+  // const [loadingOverlay, setLoadingOverlay] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,7 +50,7 @@ function AppNavbar({ onOpenBackend }) {
 
   return (
     <>
-      <div className="navbar-return-container">
+      <div className="navbar-return-container sticky-top">
         <Navbar key="lg" bg="light" expand="lg" className="shadow-sm mb-3 sticky-top navbar-nav-principal">
           <Container fluid>
             <div className="backend-circle-Brand">
@@ -278,7 +278,7 @@ function AppNavbar({ onOpenBackend }) {
         </Offcanvas.Body>
       </Offcanvas>
 
-        <ReinitModal
+        {/* <ReinitModal
           show={showReinitModal}
           onHide={() => setShowReinitModal(false)}
           onConfirm={async (confirmText, borrarCarpetas) => {
@@ -295,10 +295,10 @@ function AppNavbar({ onOpenBackend }) {
           }}
 
 
-        />
+        /> */}
 
 
-        <LoadingOverlay show={loadingOverlay} />
+        {/* <LoadingOverlay show={loadingOverlay} /> */}
 
       </div>
     </>
