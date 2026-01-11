@@ -12,6 +12,7 @@ import App from "./App";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/base/base.scss";
+import "./assets/Font_AppDeclaracion/style.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

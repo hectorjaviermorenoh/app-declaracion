@@ -1,5 +1,5 @@
 import React, { useState} from "react";
-import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas } from "react-bootstrap";
+import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 // import { useToast } from "../../context/ToastContext";
 
@@ -117,11 +117,71 @@ function AppNavbar({ onOpenBackend }) {
                 <Nav
                   className="justify-content-end flex-grow-1 pe-3"
                 >
-                  <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>Productos</Nav.Link>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>Add Facturas</Nav.Link>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>Contador</Nav.Link>
 
-                  <NavDropdown title="Más" id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
+
+                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Ver Productos</Tooltip>}>
+                  <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}><span className="icon-Verproductos"></span></Nav.Link>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Add Facturas</Tooltip>}>
+                  <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}><span className="icon-AddFacturas"></span></Nav.Link>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Contador</Tooltip>}>
+                  <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}><span className="icon-Contador"></span></Nav.Link>
+                  </OverlayTrigger>
+
+
+                  {user && (
+                    <OverlayTrigger placement="bottom" overlay={<Tooltip>Usuario Activo</Tooltip>}>
+                      <div className="navbar-session-Dropdown-desktop d-flex align-items-center ms-3">
+                        <Dropdown align="end">
+                          <Dropdown.Toggle
+                            as="div"
+                            id="userDropdown"
+                            className="cursor-pointer"
+                            style={{ display: "flex", alignItems: "center" }}
+                          >
+                            <img
+                              src={user.picture || "https://via.placeholder.com/32"}
+                              alt={user.nombre || user.correo || "Usuario"}
+                              width={34}
+                              height={34}
+                              className="rounded-circle border border-light shadow-sm"
+                            />
+                          </Dropdown.Toggle>
+
+                          <Dropdown.Menu
+                            className="p-3 shadow-sm text-center"
+                            style={{ minWidth: "220px" }}
+                          >
+                            <img
+                              src={user.picture || "https://via.placeholder.com/64"}
+                              alt={user.nombre || "Usuario"}
+                              className="rounded-circle mb-2"
+                              width={64}
+                              height={64}
+                            />
+                            <div className="fw-bold">{user.nombre || "Usuario desconocido"}</div>
+                            <div className="text-muted small mb-2">{user.correo}</div>
+                            <Dropdown.Divider />
+                            <Dropdown.Item
+                              onClick={() => {
+                                logout();
+                                navigate("/");
+                              }}
+                              className=" text-danger text-center fw-semibold d-flex align-items-center justify-content-center gap-1"
+                            >
+                              <BoxArrowRight size={16} /> Cerrar sesión
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </div>
+                    </OverlayTrigger>
+                  )}
+
+                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Más</Tooltip>}>
+                  <NavDropdown title={<span className="icon-menu-kebab"></span>} id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={onOpenBackend}>Configurar Backend</NavDropdown.Item>
@@ -130,6 +190,7 @@ function AppNavbar({ onOpenBackend }) {
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>
                   </NavDropdown>
+                  </OverlayTrigger>
 
                   {/* MAS */}
                   <Nav.Link
@@ -145,51 +206,7 @@ function AppNavbar({ onOpenBackend }) {
 
 
 
-                  {user && (
-                    <div className="navbar-session-Dropdown-desktop d-flex align-items-center ms-3">
-                      <Dropdown align="end">
-                        <Dropdown.Toggle
-                          as="div"
-                          id="userDropdown"
-                          className="cursor-pointer"
-                          style={{ display: "flex", alignItems: "center" }}
-                        >
-                          <img
-                            src={user.picture || "https://via.placeholder.com/32"}
-                            alt={user.nombre || user.correo || "Usuario"}
-                            width={34}
-                            height={34}
-                            className="rounded-circle border border-light shadow-sm"
-                          />
-                        </Dropdown.Toggle>
 
-                        <Dropdown.Menu
-                          className="p-3 shadow-sm text-center"
-                          style={{ minWidth: "220px" }}
-                        >
-                          <img
-                            src={user.picture || "https://via.placeholder.com/64"}
-                            alt={user.nombre || "Usuario"}
-                            className="rounded-circle mb-2"
-                            width={64}
-                            height={64}
-                          />
-                          <div className="fw-bold">{user.nombre || "Usuario desconocido"}</div>
-                          <div className="text-muted small mb-2">{user.correo}</div>
-                          <Dropdown.Divider />
-                          <Dropdown.Item
-                            onClick={() => {
-                              logout();
-                              navigate("/");
-                            }}
-                            className=" text-danger text-center fw-semibold d-flex align-items-center justify-content-center gap-1"
-                          >
-                            <BoxArrowRight size={16} /> Cerrar sesión
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </div>
-                  )}
 
                 </Nav>
               </Offcanvas.Body>

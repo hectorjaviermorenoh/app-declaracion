@@ -58,23 +58,28 @@ function Contador() {
     const ext = filename.split(".").pop().toLowerCase();
     switch (ext) {
       case "pdf":
-        return "📕";
+        return <span class="icon-pdf"></span>;
       case "doc":
+        return <span class="icon-microsoftword"></span>;
       case "docx":
-        return "📝";
+        return <span class="icon-microsoftword"></span>;
       case "xls":
+        return <span class="icon-excel"></span>;
       case "xlsx":
-        return "📊";
+        return <span class="icon-excel"></span>;
       case "ppt":
       case "pptx":
         return "📽️";
       case "jpg":
+        return <span class="icon-jpg"></span>;
       case "jpeg":
+        return <span class="icon-JPEG"></span>;
       case "png":
+        return <span class="icon-png"></span>;
       case "gif":
         return "🖼️";
       case "txt":
-        return "📃";
+        return <span class="icon-texto"></span>;
       case "zip":
       case "rar":
         return "🗜️";
@@ -165,6 +170,11 @@ function Contador() {
     <div className="contador-container">
       <div className="container mt-4">
         <h2 className="mb-3">📂 Archivos del año {anio}</h2>
+
+        <span class="icon-AddFacturas"></span>
+        <span class="icon-Verproductos"></span>
+        <span class="icon-pdf"></span>
+
 
         <div className="mb-3">
           <label>Año:</label>
