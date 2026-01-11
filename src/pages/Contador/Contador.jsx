@@ -171,11 +171,6 @@ function Contador() {
       <div className="container mt-4">
         <h2 className="mb-3">📂 Archivos del año {anio}</h2>
 
-        <span class="icon-AddFacturas"></span>
-        <span class="icon-Verproductos"></span>
-        <span class="icon-pdf"></span>
-
-
         <div className="mb-3">
           <label>Año:</label>
           <select

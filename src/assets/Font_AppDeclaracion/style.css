@@ -28,31 +28,47 @@
 
 .icon-microsoftword:before {
   content: "\e90f";
+  font-size: 2rem;
   color: #2b579a;
 }
 .icon-bmp:before {
   content: "\e904";
+  font-size: 2rem;
+  color: #1b1304;
 }
 .icon-excel:before {
   content: "\e907";
+  font-size: 2rem;
+  color: #05541b;
 }
 .icon-JPEG:before {
   content: "\e908";
+  font-size: 2rem;
+  color: #b89372;
 }
 .icon-jpg:before {
   content: "\e909";
+  font-size: 2rem;
+  color: #85103d;
 }
 .icon-mp4:before {
   content: "\e90a";
+  font-size: 2rem;
+  color: #869c76;
 }
 .icon-pdf:before {
   content: "\e90b";
+  font-size: 2rem;
+  color: red;
 }
 .icon-png:before {
   content: "\e90c";
+  font-size: 2rem;
+  color: #07576b;
 }
 .icon-texto:before {
   content: "\e90d";
+  font-size: 2rem;
 }
 .icon-x-altx-alt:before {
   content: "\e910";
