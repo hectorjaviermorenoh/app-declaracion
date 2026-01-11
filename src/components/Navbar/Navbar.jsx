@@ -120,15 +120,24 @@ function AppNavbar({ onOpenBackend }) {
 
 
                   <OverlayTrigger placement="bottom" overlay={<Tooltip>Ver Productos</Tooltip>}>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}><span className="icon-Verproductos"></span></Nav.Link>
+                    <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>
+                      <span className="icon-Verproductos"></span>
+                      <span className="ms-2 d-lg-none">Ver Productos</span> {/* ms-2 añade un margen a la izquierda */}
+                    </Nav.Link>
                   </OverlayTrigger>
 
                   <OverlayTrigger placement="bottom" overlay={<Tooltip>Add Facturas</Tooltip>}>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}><span className="icon-AddFacturas"></span></Nav.Link>
+                    <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>
+                      <span className="icon-AddFacturas"></span>
+                      <span className="ms-2 d-lg-none">Facturas</span>
+                    </Nav.Link>
                   </OverlayTrigger>
 
                   <OverlayTrigger placement="bottom" overlay={<Tooltip>Contador</Tooltip>}>
-                  <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}><span className="icon-Contador"></span></Nav.Link>
+                    <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>
+                      <span className="icon-Contador"></span>
+                      <span className="ms-2 d-lg-none">Contador</span>
+                    </Nav.Link>
                   </OverlayTrigger>
 
 
