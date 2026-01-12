@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import UploadModal from "../../components/Productos/UploadModal/UploadModal";
 import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
-import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
+// import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import AddProductoModal from "../../components/Modals/AddProductoModal/AddProductoModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { useToast } from "../../context/ToastContext";
 import { confirmarAccion } from "../../utils/alerts.js";
+import ProductSkeleton from "../../components/Skeletons/ProductSkeleton/ProductSkeleton";
 import "./Productos.scss";
 
 export default function Productos() {
@@ -179,69 +180,84 @@ export default function Productos() {
       <Container className="productos-page">
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
-
         </div>
 
-        <Row>
-          {registroProductos.map((prod) => (
-            <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
-              <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
-                <Card.Body>
-                  <button
-                    type="button"
-                    className="btn-close position-absolute top-0 end-0 m-2"
-                    onClick={() => {
-                      setSelectedProducto(prod);
-                      setShowDeleteModal(true);
-                    }}
-                  />
 
-                  <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
-                  <Card.Text>{prod.descripcion}</Card.Text>
 
-                  {prod.tieneArchivo ? (
-                    <>
-                      <p className="mb-2">
-                        <small>
-                          Archivo ({prod.archivoInfo?.anio}):{" "}
-                          <a
-                            href={prod.archivoInfo?.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
-                          </a>
-                        </small>
-                      </p>
+<Row>
+  {loading ? (
+    // 1. Muestra Skeletons mientras carga
+    Array.from({ length: 6 }).map((_, i) => (
+      <ProductSkeleton key={`skeleton-${i}`} />
+    ))
+  ) : (
+    // 2. Muestra los productos reales SOLO cuando loading es false
+    registroProductos.map((prod) => (
+      <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
+        <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
+          <Card.Body>
+            <button
+              type="button"
+              className="btn-close position-absolute top-0 end-0 m-2"
+              onClick={() => {
+                setSelectedProducto(prod);
+                setShowDeleteModal(true);
+              }}
+            />
 
-                      <Button
-                        variant="warning"
-                        size="sm"
-                        onClick={() => {
-                          setShowTitle("Remplazar archivo");
-                          handleUpload(prod);
-                        }}
-                      >
-                        Modificar archivo
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        setShowTitle("Subir Archivo");
-                        handleUpload(prod);
-                      }}
+            <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
+            <Card.Text>{prod.descripcion}</Card.Text>
+
+            {prod.tieneArchivo ? (
+              <>
+                <p className="mb-2">
+                  <small>
+                    Archivo ({prod.archivoInfo?.anio}):{" "}
+                    <a
+                      href={prod.archivoInfo?.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      Subir Archivo
-                    </Button>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                      {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
+                    </a>
+                  </small>
+                </p>
+
+                <Button
+                  variant="warning"
+                  size="sm"
+                  onClick={() => {
+                    setShowTitle("Remplazar archivo");
+                    handleUpload(prod);
+                  }}
+                >
+                  Modificar archivo
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setShowTitle("Subir Archivo");
+                  handleUpload(prod);
+                }}
+              >
+                Subir Archivo
+              </Button>
+            )}
+          </Card.Body>
+        </Card>
+      </Col>
+    ))
+  )}
+</Row>
+
+
+
+
+
+
 
         {isMobile && (
           <button className="fab-subir" onClick={() => setShowAddModal(true)}>
@@ -287,7 +303,7 @@ export default function Productos() {
           onConfirm={() => deleteProducto(selectedProducto.id)}
         />
 
-        <LoadingOverlay show={loading} />
+        {/* <LoadingOverlay show={loading} /> */}
       </Container>
     </>
   );
