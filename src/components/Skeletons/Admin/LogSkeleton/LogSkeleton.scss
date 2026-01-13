@@ -1,0 +1,36 @@
+.log-skeleton-row, .log-skeleton-card {
+  .skeleton-bar, .skeleton-bar-rect {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  .skeleton-bar {
+    height: 14px;
+  }
+
+  .skeleton-bar-rect {
+    height: 60px; // Simula el bloque de detalle JSON
+    width: 100%;
+  }
+}
+
+// Estilos específicos para la versión Card
+.log-skeleton-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+
+  .log-header-skeleton {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+}
+
+@keyframes skeleton-shine {
+  to { background-position-x: -200%; }
+}

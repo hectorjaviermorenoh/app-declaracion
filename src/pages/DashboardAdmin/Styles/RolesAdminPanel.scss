@@ -1,0 +1,80 @@
+.roles-admin-container {
+  // Ajustes para la tabla en escritorio
+  .table {
+    vertical-align: middle;
+
+    thead {
+      @media (max-width: 768px) {
+        display: none; // Escondemos los encabezados en móvil
+      }
+    }
+
+    tbody tr {
+      @media (max-width: 768px) {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+    }
+
+    td {
+      @media (max-width: 768px) {
+        display: block;
+        width: 100% !important;
+        border: none;
+        padding: 0.5rem 0;
+        text-align: left !important;
+
+        // Agregamos etiquetas falsas para saber qué es cada dato
+        &::before {
+          content: attr(data-label);
+          font-weight: bold;
+          display: block;
+          color: #6c757d;
+          font-size: 0.8rem;
+          margin-bottom: 0.2rem;
+        }
+      }
+    }
+
+    // Estilo especial para la celda de acciones en móvil
+    .td-acciones {
+      @media (max-width: 768px) {
+        border-top: 1px solid #eee !important;
+        margin-top: 0.5rem;
+        padding-top: 1rem !important;
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+
+        button {
+          flex: 1; // Los botones crecen para ocupar el ancho
+        }
+      }
+    }
+  }
+}
+
+// Estilos para el Skeleton (Ajuste para que coincida con la nueva estructura)
+.rol-skeleton-row {
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+
+    td {
+      display: block;
+      width: 100% !important;
+      margin-bottom: 10px;
+    }
+
+    .skeleton-btn-rect {
+      width: 100% !important; // Botones skeleton anchos en móvil
+    }
+  }
+}

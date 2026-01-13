@@ -9,7 +9,6 @@ import NoPermiso from "../../components/NoPermiso/NoPermiso";
 import FormErrorList from "../../components/FormErrorList/FormErrorList";
 import { useFormValidator } from "../../hooks/useFormValidator";
 import { normalizeField } from "../../utils/formValidator";
-import UsuarioSkeleton from "../../components/Skeletons/Admin/UsuarioSkeleton/UsuarioSkeleton";
 import "./Styles/UsuariosAdminPanel.scss";
 
 const UsuariosAdminPanel = () => {
@@ -88,9 +87,7 @@ const UsuariosAdminPanel = () => {
 
   if (!puedeVerUsuarios) return <NoPermiso />;
 
-
-
-return (
+  return (
     <div className="usuarios-admin p-3">
       {/* ---------- ENCABEZADO --------- */}
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -98,27 +95,23 @@ return (
           👥 Administración de Usuarios
         </h4>
 
-        <Button
-          onClick={() => setShowModal(true)}
-          variant="primary"
-          size="sm"
-          disabled={loading} // Deshabilitar mientras carga
-        >
+        <Button onClick={() => setShowModal(true)} variant="primary" size="sm">
           ➕ Crear Usuario
         </Button>
       </div>
 
-      {/* ---------- CONTENIDO PRINCIPAL --------- */}
-      {/* Si no está cargando y no hay usuarios */}
-      {!loading && usuarios.length === 0 ? (
+      {/* ---------- TABLA PRINCIPAL --------- */}
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" />
+        </div>
+      ) : usuarios.length === 0 ? (
         <div className="text-center text-muted py-4">
           No hay usuarios registrados.
         </div>
       ) : (
         <>
-          {/* VISTA DESKTOP (Tabla siempre presente en el DOM para evitar saltos si prefieres,
-              o condicionada por display) */}
-          <div className="table-responsive shadow-sm rounded d-none d-md-block">
+          <div className="table-responsive shadow-sm rounded">
             <Table hover className="align-middle mb-0">
               <thead className="table-light">
                 <tr>
@@ -129,108 +122,58 @@ return (
                   <th className="text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <UsuarioSkeleton key={`skel-table-${i}`} isMobile={false} />
-                  ))
-                ) : (
-                  usuarios.map((u, idx) => (
-                    <tr key={idx}>
-                      <td>{u.correo}</td>
-                      <td>{u.nombre}</td>
-                      <td>
-                        <Badge
-                          bg={
-                            u.rol === "administrador"
-                              ? "warning"
-                              : u.rol === "contador"
-                              ? "info"
-                              : "secondary"
-                          }
-                          text={u.rol === "administrador" ? "dark" : "white"}
-                          className="px-2 py-1 text-capitalize"
-                        >
-                          {u.rol}
-                        </Badge>
-                      </td>
-                      <td className="text-center">
-                        <Form.Check
-                          type="switch"
-                          checked={u.activo}
-                          onChange={() => handleToggleActivo(u)}
-                          label={
-                            <span className={u.activo ? "text-success" : "text-danger"}>
-                              {u.activo ? "Activo" : "Inactivo"}
-                            </span>
-                          }
-                        />
-                      </td>
-                      <td className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline-secondary"
-                          className="me-2"
-                          onClick={() => handleEditarUsuario(u)}
-                        >
-                          ✏️
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          disabled={user?.correo === u.correo}
-                          onClick={() => {
-                            if (user?.correo === u.correo) return;
-                            setSelectedUsuario(u);
-                            setShowDeleteModal(true);
-                          }}
-                        >
-                          🗑️
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          </div>
 
-          {/* VISTA MÓVIL (Cards) */}
-          <div className="usuarios-cards d-md-none">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <UsuarioSkeleton key={`skel-card-${i}`} isMobile={true} />
-              ))
-            ) : (
-              usuarios.map((u, idx) => (
-                <div className="usuario-card" key={idx}>
-                  <div className="card-header">
-                    <strong>{u.nombre}</strong>
-                    <Badge
-                      bg={u.rol === "administrador" ? "warning" : "info"}
-                      text={u.rol === "administrador" ? "dark" : "white"}
-                      className="ms-2"
-                    >
-                      {u.rol}
-                    </Badge>
-                  </div>
-                  <div className="card-body">
-                    <p><strong>Correo:</strong><br /> {u.correo}</p>
-                    <Form.Check
-                      type="switch"
-                      id={`switch-mobile-${u.correo}`}
-                      checked={u.activo}
-                      onChange={() => handleToggleActivo(u)}
-                      label={u.activo ? "Activo" : "Inactivo"}
-                    />
-                    <div className="d-flex gap-2 mt-3">
+              <tbody>
+                {usuarios.map((u, idx) => (
+                  <tr key={idx}>
+                    <td>{u.correo}</td>
+                    <td>{u.nombre}</td>
+
+                    <td>
+                      <Badge
+                        bg={
+                          u.rol === "administrador"
+                            ? "warning"
+                            : u.rol === "contador"
+                            ? "info"
+                            : "secondary"
+                        }
+                        text={
+                          u.rol === "administrador" ? "dark" : "white"
+                        }
+                        className="px-2 py-1 text-capitalize"
+                      >
+                        {u.rol}
+                      </Badge>
+                    </td>
+
+                    <td className="text-center">
+                      <Form.Check
+                        type="switch"
+                        checked={u.activo}
+                        onChange={() => handleToggleActivo(u)}
+                        label={
+                          <span
+                            className={
+                              u.activo ? "text-success" : "text-danger"
+                            }
+                          >
+                            {u.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        }
+                      />
+                    </td>
+
+                    <td className="text-center">
                       <Button
                         size="sm"
                         variant="outline-secondary"
+                        className="me-2"
                         onClick={() => handleEditarUsuario(u)}
                       >
-                        ✏️ Editar
+                        ✏️
                       </Button>
+
                       <Button
                         size="sm"
                         variant="outline-danger"
@@ -241,27 +184,86 @@ return (
                           setShowDeleteModal(true);
                         }}
                       >
-                        🗑️ Eliminar
+                        🗑️
                       </Button>
-                    </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+
+          <div className="usuarios-cards">
+            {usuarios.map((u, idx) => (
+              <div className="usuario-card" key={idx}>
+                <div className="card-header">
+                  <strong>{u.nombre}</strong>
+                  <Badge
+                    bg={u.rol === "administrador" ? "warning" : "info"}
+                    text={u.rol === "administrador" ? "dark" : "white"}
+                    className="ms-2"
+                  >
+                    {u.rol}
+                  </Badge>
+                </div>
+
+                <div className="card-body">
+                  <p><strong>Correo:</strong><br /> {u.correo}</p>
+
+                  <Form.Check
+                    type="switch"
+                    id={`switch-mobile-${u.correo}`}
+                    checked={u.activo}
+                    onChange={() => handleToggleActivo(u)}
+                    label={u.activo ? "Activo" : "Inactivo"}
+                  />
+
+                  <div className="d-flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      onClick={() => handleEditarUsuario(u)}
+                    >
+                      ✏️ Editar
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline-danger"
+                      disabled={user?.correo === u.correo}
+                      onClick={() => {
+                        if (user?.correo === u.correo) return;
+                        setSelectedUsuario(u);
+                        setShowDeleteModal(true);
+                      }}
+                    >
+                      🗑️ Eliminar
+                    </Button>
                   </div>
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         </>
+
+
       )}
 
-      {/* ---------- MODALES --------- */}
+      {/* ---------- MODAL AGREGAR / EDITAR --------- */}
       <Modal show={showModal} centered onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>
             {usuarioEditando ? "Editar Usuario" : "Nuevo Usuario"}
           </Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
+
+          {/* 🔥 MOSTRAR ERRORES DEL FORMULARIO */}
           <FormErrorList errors={errors} />
+
           <Form>
+
             <Form.Group className="mb-3">
               <Form.Label>Correo</Form.Label>
               <Form.Control
@@ -276,6 +278,7 @@ return (
                 disabled={usuarioEditando}
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Nombre completo</Form.Label>
               <Form.Control
@@ -288,11 +291,16 @@ return (
                 onBlur={(e) => validateField("nombreUsuario", e.target.value)}
               />
             </Form.Group>
+
+
             <Form.Group className="mb-3">
               <Form.Label>Rol</Form.Label>
+
               {rolesErrorPermisos ? (
-                <div className="alert alert-warning py-2 small">
-                  ⚠️ No tienes permiso para ver roles.
+                <div className="alert alert-warning py-2">
+                  ⚠️ No tienes permiso para ver la lista de roles.
+                  <br />
+                  Contacta al usuario administrador.
                 </div>
               ) : (
                 <Form.Select
@@ -305,35 +313,58 @@ return (
                 >
                   <option value="">Seleccionar rol...</option>
                   {rolesDisponibles.map((r, i) => (
-                    <option key={i} value={r.rol}>{r.rol}</option>
+                    <option key={i} value={r.rol}>
+                      {r.rol}
+                    </option>
                   ))}
                 </Form.Select>
               )}
             </Form.Group>
+
+
+
+
+
+
           </Form>
         </Modal.Body>
+
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-          <Button variant="success" onClick={handleGuardarUsuario} disabled={loading}>
-            {loading ? <><Spinner size="sm" animation="border" /> Guardando...</> : "💾 Guardar"}
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </Button>
+
+          <Button variant="success" onClick={handleGuardarUsuario}>
+            {loading ? (
+              <>
+                <Spinner size="sm" animation="border" /> Guardando...
+              </>
+            ) : (
+              "💾 Guardar"
+            )}
           </Button>
         </Modal.Footer>
+
         <LoadingOverlay show={loading} />
       </Modal>
 
+      {/* ---------- MODAL ELIMINAR --------- */}
       <ConfirmActionModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         title="Eliminar Usuario"
-        message={<>¿Seguro que deseas eliminar al usuario <strong>{selectedUsuario?.correo}</strong>?</>}
+        message={
+          <>
+            ¿Seguro que deseas eliminar al usuario{" "}
+            <strong>{selectedUsuario?.correo}</strong>?
+          </>
+        }
         confirmLabel="Eliminar"
         confirmVariant="danger"
         onConfirm={() => deleteDato(selectedUsuario?.correo)}
       />
     </div>
   );
-
-
 };
 
 export default UsuariosAdminPanel;

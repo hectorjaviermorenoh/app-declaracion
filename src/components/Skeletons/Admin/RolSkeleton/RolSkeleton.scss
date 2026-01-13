@@ -1,0 +1,64 @@
+.rol-skeleton-row {
+  // Animación base
+  .skeleton-bar, .skeleton-btn-rect {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.5s infinite;
+    border-radius: 4px;
+    height: 14px;
+  }
+
+  // Estilo de botones en esqueleto
+  .skeleton-btn-rect {
+    height: 30px;
+    width: 70px;
+  }
+
+  // Comportamiento Responsive (Móvil)
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+
+    td {
+      display: block;
+      width: 100% !important;
+      border: none !important;
+      padding: 0.5rem 0 !important;
+      text-align: left !important;
+
+      // Simular la etiqueta (Label) en el esqueleto
+      &::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #adb5bd;
+        font-size: 0.75rem;
+        margin-bottom: 0.4rem;
+      }
+    }
+
+    .td-acciones {
+      border-top: 1px solid #eee !important;
+      margin-top: 0.5rem;
+      padding-top: 1rem !important;
+
+      .d-flex {
+        justify-content: flex-start !important;
+      }
+
+      .skeleton-btn-rect {
+        flex: 1; // Los botones ocupan el ancho en móvil
+      }
+    }
+  }
+}
+
+@keyframes skeleton-shine {
+  to {
+    background-position-x: -200%;
+  }
+}

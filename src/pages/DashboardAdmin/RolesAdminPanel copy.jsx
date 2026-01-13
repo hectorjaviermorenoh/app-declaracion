@@ -3,13 +3,11 @@ import { useRolesAdmin } from "../../context/admin/RolesAdminContext";
 import { Button, Form, Table, Spinner, Modal, Badge } from "react-bootstrap";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
-import RolSkeleton from "../../components/Skeletons/Admin/RolSkeleton/RolSkeleton";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
 import FormErrorList from "../../components/FormErrorList/FormErrorList";
 import { useFormValidator } from "../../hooks/useFormValidator";
 import { normalizeField } from "../../utils/formValidator";
-import "./Styles/RolesAdminPanel.scss";
 
 
 const RolesAdminPanel = () => {
@@ -107,29 +105,35 @@ const RolesAdminPanel = () => {
   // Ahora sí retornar condicional
   if (!puedeVerRoles) return <NoPermiso />;
 
-return (
-    <div className="roles-admin-container p-3">
-      {/* ---------- ENCABEZADO --------- */}
+  return (
+    <div className="p-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="fw-bold mb-0">Administración de Roles</h4>
+        <h4 className="fw-bold">Administración de Roles</h4>
+        {/* <Button onClick={() => setShowModal(true)} variant="primary">
+          ➕ Nuevo Rol
+        </Button> */}
         <Button
           onClick={() => {
-            setRolEditando(null);
-            setNuevoRol("");
-            setPermisosSeleccionados([]);
-            setShowModal(true);
+            setRolEditando(null);           // ← marca que NO estás editando
+            setNuevoRol("");                // ← limpia el input
+            setPermisosSeleccionados([]);   // ← limpia los permisos
+            setShowModal(true);             // ← abre el modal
           }}
           variant="primary"
-          disabled={loading}
         >
           ➕ Nuevo Rol
         </Button>
       </div>
 
-      {/* ---------- TABLA DE ROLES (Adaptativa vía SCSS) --------- */}
-      <div className="table-responsive shadow-sm rounded">
-        <Table striped bordered hover className="align-middle mb-0">
-          <thead className="table-light">
+
+
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" />
+        </div>
+      ) : (
+        <Table striped bordered hover responsive>
+          <thead>
             <tr>
               <th>Rol</th>
               <th>Permisos</th>
@@ -137,76 +141,64 @@ return (
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <RolSkeleton key={`rol-skel-${i}`} />
-              ))
-            ) : roles.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="text-center py-4 text-muted">
-                  No hay roles definidos.
+            {roles.map((rol, idx) => (
+              <tr key={idx}>
+                <td>
+                  <strong>{rol.rol}</strong>
+                  {rol.rol === "administrador" && (
+                    <Badge bg="warning" className="ms-2">
+                      Protegido
+                    </Badge>
+                  )}
                 </td>
-              </tr>
-            ) : (
-              roles.map((rol, idx) => (
-                <tr key={idx}>
-                  <td data-label="Rol">
-                    <strong>{rol.rol}</strong>
-                    {rol.rol === "administrador" && (
-                      <Badge bg="warning" text="dark" className="ms-2">
-                        Protegido
-                      </Badge>
-                    )}
-                  </td>
-                  <td data-label="Permisos">
-                    <div className="text-muted small text-break">
-                      {rol.permisos?.includes("*")
-                        ? "Todos los permisos"
-                        : rol.permisos?.join(", ") || "—"}
-                    </div>
-                  </td>
-                  <td className="td-acciones text-center" data-label="Acciones">
+                <td>
+                  {rol.permisos?.includes("*")
+                    ? "Todos los permisos"
+                    : rol.permisos?.join(", ") || "—"}
+                </td>
+                <td className="text-center">
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    className="me-2"
+                    onClick={() => handleEditarPermisos(rol)}
+                  >
+                    ✏️ Editar
+                  </Button>
+                  {rol.rol !== "administrador" && (
                     <Button
                       size="sm"
-                      variant="outline-secondary"
-                      className="me-md-2"
-                      onClick={() => handleEditarPermisos(rol)}
+                      variant="outline-danger"
+                      onClick={() => {
+                        setSelectedRol(rol.rol);
+                        setShowDeleteModal(true);
+                      }}
                     >
-                      ✏️ Editar
+                      🗑️ Eliminar
                     </Button>
-                    {rol.rol !== "administrador" && (
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => {
-                          setSelectedRol(rol.rol);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </Table>
-      </div>
+      )}
 
-      {/* ---------- MODAL CREAR/EDITAR --------- */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
+      {/* MODAL CREAR/EDITAR ROL */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {rolEditando ? `Editar Permisos: ${rolEditando.rol}` : "Crear Nuevo Rol"}
+            {rolEditando ? "Editar Permisos del Rol" : "Crear Nuevo Rol"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
+
+          {/* 🔥 MOSTRAR ERRORES DEL FORMULARIO */}
           <FormErrorList errors={errors} />
 
           {!rolEditando && (
             <Form.Group className="mb-3">
-              <Form.Label className="fw-bold">Nombre del Rol</Form.Label>
+              <Form.Label>Nombre del Rol</Form.Label>
               <Form.Control
                 type="text"
                 value={nuevoRol}
@@ -218,6 +210,7 @@ return (
                 placeholder="Ejemplo: Contador, Revisor, Supervisor..."
               />
             </Form.Group>
+
           )}
 
           <div className="d-flex justify-content-between align-items-center mb-2">
@@ -236,60 +229,66 @@ return (
           </div>
 
           <div
-            className="p-3 bg-light border rounded"
-            style={{ maxHeight: "350px", overflowY: "auto" }}
+            style={{
+              maxHeight: "400px",
+              overflowY: "auto",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+              padding: "10px",
+            }}
           >
-            <div className="row">
-              {funcionesDisponibles.map((permiso) => (
-                <div key={permiso} className="col-md-6 col-lg-4 mb-2">
-                  <Form.Check
-                    type="checkbox"
-                    id={`perm-${permiso}`}
-                    label={<span className="small">{permiso}</span>}
-                    checked={permisosSeleccionados.includes(permiso)}
-                    onChange={() => togglePermiso(permiso)}
-                  />
-                </div>
-              ))}
-            </div>
+            {funcionesDisponibles.map((permiso) => (
+              <Form.Check
+                key={permiso}
+                type="checkbox"
+                label={permiso}
+                checked={permisosSeleccionados.includes(permiso)}
+                onChange={() => togglePermiso(permiso)}
+              />
+            ))}
           </div>
         </Modal.Body>
         <Modal.Footer>
+
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancelar
           </Button>
-          <Button variant="success" onClick={handleGuardarRol} disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner size="sm" animation="border" className="me-2" />
-                Guardando...
-              </>
-            ) : (
-              "💾 Guardar"
-            )}
+
+          <Button variant="success" onClick={handleGuardarRol}>
+               {loading ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  {" "}Guardando...
+                </>
+              ) : (
+                "💾 Guardar"
+              )}
           </Button>
+
         </Modal.Footer>
+
         <LoadingOverlay show={loading} />
       </Modal>
 
-      {/* ---------- MODAL ELIMINAR --------- */}
       <ConfirmActionModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         title="Eliminar Rol"
         message={
-          <>¿Seguro que deseas eliminar el rol <strong>{selectedRol}</strong>?</>
+          <>
+            ¿Seguro que deseas eliminar el rol{" "}
+            <strong>{selectedRol}</strong>?
+          </>
         }
         confirmLabel="Eliminar"
         confirmVariant="danger"
         onConfirm={() => deleteDato(selectedRol)}
+
       />
+
+
     </div>
   );
-
-
-
-
 };
 
 export default RolesAdminPanel;
