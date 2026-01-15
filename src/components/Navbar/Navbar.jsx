@@ -18,6 +18,8 @@ function AppNavbar({ onOpenBackend }) {
 
   const { activeBackend, } = useBackends();
   const { getDatos } = useDatosTributarios(); // 👈 accede al refresco
+
+
   // const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
   // const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
   // const { showToast } = useToast();
@@ -119,21 +121,21 @@ function AppNavbar({ onOpenBackend }) {
                 >
 
 
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Ver Productos</Tooltip>}>
+                  <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Ver Productos</Tooltip>}>
                     <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>
                       <span className="icon-Verproductos"></span>
                       <span className="ms-2 d-lg-none">Ver Productos</span> {/* ms-2 añade un margen a la izquierda */}
                     </Nav.Link>
                   </OverlayTrigger>
 
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Add Facturas</Tooltip>}>
+                  <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Add Facturas</Tooltip>}>
                     <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>
                       <span className="icon-AddFacturas"></span>
                       <span className="ms-2 d-lg-none">Facturas</span>
                     </Nav.Link>
                   </OverlayTrigger>
 
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Contador</Tooltip>}>
+                  <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Contador</Tooltip>}>
                     <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>
                       <span className="icon-Contador"></span>
                       <span className="ms-2 d-lg-none">Contador</span>
@@ -142,7 +144,7 @@ function AppNavbar({ onOpenBackend }) {
 
 
                   {user && (
-                    <OverlayTrigger placement="bottom" overlay={<Tooltip>Usuario Activo</Tooltip>}>
+                    <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Usuario Activo</Tooltip>}>
                       <div className="navbar-session-Dropdown-desktop d-flex align-items-center ms-3">
                         <Dropdown align="end">
                           <Dropdown.Toggle
@@ -189,7 +191,7 @@ function AppNavbar({ onOpenBackend }) {
                     </OverlayTrigger>
                   )}
 
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip>Más</Tooltip>}>
+                  <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Más</Tooltip>}>
                   <NavDropdown title={<span className="icon-menu-kebab"></span>} id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                     <NavDropdown.Divider />

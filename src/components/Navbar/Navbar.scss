@@ -405,3 +405,8 @@ $hover-bg: #f1f1f1;
     display: none !important;
 }
 
+
+.tooltip {
+  pointer-events: none; // Evita que el tooltip interfiera con el mouse
+  position: fixed;     // Ayuda a Popper.js a calcular mejor en elementos sticky
+}
