@@ -166,27 +166,17 @@ return (
                           }
                         />
                       </td>
-                      <td className="text-center">
-                        <Button
-                          size="sm"
-                          variant="outline-secondary"
-                          className="me-2"
-                          onClick={() => handleEditarUsuario(u)}
-                        >
-                          ✏️
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          disabled={user?.correo === u.correo}
-                          onClick={() => {
-                            if (user?.correo === u.correo) return;
-                            setSelectedUsuario(u);
-                            setShowDeleteModal(true);
-                          }}
-                        >
-                          🗑️
-                        </Button>
+                      <td className="text-center" data-label="Acciones">
+                        {/* <Button size="sm" variant="outline-secondary" className="me-2" onClick={() => handleEditarUsuario(u)}>✏️</Button>
+                        <Button size="sm" variant="outline-danger" disabled={user?.correo === u.correo} onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}>🗑️</Button> */}
+                        {/* ********************************** */}
+                        <div className="ico-edit-elim">
+                          <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
+                          {user?.correo !== u.correo && (
+                          <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}></i>
+                          )}
+                        </div>
+                        {/* ********************************** */}
                       </td>
                     </tr>
                   ))
@@ -224,25 +214,18 @@ return (
                       label={u.activo ? "Activo" : "Inactivo"}
                     />
                     <div className="d-flex gap-2 mt-3">
-                      <Button
-                        size="sm"
-                        variant="outline-secondary"
-                        onClick={() => handleEditarUsuario(u)}
-                      >
-                        ✏️ Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        disabled={user?.correo === u.correo}
-                        onClick={() => {
-                          if (user?.correo === u.correo) return;
-                          setSelectedUsuario(u);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
+                      <p><strong>Acciones:</strong><br /></p>
+                      {/* <Button size="sm" variant="outline-secondary" onClick={() => handleEditarUsuario(u)}>✏️ Editar</Button>
+                      <Button size="sm" variant="outline-danger" disabled={user?.correo === u.correo} onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}>🗑️ Eliminar</Button> */}
+
+                      {/* <div className="ico-edit-elim"> */}
+                        <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
+                        {user?.correo !== u.correo && (
+                        <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}></i>
+                        )}
+                      {/* </div> */}
+
+
                     </div>
                   </div>
                 </div>

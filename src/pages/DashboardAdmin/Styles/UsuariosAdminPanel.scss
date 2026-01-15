@@ -33,4 +33,14 @@
   }
 }
 
+.ico-edit-elim {
+  display: flex;
+  justify-content: center;
+  gap: 1rem !important;
+  i {
+    font-size: 1.2rem;
+    cursor: pointer !important;
+    transition: transform 0.15s ease, opacity 0.15s ease !important;
+  }
+}
 
