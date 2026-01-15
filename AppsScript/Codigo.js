@@ -163,8 +163,38 @@ function inicializarSistema() {
     // Usamos el prefijo definido para que cada usuario tenga su carpeta única
     const nombreUnico = `${CARPETA_PRINCIPAL}_${correoAdmin.split("@")[0].replace(/[^a-zA-Z]/g, "").substring(0, 4).toUpperCase()}`;
 
+    // 🔍 VALIDACIÓN: Buscar si la carpeta ya existe
+    const carpetasExistentes = DriveApp.getRootFolder().getFoldersByName(nombreUnico);
+
+
+    if (carpetasExistentes.hasNext()) {
+      const carpetaExistente = carpetasExistentes.next();
+      const idExistente = carpetaExistente.getId();
+      
+      Logger.log("⚠️ El sistema ya estaba inicializado. Carpeta encontrada: " + nombreUnico);
+      
+      return { 
+        status: "existente", 
+        mensaje: "El sistema ya se encuentra inicializado para este usuario.",
+        id: idExistente, 
+        nombre: nombreUnico 
+      };
+    }
+
+    // 2️⃣ Si no existe, proceder con la creación (Paso original)
     const carpetaPrincipal = DriveApp.getRootFolder().createFolder(nombreUnico);
     const carpetaPrincipalId = carpetaPrincipal.getId();
+
+    // 🎨 CAMBIO DE COLOR CARPETA (Drive API v3)
+    // Nota: Drive no permite cualquier hex arbitrario, usamos el verde más cercano al #198754
+    try {
+      // En v3 se usa Drive.Files.update
+      Drive.Files.update({
+        "folderColorRgb": "#198754"
+      }, carpetaPrincipalId);
+    } catch (e) {
+      Logger.log("Nota: No se pudo aplicar el color en v3: " + e.message);
+    }
 
 
     // 2️⃣ Construir configuración con el ID REAL
