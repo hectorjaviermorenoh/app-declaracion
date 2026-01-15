@@ -26,5 +26,20 @@
   }
 
 
+  .btn-CAP-guardar-iconText {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    .icon-disk {
+      color: #8ee095;
+    }
+    @media (max-width: 768px) {
+      justify-content: center;
+    }
+  }
 
 }
+
+
+
+

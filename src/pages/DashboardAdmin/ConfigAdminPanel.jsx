@@ -242,7 +242,14 @@ export const ConfigAdminPanel = () => {
                     <Spinner as="span" animation="border" size="sm" /> Guardando...
                   </>
                 ) : (
-                  "💾 Guardar Cambios"
+
+                  <div className="btn-CAP-guardar-iconText">
+                    <span className="icon-disk"></span>
+                    <span>Guardar Cambios</span>
+                  </div>
+
+
+                  // "💾 Guardar Cambios"
                 )}
               </Button>
             </div>
