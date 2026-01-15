@@ -22,7 +22,8 @@ const ZEICHENSCHLUESSEL = "528138845199053779904519";
 const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: "",
   TAMANO_MAX_MB: 10,
-  TIPOS_PERMITIDOS: ["pdf", "jpg", "jpeg", "png", "docx", "txt", "xlsx"]
+  TIPOS_PERMITIDOS: ["pdf", "jpg", "jpeg", "png", "docx", "txt", "xlsx"],
+  TOKEN_EXP_MINUTOS: 60 // 👈 Nuevo: Valor por defecto (1 hora)
 };
 
 const DATOS_TRIBUTARIOS_INICIALES = [
@@ -411,6 +412,12 @@ function validarPermiso(usuario, accion) {
  * Este token se genera DESPUÉS de que Google valida al usuario.
  */
 function generarTokenPropio(usuarioInfo) {
+
+  // 1. Leer la configuración actual de Drive
+  const config = leerJSON(JSON_CONFIGURACION) || {};
+  // 2. Obtener los minutos o usar 60 por defecto si no existe
+  const minutosExp = config.TOKEN_EXP_MINUTOS || 60;
+
   const payload = {
     // Info del usuario (verificada por Google)
     correo: usuarioInfo.correo,
@@ -423,7 +430,8 @@ function generarTokenPropio(usuarioInfo) {
     iat: Math.floor(Date.now() / 1000),
     // exp: Math.floor(Date.now() / 1000) + (1 * 60) // 👈 Válido por 3 minutos
     // exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
-    exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
+    // exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
+    exp: Math.floor(Date.now() / 1000) + (minutosExp * 60)
   };
   
   // Codificamos el payload (String -> Byte[] -> Base64WebSafe)
@@ -1169,6 +1177,7 @@ function updateConfig(data, usuario) {
       TIPOS_PERMITIDOS: Array.isArray(data.TIPOS_PERMITIDOS)
         ? data.TIPOS_PERMITIDOS
         : configActual.TIPOS_PERMITIDOS,
+      TOKEN_EXP_MINUTOS: Number(data.TOKEN_EXP_MINUTOS) || configActual.TOKEN_EXP_MINUTOS,
     };
 
     guardarJSON(JSON_CONFIGURACION, nuevaConfig);

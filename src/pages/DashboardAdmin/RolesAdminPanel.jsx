@@ -165,28 +165,18 @@ return (
                         : rol.permisos?.join(", ") || "—"}
                     </div>
                   </td>
+
                   <td className="td-acciones text-center" data-label="Acciones">
-                    <Button
-                      size="sm"
-                      variant="outline-secondary"
-                      className="me-md-2"
-                      onClick={() => handleEditarPermisos(rol)}
-                    >
-                      ✏️ Editar
-                    </Button>
-                    {rol.rol !== "administrador" && (
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => {
-                          setSelectedRol(rol.rol);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
-                    )}
+                    <div className="ico-edit-elim">
+                      <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarPermisos(rol)}></i>
+                      {rol.rol !== "administrador" && (
+                        <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {setSelectedRol(rol.rol); setShowDeleteModal(true);}}></i>
+                      )}
+                    </div>
                   </td>
+
+
+
                 </tr>
               ))
             )}

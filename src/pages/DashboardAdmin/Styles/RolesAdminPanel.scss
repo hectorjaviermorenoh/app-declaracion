@@ -44,17 +44,42 @@
 
     // Estilo especial para la celda de acciones en móvil
     .td-acciones {
+
+      .ico-edit-elim {
+        display: flex;
+        justify-content: space-evenly;
+        i {
+          font-size: 1.1rem;
+          cursor: pointer !important;
+          transition: transform 0.15s ease, opacity 0.15s ease !important;
+        }
+      }
+
       @media (max-width: 768px) {
         border-top: 1px solid #eee !important;
         margin-top: 0.5rem;
         padding-top: 1rem !important;
         display: flex;
-        justify-content: flex-start;
+        justify-content: space-around;
+        align-items: center;
         gap: 10px;
 
         button {
           flex: 1; // Los botones crecen para ocupar el ancho
         }
+
+        .ico-edit-elim {
+          display: flex;
+          justify-content: space-evenly;
+          gap: 1.8rem !important;
+          i {
+            font-size: 1.5rem;
+            cursor: pointer !important;
+            transition: transform 0.15s ease, opacity 0.15s ease !important;
+          }
+        }
+
+
       }
     }
   }
@@ -78,3 +103,6 @@
     }
   }
 }
+
+
+

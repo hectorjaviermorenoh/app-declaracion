@@ -1,0 +1,24 @@
+.config-skeleton-container {
+  .skeleton-title, .skeleton-label, .skeleton-input,
+  .skeleton-btn, .skeleton-text, .skeleton-bar {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  .skeleton-title { height: 24px; }
+  .skeleton-label { height: 14px; width: 100px; }
+  .skeleton-input { height: 38px; width: 100%; }
+  .skeleton-btn { height: 38px; }
+  .skeleton-text { height: 10px; }
+  .skeleton-bar { height: 14px; }
+
+  .skeleton-table-row {
+    align-items: center;
+  }
+}
+
+@keyframes skeleton-shine {
+  to { background-position-x: -200%; }
+}

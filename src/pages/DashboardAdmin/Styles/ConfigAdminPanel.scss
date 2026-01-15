@@ -16,4 +16,15 @@
   table td {
     vertical-align: middle;
   }
+
+
+  @media (max-width: 768px) {
+    .btn-CAP-inicializarproyecto,
+    .btn-CAP-guardar {
+      min-width: 100%;
+    }
+  }
+
+
+
 }
