@@ -214,16 +214,13 @@ return (
                       label={u.activo ? "Activo" : "Inactivo"}
                     />
                     <div className="d-flex gap-2 mt-3">
-                      <p><strong>Acciones:</strong><br /></p>
-                      {/* <Button size="sm" variant="outline-secondary" onClick={() => handleEditarUsuario(u)}>✏️ Editar</Button>
-                      <Button size="sm" variant="outline-danger" disabled={user?.correo === u.correo} onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}>🗑️ Eliminar</Button> */}
-
-                      {/* <div className="ico-edit-elim"> */}
+                      <span className="label-edit-elim-span">Acciones:</span>
+                      <div className="ico-edit-elim">
                         <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
                         {user?.correo !== u.correo && (
                         <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}></i>
                         )}
-                      {/* </div> */}
+                      </div>
 
 
                     </div>
