@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1501260852am"; 
+const CACHE_VERSION = "v1501261203pm"; 
 const CACHE_NAME = `app-declaracion-${CACHE_VERSION}`;
 
 /* Archivos básicos que queremos disponibles */
