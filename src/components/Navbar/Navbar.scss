@@ -348,6 +348,19 @@ $hover-bg: #f1f1f1;
 
   }
 
+    @media (max-width: 768px) {
+      .offcanvas-body {
+
+
+        .flex-column {
+          gap: 1rem;
+        }
+
+      }
+
+
+    }
+
 
 
 
@@ -391,3 +404,4 @@ $hover-bg: #f1f1f1;
 .navbar-session-Dropdown-desktop .dropdown-toggle::after {
     display: none !important;
 }
+

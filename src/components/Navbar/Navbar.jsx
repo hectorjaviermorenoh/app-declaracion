@@ -264,42 +264,10 @@ function AppNavbar({ onOpenBackend }) {
 
         <Offcanvas.Body>
           <Nav className="flex-column">
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/admin");
-              }}
-            >
-              Admin & Config
-            </Nav.Link>
-
-            <Nav.Link
-              onClick={() => {
-                setShow(false);
-                onOpenBackend()
-              }}
-            >
-              Configurar Backend
-            </Nav.Link>
-
-
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/about");
-              }}
-            >
-              Donaciones
-            </Nav.Link>
-
-            <Nav.Link
-              onClick={() => {
-                setShowMoreMenu(false);
-                navigate("/about");
-              }}
-            >
-              Acerca de
-            </Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false); navigate("/admin");}}>Admin & Config</Nav.Link>
+            <Nav.Link onClick={() => {setShow(false);onOpenBackend()}}>Configurar Backend</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/about");}}>Donaciones</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/about");}}>Acerca de</Nav.Link>
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
