@@ -154,11 +154,21 @@ function AppNavbar({ onOpenBackend }) {
                             style={{ display: "flex", alignItems: "center" }}
                           >
                             <img
-                              src={user.picture || "https://via.placeholder.com/32"}
-                              alt={user.nombre || user.correo || "Usuario"}
+                              src={user.picture || "https://via.placeholder.com/34"}
+                              // alt={user.nombre || user.correo || "Usuario"}
+                              alt=""
                               width={34}
                               height={34}
                               className="rounded-circle border border-light shadow-sm"
+                              style={{
+                                objectFit: "cover",
+                                backgroundColor: "#e9ecef", // Un color gris suave de fondo mientras carga
+                                display: "inline-block"
+                              }}
+                              // Si la URL de Google falla, ponemos el placeholder
+                              onError={(e) => {
+                                e.target.src = "https://via.placeholder.com/34";
+                              }}
                             />
                           </Dropdown.Toggle>
 
