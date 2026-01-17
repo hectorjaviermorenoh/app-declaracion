@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
+import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import DatoTributarioSkeleton from "../../components/Skeletons/DatoTributarioSkeleton/DatoTributarioSkeleton";
 import "./DatosTributarios.scss";
@@ -12,6 +13,8 @@ export default function DatosTributarios() {
 
   const [editandoId, setEditandoId] = useState(null);
   const [nuevo, setNuevo] = useState({ label: "", valor: "" });
+  const [datoTributarioSeleccionado, setDatoTributarioSeleccionado] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => { getDatos(); }, [getDatos]);
 
@@ -33,17 +36,19 @@ export default function DatosTributarios() {
     setDatos(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d));
   };
 
-  const deleteLocal = (id) => {
-    if (window.confirm("¿Eliminar registro?")) {
-      setDatos(prev => prev.filter(d => d.id !== id).map((d, i) => ({ ...d, orden: i + 1 })));
-    }
+  const deleteLocal = () => {
+    // if (window.confirm("¿Eliminar registro?")) {
+    //   setDatos(prev => prev.filter(d => d.id !== id).map((d, i) => ({ ...d, orden: i + 1 })));
+    // }
+    setDatos(prev => prev.filter(d => d.id !== datoTributarioSeleccionado).map((d, i) => ({ ...d, orden: i + 1 })));
   };
 
   const addLocal = () => {
     if (!nuevo.label.trim()) return;
     const nuevoReg = {
       id: `new_${Date.now()}`,
-      label: nuevo.label,
+      label: nuevo.label.charAt(0).toUpperCase() + nuevo.label.slice(1),
+      // label: nuevo.label,
       valor: nuevo.valor,
       orden: datos.length + 1,
       importante: false
@@ -155,7 +160,11 @@ return (
                   <i
                     className="bi bi-x-circle accion-icon text-danger"
                     title="Eliminar"
-                    onClick={() => deleteLocal(d.id)}
+                    onClick={() => {
+                      // deleteLocal(d.id);
+                      setDatoTributarioSeleccionado(d.id);
+                      setShowDeleteModal(true);
+                    }}
                   ></i>
                 </div>
               </div>
@@ -169,6 +178,22 @@ return (
           </div>
         </>
       )}
+
+      <ConfirmActionModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        title="Eliminar dato tributario"
+        message={
+          <>
+            ¿Seguro que deseas eliminar el registro{" "}?
+            {/* <strong>{facturaSeleccionada?.entidad}</strong> por{" "}
+            <strong>{formatCurrency(facturaSeleccionada?.valor || 0)}</strong>? */}
+          </>
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={deleteLocal}
+      />
 
       {/* Overlay opcional para cuando se está guardando */}
       <LoadingOverlay show={loading && datos.length > 0} />
