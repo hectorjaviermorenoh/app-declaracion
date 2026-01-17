@@ -1,0 +1,57 @@
+.datos-tributarios {
+  .fila {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      resize: vertical;
+    }
+
+    .acciones {
+      display: flex;
+      gap: 0.25rem;
+    }
+  }
+
+  .fila-nueva {
+    background: #f9f9f9;
+  }
+
+  .fila-label-valor {
+    white-space: normal;        /* Permite múltiples líneas */
+    word-wrap: break-word;      /* Rompe las palabras largas si es necesario */
+    word-break: break-word;
+  }
+
+  .fila-label {
+    font-weight: 400;
+    color: #002152;
+  }
+
+  @media (max-width: 768px) {
+    .fila {
+      grid-template-columns: 1fr;
+      .acciones {
+        margin-top: 0.5rem;
+        justify-content: flex-end;
+      }
+    }
+  }
+}
+
+
+.btn-subir-bajar {
+  display: flex;
+  flex-direction: column;
+  .btn {
+    padding: 0;
+    border: 0px;
+
+  }
+}

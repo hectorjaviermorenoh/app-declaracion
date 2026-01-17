@@ -55,6 +55,7 @@ const ROLES_INICIALES = [
       "deleteProducto",
       "addDatoTributario",
       "updateDatoTributario",
+      "updateAllDatosTributarios",
       "deleteDatoTributario",
       "moveDatoTributario",
       "getFacturasPorAnio",
@@ -74,6 +75,7 @@ const ROLES_INICIALES = [
       "deleteProducto",
       "addDatoTributario",
       "updateDatoTributario",
+      "updateAllDatosTributarios",
       "deleteDatoTributario",
       "moveDatoTributario",
       "getFacturasPorAnio",
@@ -117,6 +119,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "deleteProducto",
   "addDatoTributario",
   "updateDatoTributario",
+  "updateAllDatosTributarios",
   "deleteDatoTributario",
   "moveDatoTributario",
   "updateConfig",
@@ -1114,6 +1117,8 @@ function doPost(e) {
         return addDatoTributario(data, usuario);
       case "updateDatoTributario":
         return updateDatoTributario(data, usuario);
+      case "updateAllDatosTributarios":
+        return updateAllDatosTributarios(data, usuario);
       case "deleteDatoTributario":
         return deleteDatoTributario(data, usuario);
       case "moveDatoTributario":
@@ -3348,3 +3353,59 @@ function limpiarLogsAntiguos(usuario) {
   }
 }
 
+
+// function updateAllDatosTributarios(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+//   try {
+//     if (!Array.isArray(data)) throw new Error("Los datos deben ser un array");
+
+//     // Guardar en el archivo JSON
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, data);
+
+//     registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
+//       cantidad: data.length
+//     });
+
+//     return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
+//   } catch (error) {
+//     return respuestaJSON({ status: "error", mensaje: error.message });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
+function updateAllDatosTributarios(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    // --- LÓGICA DE NORMALIZACIÓN ---
+    let arrayParaGuardar = data;
+
+    // Si data no es array pero tiene una propiedad 'data' que sí lo es
+    if (!Array.isArray(data) && data && Array.isArray(data.data)) {
+      arrayParaGuardar = data.data;
+    } 
+    // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
+    else if (!Array.isArray(data) && typeof data === 'object') {
+       arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
+    }
+
+    if (!Array.isArray(arrayParaGuardar)) {
+      throw new Error("Los datos recibidos no tienen un formato de array válido");
+    }
+
+    // Guardar en el archivo JSON
+    guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
+
+    registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
+      cantidad: arrayParaGuardar.length
+    });
+
+    return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
+  } catch (error) {
+    return respuestaJSON({ status: "error", mensaje: error.message });
+  } finally {
+    lock.releaseLock();
+  }
+}
