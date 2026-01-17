@@ -42,29 +42,6 @@ export function DatosTributariosProvider({ children }) {
   /**
    * Guarda todo el array actual en el servidor de una sola vez
    */
-  // const saveChanges = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     // Enviamos el array 'datos' completo al backend
-  //     const res = await apiPost("updateAllDatosTributarios", datos);
-
-  //     if (res.status === "ok") {
-  //       setOriginales(JSON.parse(JSON.stringify(datos))); // Sincronizamos referencia
-  //       showToast("✅ Todos los cambios han sido guardados", "success");
-  //       return { ok: true };
-  //     } else {
-  //       showToast("❌ " + res.mensaje, "error");
-  //       return { ok: false };
-  //     }
-  //   } catch (err) {
-  //     showToast("❌ Error al sincronizar con el servidor", "error");
-  //     return { ok: false };
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [datos, showToast]);
-
-
   const saveChanges = useCallback(async () => {
     setLoading(true);
     try {

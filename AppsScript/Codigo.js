@@ -3133,146 +3133,180 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-function addDatoTributario(data, usuario) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
+// function addDatoTributario(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // hasta 30s esperando
 
-  try {
-    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-    const correoEjecutor = usuario?.correo || "sistema";
+//   try {
+//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+//     const correoEjecutor = usuario?.correo || "sistema";
 
-    // 🔎 Validar duplicados en label o valor normalizados
-    const yaExiste = datos.some(d =>
-      normalizarTexto(d.label) === normalizarTexto(data.label) ||
-      (normalizarTexto(d.label) === normalizarTexto(data.label) && normalizarTexto(d.valor) === normalizarTexto(data.valor))
-    );
+//     // 🔎 Validar duplicados en label o valor normalizados
+//     const yaExiste = datos.some(d =>
+//       normalizarTexto(d.label) === normalizarTexto(data.label) ||
+//       (normalizarTexto(d.label) === normalizarTexto(data.label) && normalizarTexto(d.valor) === normalizarTexto(data.valor))
+//     );
 
-    if (yaExiste) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: `⚠️ Ya existe un dato tributario con el mismo label o valor`
-      });
-    }
+//     if (yaExiste) {
+//       return respuestaJSON({
+//         status: "error",
+//         mensaje: `⚠️ Ya existe un dato tributario con el mismo label o valor`
+//       });
+//     }
 
-    // 🔹 Calcular el orden (último + 1)
-    const maxOrden = datos.length > 0 ? Math.max(...datos.map(d => d.orden || 0)) : 0;
+//     // 🔹 Calcular el orden (último + 1)
+//     const maxOrden = datos.length > 0 ? Math.max(...datos.map(d => d.orden || 0)) : 0;
 
-    // 📦 Crear nuevo registro (guardamos lo que llega sin cambios)
-    const nuevo = {
-      id: data.id || ("dato" + new Date().getTime()),
-      label: data.label || "",
-      valor: data.valor || "",
-      orden: maxOrden + 1
-    };
+//     // 📦 Crear nuevo registro (guardamos lo que llega sin cambios)
+//     const nuevo = {
+//       id: data.id || ("dato" + new Date().getTime()),
+//       label: data.label || "",
+//       valor: data.valor || "",
+//       orden: maxOrden + 1
+//     };
 
-    datos.push(nuevo);
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+//     datos.push(nuevo);
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
 
-    // ✅ Registrar log
-    registrarLog("addDatoTributario", correoEjecutor, {
-      datoTributarioAdicionado: nuevo
-    });
+//     // ✅ Registrar log
+//     registrarLog("addDatoTributario", correoEjecutor, {
+//       datoTributarioAdicionado: nuevo
+//     });
 
-    return respuestaJSON({ status: "ok", mensaje: "Dato agregado", datos });
-  } finally {
-    lock.releaseLock();
-  }
-}
-function updateDatoTributario(data, usuario) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
-
-  try {
-    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-    const correoEjecutor = usuario?.correo || "sistema";
-
-    const idx = datos.findIndex(d => d.id === data.id);
-    if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
-
-    // ⚡ Solo persistir estos campos
-    const dataLimpia = {
-      id: datos[idx].id,                 // nunca cambia
-      orden: data.orden ?? datos[idx].orden, // conservar si no viene
-      label: data.label ?? datos[idx].label,
-      valor: data.valor ?? datos[idx].valor
-    };
-
-    datos[idx] = dataLimpia;
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-     // ✅ Registrar log
-    registrarLog("updateDatoTributario", correoEjecutor, {
-      datoTributarioActualizado: data
-    });
-    return respuestaJSON({ status: "ok", mensaje: "Dato actualizado", datos });
-
-  } finally {
-    lock.releaseLock();
-  }
-}
-function deleteDatoTributario(data, usuario) {
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
-
-  try {
-    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-    const correoEjecutor = usuario?.correo || "sistema";
-
-    datos = datos.filter(d => d.id !== data.id);
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-    // ✅ Registrar log
-    registrarLog("deleteDatoTributario", correoEjecutor, {
-      datoTributarioBorrado: data.id || data
-    });
-    return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
-
-  } finally {
-    lock.releaseLock();
-  }
-
-}
-function moveDatoTributario(data, usuario) {
-  const { id, direction } = data;  // 👈 desestructurar el objeto
+//     return respuestaJSON({ status: "ok", mensaje: "Dato agregado", datos });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+function updateAllDatosTributarios(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
-
   try {
-    let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-    const correoEjecutor = usuario?.correo || "sistema";
+    // --- LÓGICA DE NORMALIZACIÓN ---
+    let arrayParaGuardar = data;
 
-    // Ordenarlos antes de mover
-    datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
-
-    const index = datos.findIndex(d => d.id === id);
-    if (index === -1) {
-      return respuestaJSON({ status: "error", mensaje: "❌ No se encontró el dato" });
+    // Si data no es array pero tiene una propiedad 'data' que sí lo es
+    if (!Array.isArray(data) && data && Array.isArray(data.data)) {
+      arrayParaGuardar = data.data;
+    } 
+    // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
+    else if (!Array.isArray(data) && typeof data === 'object') {
+       arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
     }
 
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= datos.length) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ Movimiento inválido" });
+    if (!Array.isArray(arrayParaGuardar)) {
+      throw new Error("Los datos recibidos no tienen un formato de array válido");
     }
 
+    // Guardar en el archivo JSON
+    guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
 
-    // Intercambiar orden
-    const tempOrden = datos[index].orden;
-    datos[index].orden = datos[targetIndex].orden;
-    datos[targetIndex].orden = tempOrden;
-
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-    registrarLog("moveDatoTributario", correoEjecutor, {
-      idMovido: id,
-      direccion: direction
+    registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
+      cantidad: arrayParaGuardar.length
     });
 
-    return respuestaJSON({ status: "ok", mensaje: "Dato movido", datos });
+    return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
+  } catch (error) {
+    return respuestaJSON({ status: "error", mensaje: error.message });
   } finally {
     lock.releaseLock();
   }
 }
+// function updateDatoTributario(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // hasta 30s esperando
+
+//   try {
+//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     const idx = datos.findIndex(d => d.id === data.id);
+//     if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
+
+//     // ⚡ Solo persistir estos campos
+//     const dataLimpia = {
+//       id: datos[idx].id,                 // nunca cambia
+//       orden: data.orden ?? datos[idx].orden, // conservar si no viene
+//       label: data.label ?? datos[idx].label,
+//       valor: data.valor ?? datos[idx].valor
+//     };
+
+//     datos[idx] = dataLimpia;
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+//      // ✅ Registrar log
+//     registrarLog("updateDatoTributario", correoEjecutor, {
+//       datoTributarioActualizado: data
+//     });
+//     return respuestaJSON({ status: "ok", mensaje: "Dato actualizado", datos });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+// function deleteDatoTributario(data, usuario) {
+
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000); // hasta 30s esperando
+
+//   try {
+//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     datos = datos.filter(d => d.id !== data.id);
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+//     // ✅ Registrar log
+//     registrarLog("deleteDatoTributario", correoEjecutor, {
+//       datoTributarioBorrado: data.id || data
+//     });
+//     return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
+
+//   } finally {
+//     lock.releaseLock();
+//   }
+
+// }
+// function moveDatoTributario(data, usuario) {
+//   const { id, direction } = data;  // 👈 desestructurar el objeto
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+
+//   try {
+//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
+//     const correoEjecutor = usuario?.correo || "sistema";
+
+//     // Ordenarlos antes de mover
+//     datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+//     const index = datos.findIndex(d => d.id === id);
+//     if (index === -1) {
+//       return respuestaJSON({ status: "error", mensaje: "❌ No se encontró el dato" });
+//     }
+
+//     const targetIndex = index + direction;
+//     if (targetIndex < 0 || targetIndex >= datos.length) {
+//       return respuestaJSON({ status: "error", mensaje: "⚠️ Movimiento inválido" });
+//     }
+
+
+//     // Intercambiar orden
+//     const tempOrden = datos[index].orden;
+//     datos[index].orden = datos[targetIndex].orden;
+//     datos[targetIndex].orden = tempOrden;
+
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
+
+//     registrarLog("moveDatoTributario", correoEjecutor, {
+//       idMovido: id,
+//       direccion: direction
+//     });
+
+//     return respuestaJSON({ status: "ok", mensaje: "Dato movido", datos });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
 // Manejo de logs
 function getLogs() {
   const lock = LockService.getScriptLock();
@@ -3354,58 +3388,4 @@ function limpiarLogsAntiguos(usuario) {
 }
 
 
-// function updateAllDatosTributarios(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-//   try {
-//     if (!Array.isArray(data)) throw new Error("Los datos deben ser un array");
 
-//     // Guardar en el archivo JSON
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, data);
-
-//     registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
-//       cantidad: data.length
-//     });
-
-//     return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
-//   } catch (error) {
-//     return respuestaJSON({ status: "error", mensaje: error.message });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
-function updateAllDatosTributarios(data, usuario) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    // --- LÓGICA DE NORMALIZACIÓN ---
-    let arrayParaGuardar = data;
-
-    // Si data no es array pero tiene una propiedad 'data' que sí lo es
-    if (!Array.isArray(data) && data && Array.isArray(data.data)) {
-      arrayParaGuardar = data.data;
-    } 
-    // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
-    else if (!Array.isArray(data) && typeof data === 'object') {
-       arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
-    }
-
-    if (!Array.isArray(arrayParaGuardar)) {
-      throw new Error("Los datos recibidos no tienen un formato de array válido");
-    }
-
-    // Guardar en el archivo JSON
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
-
-    registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
-      cantidad: arrayParaGuardar.length
-    });
-
-    return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
-  } catch (error) {
-    return respuestaJSON({ status: "error", mensaje: error.message });
-  } finally {
-    lock.releaseLock();
-  }
-}
