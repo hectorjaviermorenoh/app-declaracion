@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - AppDeclaración</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .highlight { background-color: #f8f9fa; padding: 15px; border-left: 5px solid #2980b9; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>Política de Privacidad</h1>
+    <p>Última actualización: 20 de enero de 2026</p>
+
+    <p>Esta Política de Privacidad describe cómo <strong>AppDeclaración</strong> recopila, utiliza y protege su información al utilizar nuestro servicio de autenticación a través de Google.</p>
+
+    <div class="highlight">
+        <strong>Nota importante sobre la arquitectura:</strong> Esta aplicación es una herramienta descentralizada. Los datos que usted genera se almacenan exclusivamente en su propia cuenta de Google Drive a través de su implementación personal de Google Apps Script. Nosotros no tenemos acceso a sus archivos ni a su información privada.
+    </div>
+
+    <h2>1. Información que recopilamos</h2>
+    <p>Nuestra aplicación utiliza los servicios de Google OAuth para la autenticación. Al iniciar sesión, solicitamos acceso a:</p>
+    <ul>
+        <li><strong>Dirección de correo electrónico:</strong> Para identificar su cuenta y gestionar los permisos de acceso.</li>
+        <li><strong>Información básica de perfil (Nombre y foto):</strong> Para personalizar su experiencia dentro de la interfaz.</li>
+    </ul>
+
+    <h2>2. Uso de la información</h2>
+    <p>La información obtenida a través de Google se utiliza únicamente para:</p>
+    <ul>
+        <li>Validar su identidad y permitir el acceso a las funciones del backend.</li>
+        <li>Registrar logs de auditoría de inicio de sesión (almacenados en su propio Google Drive).</li>
+        <li>Garantizar que el sistema de permisos y roles funcione correctamente.</li>
+    </ul>
+
+    <h2>3. Almacenamiento de datos</h2>
+    <p>Todos los datos operativos (usuarios, logs, configuraciones y archivos) se almacenan en archivos JSON dentro de la infraestructura de <strong>Google Drive del usuario</strong>. Esta aplicación no posee una base de datos centralizada y los desarrolladores no pueden ver, editar ni eliminar sus datos.</p>
+
+    <h2>4. Intercambio de datos con terceros</h2>
+    <p><strong>No vendemos, alquilamos ni compartimos</strong> su información personal con terceros. Los datos solo fluyen entre su navegador, el frontend alojado en GitHub y su backend personal en Google Apps Script.</p>
+
+    <h2>5. Seguridad</h2>
+    <p>La seguridad de su información está garantizada por los protocolos de seguridad de Google. Al utilizar OAuth 2.0, nunca conocemos ni almacenamos su contraseña de Google.</p>
+
+    <h2>6. Sus Derechos</h2>
+    <p>Usted puede revocar el acceso de esta aplicación a su cuenta de Google en cualquier momento a través de la configuración de seguridad de su cuenta de Google en: <a href="https://myaccount.google.com/permissions" target="_blank">Google - Aplicaciones con acceso a tu cuenta</a>.</p>
+
+    <h2>7. Contacto</h2>
+    <p>Si tiene preguntas sobre esta política, puede contactarnos en: <strong>hectorjaviermorenoh@gmail.com</strong></p>
+
+</body>
+</html>
