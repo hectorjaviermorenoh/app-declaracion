@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos y Condiciones - AppDeclaración</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 30px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 28px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .footer { margin-top: 50px; font-size: 0.9em; color: #7f8c8d; text-align: center; }
+        .notice {
+            background: #e8f4fd;
+            padding: 16px;
+            border-radius: 5px;
+            border-left: 5px solid #3498db;
+            margin-bottom: 25px;
+        }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+
+        .warning {
+            background: #fff5f5;
+            padding: 16px;
+            border-radius: 5px;
+            border-left: 5px solid #e53e3e;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Términos y Condiciones de Uso</h1>
+<p>Última actualización: 20 de enero de 2026</p>
+
+<div class="notice">
+    <strong>Aviso Importante sobre la Arquitectura del Servicio:</strong><br>
+    AppDeclaración es una aplicación descentralizada. El frontend es centralizado, pero el backend, el procesamiento de datos y el almacenamiento se ejecutan de forma privada dentro de la cuenta personal de Google del usuario, mediante Google Apps Script y Google Drive.
+</div>
+
+<h2>1. Aceptación de los Términos</h2>
+<p>
+Al acceder, instalar o utilizar AppDeclaración, usted acepta quedar legalmente vinculado a los presentes Términos y Condiciones.
+Si no está de acuerdo con alguno de ellos, debe abstenerse de utilizar la aplicación.
+</p>
+
+<h2>2. Descripción del Servicio</h2>
+<p>
+AppDeclaración es una herramienta de organización documental y gestión tributaria personal, orientada a facilitar la preparación
+y el control de información relacionada con declaraciones de renta y soportes fiscales.
+</p>
+
+<p>La aplicación permite, entre otras funciones:</p>
+<ul>
+    <li>Registrar y clasificar entidades emisoras de certificados y documentos tributarios.</li>
+    <li>Organizar automáticamente archivos y fotografías en carpetas estructuradas por año gravable y categoría.</li>
+    <li>Gestionar datos fiscales básicos como NIT, nombres e identificaciones.</li>
+    <li>Administrar accesos mediante tokens y roles definidos por el propio usuario.</li>
+    <li>Generar respaldos completos (backups) en formato ZIP de la información almacenada.</li>
+</ul>
+
+<p>
+El software se entrega <strong>“tal cual”</strong> y su funcionamiento depende de que el usuario mantenga una cuenta de Google activa
+y correctamente configurada.
+</p>
+
+<h2>3. Responsabilidad del Usuario</h2>
+<p>El usuario acepta y reconoce que es el único y exclusivo responsable de:</p>
+<ul>
+    <li>La correcta instalación, despliegue y mantenimiento del backend en su cuenta de Google Apps Script.</li>
+    <li>La integridad, disponibilidad y confidencialidad de los archivos y carpetas generados en su Google Drive.</li>
+    <li>La veracidad y exactitud de la información tributaria ingresada.</li>
+    <li>El cumplimiento de las leyes tributarias y fiscales aplicables en su jurisdicción.</li>
+</ul>
+
+<div class="warning">
+    <h2>4. Integridad del Código y Seguridad del Script</h2>
+    <p>Para garantizar la seguridad de su información y el correcto funcionamiento del sistema, el usuario se compromete a cumplir las siguientes normas de seguridad técnica:</p>
+    <ul>
+        <li><strong>Origen Oficial:</strong> El código de Backend (Google Apps Script) debe ser obtenido exclusivamente desde la aplicación oficial de <strong>AppDeclaración</strong>. No utilice códigos proporcionados por terceros, foros o fuentes no oficiales.</li>
+        <li><strong>Prohibición de Alteración:</strong> El usuario no debe modificar, editar ni alterar el código fuente proporcionado para el backend. Cualquier cambio manual puede introducir fallos de seguridad, pérdida de datos o comportamientos imprevistos.</li>
+        <li><strong>Ejecución por el Propietario:</strong> El despliegue y ejecución del script en el entorno de Google Apps Script debe ser realizado personalmente por el dueño de la cuenta de Google. No permita que terceros accedan a su entorno de desarrollo para pegar o ejecutar códigos en su nombre.</li>
+        <li><strong>Prevención de Código Malicioso:</strong> El uso de versiones modificadas o "clones" de la aplicación representa un riesgo crítico de seguridad. El desarrollador original no se hace responsable de las consecuencias derivadas del uso de código alterado o distribuido por canales ajenos a la aplicación oficial.</li>
+    </ul>
+</div>
+
+<h2>5. Seguridad de la Cuenta de Google</h2>
+<p>
+Dado que AppDeclaración opera íntegramente sobre la infraestructura personal del usuario, este reconoce que:
+</p>
+<ul>
+    <li>Es plenamente responsable de la seguridad de su cuenta de Google.</li>
+    <li>Debe proteger sus credenciales de acceso y no compartirlas con terceros.</li>
+    <li>Se recomienda de forma expresa habilitar mecanismos de seguridad adicionales, como la <strong>autenticación en dos pasos (2FA)</strong>.</li>
+    <li>Cualquier acceso no autorizado derivado de una configuración insegura de la cuenta es responsabilidad exclusiva del usuario.</li>
+</ul>
+
+<p>
+El desarrollador no tiene acceso, control ni visibilidad sobre las credenciales, datos o archivos almacenados en la cuenta del usuario.
+</p>
+
+<h2>6. Privacidad y Datos</h2>
+<p>
+AppDeclaración no utiliza bases de datos centralizadas ni almacena información en servidores controlados por el desarrollador.
+Toda la información reside exclusivamente en archivos locales del Google Drive del usuario, tales como:
+</p>
+<ul>
+    <li><code>productos.json</code></li>
+    <li><code>bddatos.json</code></li>
+    <li><code>facturas.json</code></li>
+    <li>y otros archivos generados por la aplicación</li>
+</ul>
+
+<h2>7. Limitación de Responsabilidad</h2>
+<p>
+Bajo ninguna circunstancia el desarrollador será responsable por:
+</p>
+<ul>
+    <li>Pérdida, corrupción o eliminación de datos almacenados en la cuenta del usuario.</li>
+    <li>Errores derivados de información incorrecta o <strong>código de backend modificado</strong> por el usuario.</li>
+    <li>Interrupciones del servicio ocasionadas por cambios, fallos o políticas de Google Cloud, Google Drive, Apps Script o GitHub.</li>
+    <li>Daños directos o indirectos derivados del uso o imposibilidad de uso de la aplicación.</li>
+</ul>
+
+<h2>8. Modificaciones del Servicio</h2>
+<p>
+El desarrollador podrá actualizar el frontend para mejoras o correcciones.
+La actualización del backend desplegado en la cuenta del usuario es responsabilidad exclusiva de este último.
+</p>
+
+<h2>9. Propiedad Intelectual</h2>
+<p>
+El código fuente, diseño y concepto de AppDeclaración son propiedad de <strong>Hector Javier Moreno</strong>.
+Se concede una licencia de uso personal, no exclusiva, no transferible y revocable.
+</p>
+
+<h2>10. Terminación</h2>
+<p>
+El usuario puede dejar de utilizar el servicio en cualquier momento eliminando el script de su cuenta de Google y revocando los permisos OAuth.
+El desarrollador no puede cancelar ni eliminar cuentas del usuario, dado que la infraestructura es completamente privada.
+</p>
+
+<h2>11. Uso Gratuito y Donaciones de Carácter Simbólico</h2>
+<p>
+AppDeclaración es una herramienta de uso <strong>totalmente gratuito</strong>.
+El acceso, instalación y utilización de la aplicación no implican ningún costo para el usuario.
+</p>
+
+<p>
+De manera opcional, el usuario podrá realizar una <strong>donación voluntaria y de carácter simbólico</strong>,
+como un gesto de buena voluntad si considera que la aplicación le ha resultado útil o le ha ayudado
+a resolver una necesidad puntual.
+</p>
+
+<p>
+Estas donaciones tienen un sentido meramente simbólico —por ejemplo, el valor de un café—
+y no constituyen en ningún caso un pago por el uso del software.
+</p>
+
+<ul>
+    <li>La donación es completamente voluntaria y no obligatoria.</li>
+    <li>No existe un monto mínimo ni máximo establecido.</li>
+    <li>La donación no otorga derechos adicionales, funcionalidades extra ni soporte preferencial.</li>
+    <li>La no realización de una donación no limita ni condiciona el uso de la aplicación.</li>
+</ul>
+
+<p>
+En caso de que el usuario decida realizar una donación, podrá hacerlo a través del enlace de donaciones
+en la aplicación.
+</p>
+
+
+<h2>12. Contacto</h2>
+<p>
+Para consultas relacionadas con estos términos, puede contactar a:<br>
+<strong>hectorjaviermorenoh@gmail.com</strong>
+</p>
+
+<div class="footer">
+    &copy; 2026 AppDeclaración. Todos los derechos reservados.
+</div>
+
+</body>
+</html>

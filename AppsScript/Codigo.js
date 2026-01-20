@@ -374,10 +374,15 @@ function verificarTokenYAutorizar(token) {
     const response = UrlFetchApp.fetch(tokenInfoUrl, { method: 'GET', muteHttpExceptions: true });
     const tokenPayload = JSON.parse(response.getContentText());
 
+    // 🚩 Fallo: Token inválido o expirado
     if (tokenPayload.error) {
+      registrarLog("LOGIN_FALLIDO", "sistema", { mensaje: "Token de Google inválido o expirado", error: tokenPayload.error });
       return { autorizado: false, mensaje: "Token inválido o expirado" };
     }
+
+    // 🚩 Fallo: El Client ID no coincide
     if (tokenPayload.aud !== CLIENT_ID) {
+      registrarLog("LOGIN_FALLIDO", tokenPayload.email || "sistema", { mensaje: "ID de cliente incorrecto (aud mismatch)", aud: tokenPayload.aud });
       return { autorizado: false, mensaje: "ID de cliente incorrecto" };
     }
 
@@ -388,12 +393,18 @@ function verificarTokenYAutorizar(token) {
     const roles = leerJSON(JSON_ROLES);
 
     const usuario = usuarios.find(u => u.correo === userEmail && u.activo);
+
+    // 🚩 Fallo: Usuario no existe en el sistema o está inactivo
     if (!usuario) {
+      registrarLog("LOGIN_FALLIDO", userEmail, { mensaje: "Usuario no registrado o inactivo en la base de datos" });
       return { autorizado: false, mensaje: "Usuario no registrado o inactivo" };
     }
 
     const rol = roles.find(r => r.rol === usuario.rol);
+
+    // 🚩 Fallo: El rol asignado no existe en la configuración
     if (!rol) {
+      registrarLog("LOGIN_FALLIDO", userEmail, { mensaje: "Rol no definido para el usuario", rolAsignado: usuario.rol });
       return { autorizado: false, mensaje: "Rol no definido para el usuario" };
     }
 
@@ -407,6 +418,8 @@ function verificarTokenYAutorizar(token) {
     };
 
   } catch (err) {
+    // 🚩 Fallo: Error de conexión o excepción del sistema
+    registrarLog("LOGIN_ERROR_SISTEMA", "sistema", { mensaje: "Error excepcional en verificarTokenYAutorizar", error: err.message });
     return { autorizado: false, mensaje: "Error al verificar token: " + err.message };
   }
 }
@@ -530,7 +543,10 @@ function verificarTokenPropio(token) {
  */
 function handleGoogleLogin(data) {
   const { googleToken } = data;
+
+  // 🚩 Fallo: No se recibió el token en la petición
   if (!googleToken) {
+    registrarLog("LOGIN_FALLIDO", "sistema", { mensaje: "No se recibió el token de Google en el payload" });
     return respuestaJSON({ status: "error", mensaje: "No se recibió el token de Google (googleToken)" });
   }
   
@@ -544,6 +560,9 @@ function handleGoogleLogin(data) {
   
   // 2. Si es válido, generar nuestro propio token de sesión
   const tokenPropio = generarTokenPropio(infoUsuarioGoogle);
+
+  // ✅ LOG POSITIVO: Registrar solamente el correo
+  registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo);
   
   // 3. Devolver el token propio y la info del usuario al cliente
   return respuestaJSON({
