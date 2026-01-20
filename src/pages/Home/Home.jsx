@@ -117,6 +117,20 @@ export default function Home() {
   /***************************************************
    * 🎨 UI principal (login)
    ***************************************************/
+  // return (
+  //   <div className="home-wrapper">
+  //     <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
+  //       <h3 className="mb-3 fw-bold">Bienvenido</h3>
+  //       <p className="text-muted mb-4">
+  //         Inicia sesión con tu cuenta de Google para continuar
+  //       </p>
+
+  //       {/* Contenedor del botón */}
+  //       <div id="googleLoginDiv"></div>
+  //     </div>
+  //   </div>
+  // );
+
   return (
     <div className="home-wrapper">
       <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
@@ -126,7 +140,29 @@ export default function Home() {
         </p>
 
         {/* Contenedor del botón */}
-        <div id="googleLoginDiv"></div>
+        <div id="googleLoginDiv" className="d-flex justify-content-center"></div>
+
+        {/* --- LINKS LEGALES AGREGADOS AQUÍ --- */}
+        <hr className="mt-4 mb-3" />
+        <div className="legal-links" style={{ fontSize: "0.85rem" }}>
+          <a
+            href="/privacidad.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-decoration-none text-secondary mx-2"
+          >
+            Privacidad
+          </a>
+          <span className="text-muted">|</span>
+          <a
+            href="/terminos.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-decoration-none text-secondary mx-2"
+          >
+            Términos
+          </a>
+        </div>
       </div>
     </div>
   );
