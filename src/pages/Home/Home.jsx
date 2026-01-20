@@ -146,7 +146,7 @@ export default function Home() {
         <hr className="mt-4 mb-3" />
         <div className="legal-links" style={{ fontSize: "0.85rem" }}>
           <a
-            href="/privacidad.html"
+            href="/app-declaracion/privacidad.html"
             target="_blank"
             rel="noopener noreferrer"
             className="text-decoration-none text-secondary mx-2"
@@ -155,7 +155,7 @@ export default function Home() {
           </a>
           <span className="text-muted">|</span>
           <a
-            href="/terminos.html"
+            href="/app-declaracion/terminos.html"
             target="_blank"
             rel="noopener noreferrer"
             className="text-decoration-none text-secondary mx-2"
