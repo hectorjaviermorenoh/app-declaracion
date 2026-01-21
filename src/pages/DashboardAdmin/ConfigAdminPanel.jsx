@@ -20,6 +20,8 @@ export const ConfigAdminPanel = () => {
   const [tipoAEliminar, setTipoAEliminar] = useState("");
   const [showReinitModal, setShowReinitModal] = useState(false);
 
+  const [versionFrontend, setVersionFrontend] = useState("Cargando...");
+
   const { puede } = usePermisos();
   const puedeVerConfig = puede("getConfig");
 
@@ -27,6 +29,33 @@ export const ConfigAdminPanel = () => {
   const [loadingReinit, setLoadingReinit] = useState(false);
   const [loadingGuardar, setLoadingGuardar] = useState(false);
 
+/*******************************
+   * 🛠️ Obtener versión desde SW
+   *******************************/
+  useEffect(() => {
+    const fetchSWVersion = async () => {
+      try {
+        // Ajustamos la ruta según lo que veo en tu captura (localhost:5174/app-declaracion/)
+        const response = await fetch("/app-declaracion/service-worker.js");
+        const text = await response.text();
+
+        // Usamos Regex para buscar: const CACHE_VERSION = "valor";
+        const match = text.match(/const\s+CACHE_VERSION\s*=\s*"([^"]+)"/);
+
+        if (match && match[1]) {
+          setVersionFrontend(match[1]);
+        } else {
+          setVersionFrontend("No encontrada");
+        }
+      } catch (error) {
+        console.error("Error leyendo el Service Worker:", error);
+        setVersionFrontend("Error al cargar");
+      }
+    };
+
+    fetchSWVersion();
+  }, []);
+  
   /*******************************
    * 🔄 Cargar configuración
    *******************************/
@@ -130,6 +159,7 @@ export const ConfigAdminPanel = () => {
                   />
                   <Form.Text muted>
                     <p>Versión Backend: <span className="version-backend">{`${versionBackend}`}</span></p>
+                    <p>Versión FrontEnd: <span className="version-frontEnd">{versionFrontend}</span></p>
                   </Form.Text>
                 </Form.Group>
 
