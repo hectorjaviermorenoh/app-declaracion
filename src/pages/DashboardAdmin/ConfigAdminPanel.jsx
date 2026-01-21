@@ -10,7 +10,7 @@ import "./Styles/ConfigAdminPanel.scss";
 
 
 export const ConfigAdminPanel = () => {
-  const { config, getConfig, updateConfig, generarBackup, reinicializarSistemaForzado, loading } = useConfigAdmin();
+  const { config, getConfig, versionBackend, updateConfig, generarBackup, reinicializarSistemaForzado, loading } = useConfigAdmin();
 
   const [tamanoMax, setTamanoMax] = useState(10);
   const [tokenExp, setTokenExp] = useState(60); // 👈 Nuevo estado (valor por defecto 60)
@@ -129,10 +129,10 @@ export const ConfigAdminPanel = () => {
                     plaintext
                   />
                   <Form.Text muted>
-                    Carpeta base en Google Drive.
+                    <p>Versión Backend: <span className="version-backend">{`${versionBackend}`}</span></p>
                   </Form.Text>
                 </Form.Group>
-                <br />
+
                 <Button variant="danger" className="btn-CAP-inicializarproyecto" onClick={() => setShowReinitModal(true)} disabled={loadingReinit}>
                   {loadingReinit ? (
                     <>

@@ -8,6 +8,7 @@ export const ConfigAdminProvider = ({ children }) => {
 
   const { showToast } = useToast();
   const [config, setConfig] = useState(null);
+  const [versionBackend, setVersionBackend] = useState(null);
   const [loading, setLoading] = useState(false);
 
   /*******************************
@@ -20,6 +21,7 @@ export const ConfigAdminProvider = ({ children }) => {
       const response = await apiGet("getConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
+        setVersionBackend(response.version || {});
       }
     } catch (err) {
       console.error("❌ getConfig error:", err);
@@ -128,6 +130,7 @@ export const ConfigAdminProvider = ({ children }) => {
         config,
         loading,
         getConfig,
+        versionBackend,
         updateConfig,
         reinicializarSistemaForzado,
         generarBackup,

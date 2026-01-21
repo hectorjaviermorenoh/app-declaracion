@@ -1,6 +1,7 @@
 /******************************
- * Version 0601261140pm
+ * Version 
  ******************************/
+ const VERSION = "2101261146AM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -1204,6 +1205,7 @@ function getConfig() {
     return respuestaJSON({
       status: "ok",
       mensaje: "⚙️ Configuración obtenida correctamente.",
+      version: VERSION,
       datos: config,
     });
   } catch (err) {
