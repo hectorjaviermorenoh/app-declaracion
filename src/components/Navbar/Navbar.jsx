@@ -166,8 +166,12 @@ function AppNavbar({ onOpenBackend }) {
                                 display: "inline-block"
                               }}
                               // Si la URL de Google falla, ponemos el placeholder
+                              // onError={(e) => {
+                              //   e.target.src = "https://via.placeholder.com/34";
+                              // }}
                               onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/34";
+                                const session = JSON.parse(localStorage.getItem('auth_session'));
+                                e.target.src = session?.user?.picture || "https://via.placeholder.com/34";
                               }}
                             />
                           </Dropdown.Toggle>

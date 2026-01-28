@@ -244,32 +244,32 @@ function inicializarSistema() {
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA SOLO ARCHIVOS
  ******************************/
-function inicializarSistemaSeguro(data) {
-  const correo = Session.getActiveUser().getEmail() || data.correo || "";
+// function inicializarSistemaSeguro(data) {
+//   const correo = Session.getActiveUser().getEmail() || data.correo || "";
 
-  // 1. Validar admin
-  if (!esAdmin(correo)) {
-    return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado", correo });
-  }
+//   // 1. Validar admin
+//   if (!esAdmin(correo)) {
+//     return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado", correo });
+//   }
 
-  // 2. Validar confirmación
-  if (!data.confirmacion || data.confirmacion !== "INICIALIZAR") {
-    return respuestaJSON({
-      status: "error",
-      mensaje: "❌ Debe confirmar escribiendo INICIALIZAR"
-    });
-  }
+//   // 2. Validar confirmación
+//   if (!data.confirmacion || data.confirmacion !== "INICIALIZAR") {
+//     return respuestaJSON({
+//       status: "error",
+//       mensaje: "❌ Debe confirmar escribiendo INICIALIZAR"
+//     });
+//   }
 
-  // 3. Inicializar sistema
-  inicializarSistemaForzado();
+//   // 3. Inicializar sistema
+//   inicializarSistemaForzado();
 
 
-  return respuestaJSON({
-    status: "ok",
-    mensaje: "✅ Sistema reinicializado correctamente inicializarSistemaSeguro",
-    correo
-  });
-}
+//   return respuestaJSON({
+//     status: "ok",
+//     mensaje: "✅ Sistema reinicializado correctamente inicializarSistemaSeguro",
+//     correo
+//   });
+// }
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
  ******************************/
@@ -360,13 +360,14 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
 /******************************
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
-function esAdmin(correo) {
-  let usuarios = leerJSON(JSON_USUARIOS);
-  let user = usuarios.find(u => {
-    return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
-  });
-  return user && user.rol === "administrador";
-}
+// function esAdmin(correo) {
+//   let usuarios = leerJSON(JSON_USUARIOS);
+//   let user = usuarios.find(u => {
+//     return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
+//   });
+//   return user && user.rol === "administrador";
+// }
+
 function verificarTokenYAutorizar(token) {
   const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
