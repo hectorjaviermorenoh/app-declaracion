@@ -93,9 +93,9 @@ const ROLES_INICIALES = [
 // 🧩 Funciones expuestas al frontend (de lógica del negocio)
 const FUNCIONES_LOGICA_NEGOCIO = [
   // --- GET ---
-  "getConfig",
+  "obtenerConfig",
   "obtenerRoles",
-  "getUsuarios",
+  "obtenerUsuarios",
   "getDatosTributarios",
   "getLogs",
   "getProductosPorArchivo",
@@ -113,9 +113,9 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "agregarRol",
   "actualizarRol",
   "eliminarRol",
-  "addUsuario",
-  "updateUsuario",
-  "deleteUsuario",
+  "agregarUsuario",
+  "actualizarUsuario",
+  "eliminarUsuario",
   "addProducto",
   "deleteProducto",
   "addDatoTributario",
@@ -953,12 +953,12 @@ function doGet(e) {
           ...usuario 
         });
 
-      case "getConfig":
-        return getConfig();
+      case "obtenerConfig":
+        return obtenerConfig();
       case "listarFuncionesLogicaNegocio":
         return listarFuncionesLogicaNegocio();
-      case "getUsuarios":
-        return getUsuarios();
+      case "obtenerUsuarios":
+        return obtenerUsuarios();
       case "obtenerRoles":
         return obtenerRoles();
       case "getProductos":
@@ -1114,14 +1114,14 @@ function doPost(e) {
         return actualizarRol(data, usuario);
       case "eliminarRol":
         return eliminarRol(data, usuario);
-      case "addUsuario":
-        return addUsuario(data, usuario);
+      case "agregarUsuario":
+        return agregarUsuario(data, usuario);
       case "toggleUsuarioActivo":
         return toggleUsuarioActivo(data, usuario);
-      case "updateUsuario":
-        return updateUsuario(data, usuario);
-      case "deleteUsuario":
-        return deleteUsuario(data, usuario);
+      case "actualizarUsuario":
+        return actualizarUsuario(data, usuario);
+      case "eliminarUsuario":
+        return eliminarUsuario(data, usuario);
       case "addProducto":
         return addProducto(data, usuario);
       case "deleteProducto":
@@ -1196,7 +1196,7 @@ function listarFuncionesLogicaNegocio() {
 /******************************
  * 🔧 CRUD DE CONFIGURACIÓN (versión final)
  ******************************/
-function getConfig() {
+function obtenerConfig() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1210,7 +1210,7 @@ function getConfig() {
       datos: config,
     });
   } catch (err) {
-    manejarError(err, "getConfig");
+    manejarError(err, "obtenerConfig");
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al obtener la configuración.",
@@ -1443,7 +1443,7 @@ function eliminarRol(data, usuario) {
   }
 }
 // Usuarios
-function getUsuarios() {
+function obtenerUsuarios() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1464,7 +1464,7 @@ function getUsuarios() {
       datos: usuarios,
     });
   } catch (err) {
-    manejarError(err, "getUsuarios");
+    manejarError(err, "obtenerUsuarios");
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al obtener la lista de usuarios.",
@@ -1474,7 +1474,7 @@ function getUsuarios() {
     lock.releaseLock();
   }
 }
-function addUsuario(data, usuario) {
+function agregarUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1546,7 +1546,7 @@ function addUsuario(data, usuario) {
     usuarios.push(nuevoUsuario);
     guardarJSON(JSON_USUARIOS, usuarios);
 
-    registrarLog("addUsuario", correoEjecutor, { usuarioCreado: correo, rol, nivel: "reader" });
+    registrarLog("agregarUsuario", correoEjecutor, { usuarioCreado: correo, rol, nivel: "reader" });
 
     return respuestaJSON({
       status: "ok",
@@ -1555,13 +1555,13 @@ function addUsuario(data, usuario) {
     });
 
   } catch (err) {
-    manejarError(err, "addUsuario", usuario?.correo);
+    manejarError(err, "agregarUsuario", usuario?.correo);
     return respuestaJSON({ status: "error", mensaje: "❌ Error al crear el usuario.", detalle: err.message });
   } finally {
     lock.releaseLock();
   }
 }
-function updateUsuario(data, usuario) {
+function actualizarUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1581,7 +1581,7 @@ function updateUsuario(data, usuario) {
     usuarios[index].rol = rol || usuarios[index].rol;
 
     guardarJSON(JSON_USUARIOS, usuarios);
-    registrarLog("updateUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
+    registrarLog("actualizarUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
 
     return respuestaJSON({
       status: "ok",
@@ -1589,7 +1589,7 @@ function updateUsuario(data, usuario) {
       datos: usuarios,
     });
   } catch (err) {
-    manejarError(err, "updateUsuario", usuario?.correo);
+    manejarError(err, "actualizarUsuario", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al actualizar usuario.",
@@ -1989,7 +1989,7 @@ function toggleUsuarioActivo(data, usuario) {
 
 
 
-// function deleteUsuario(data, usuario) {
+// function eliminarUsuario(data, usuario) {
 //   const lock = LockService.getScriptLock();
 //   lock.waitLock(30000);
 
@@ -2040,7 +2040,7 @@ function toggleUsuarioActivo(data, usuario) {
 //           err.name = "PermisoInexistenteError";
 
 //           // 📝 Se registra el warning, pero NO se interrumpe el flujo
-//           manejarError(err, "deleteUsuario", usuario?.correo);
+//           manejarError(err, "eliminarUsuario", usuario?.correo);
 //         } else {
 //           throw e; // otros errores sí son críticos
 //         }
@@ -2052,14 +2052,14 @@ function toggleUsuarioActivo(data, usuario) {
 //       throw err;
 //     }
 
-//     registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
+//     registrarLog("eliminarUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
 //     return respuestaJSON({
 //       status: "ok",
 //       mensaje: `🗑️ Usuario "${correo}" eliminado correctamente.`,
 //       datos: nuevosUsuarios,
 //     });
 //   } catch (err) {
-//     manejarError(err, "deleteUsuario", usuario?.correo);
+//     manejarError(err, "eliminarUsuario", usuario?.correo);
 //     return respuestaJSON({
 //       status: "error",
 //       mensaje: "❌ Error al eliminar usuario.",
@@ -2070,7 +2070,7 @@ function toggleUsuarioActivo(data, usuario) {
 //   }
 // }
 
-function deleteUsuario(data, usuario) {
+function eliminarUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2132,7 +2132,7 @@ function deleteUsuario(data, usuario) {
     const nuevosUsuarios = usuarios.filter((u) => u.correo.toLowerCase() !== correo.toLowerCase());
     guardarJSON(JSON_USUARIOS, nuevosUsuarios);
 
-    registrarLog("deleteUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
+    registrarLog("eliminarUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
     
     return respuestaJSON({
       status: "ok",
@@ -2141,7 +2141,7 @@ function deleteUsuario(data, usuario) {
     });
 
   } catch (err) {
-    manejarError(err, "deleteUsuario", usuario?.correo);
+    manejarError(err, "eliminarUsuario", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al eliminar usuario.",

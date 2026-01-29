@@ -18,13 +18,13 @@ export const ConfigAdminProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const response = await apiGet("getConfig");
+      const response = await apiGet("obtenerConfig");
       if (response.status === "ok") {
         setConfig(response.datos || response.data || {});
         setVersionBackend(response.version || {});
       }
     } catch (err) {
-      console.error("❌ getConfig error:", err);
+      console.error("❌ obtenerConfig error:", err);
       showToast("❌ Error al obtener configuración del servidor", "danger", 4000, "ConfigAdmin");
     } finally {
       setLoading(false);
@@ -34,7 +34,7 @@ export const ConfigAdminProvider = ({ children }) => {
   /*******************************
    * 💾 Actualizar configuración
    *******************************/
-  const actualizarConfig = async (nuevaConfig) => {
+  const updateConfig = async (nuevaConfig) => {
     setLoading(true);
     try {
       const response = await apiPost("actualizarConfig", nuevaConfig);
@@ -131,7 +131,7 @@ export const ConfigAdminProvider = ({ children }) => {
         loading,
         getConfig,
         versionBackend,
-        actualizarConfig,
+        updateConfig,
         reinicializarSistemaForzado,
         generarBackup,
       }}

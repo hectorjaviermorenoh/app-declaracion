@@ -16,7 +16,7 @@ export const UsuariosAdminProvider = ({ children }) => {
    *******************************/
   const getRoles = useCallback(async () => {
     try {
-      const response = await apiGet("getRoles");
+      const response = await apiGet("obtenerRoles");
       if (response.status === "ok") {
         setRolesDisponibles(response.data || []);
         setRolesErrorPermisos(false);
@@ -39,14 +39,14 @@ export const UsuariosAdminProvider = ({ children }) => {
   const getDatos = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiGet("getUsuarios");
+      const response = await apiGet("obtenerUsuarios");
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
       } else {
         console.warn(response.mensaje, "UsuariosAdmin");
       }
     } catch (err) {
-      console.error("❌ getUsuarios error:", err);
+      console.error("❌ obtenerUsuarios error:", err);
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export const UsuariosAdminProvider = ({ children }) => {
         rol: nuevoUsuario.rol,
       };
 
-      const response = await apiPost("addUsuario", payload);
+      const response = await apiPost("agregarUsuario", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || "✅ Usuario creado correctamente.", "success", 2000, "UsuariosAdmin");
@@ -76,7 +76,7 @@ export const UsuariosAdminProvider = ({ children }) => {
         showToast(response.mensaje || "⚠️ No se pudo crear el usuario.", "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
-      console.error("❌ addUsuario error:", err);
+      console.error("❌ agregarUsuario error:", err);
       showToast("❌ Error de conexión al crear usuario.", "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ export const UsuariosAdminProvider = ({ children }) => {
     setLoading(true);
     try {
       const payload = { correo, ...datosActualizados };
-      const response = await apiPost("updateUsuario", payload);
+      const response = await apiPost("actualizarUsuario", payload);
 
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
@@ -99,7 +99,7 @@ export const UsuariosAdminProvider = ({ children }) => {
         showToast(response.mensaje || `⚠️ No se pudo actualizar el usuario "${correo}".`, "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
-      console.error("❌ updateUsuario error:", err);
+      console.error("❌ actualizarUsuario error:", err);
       showToast(`❌ Error de conexión al actualizar usuario "${correo}".`, "danger", 4000, "UsuariosAdmin");
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ export const UsuariosAdminProvider = ({ children }) => {
     setLoading(true);
     try {
       const payload = { correo };
-      const response = await apiPost("deleteUsuario", payload);
+      const response = await apiPost("eliminarUsuario", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
         showToast(response.mensaje || `🗑️ Usuario "${correo}" eliminado correctamente.`, "success", 3000, "UsuariosAdmin");
@@ -143,7 +143,7 @@ export const UsuariosAdminProvider = ({ children }) => {
         showToast(response.mensaje || `⚠️ No se pudo eliminar el usuario "${correo}".`, "warning", 4000, "UsuariosAdmin");
       }
     } catch (err) {
-      console.error("❌ deleteUsuario error:", err);
+      console.error("❌ eliminarUsuario error:", err);
       showToast(`❌ Error al eliminar el usuario "${correo}" "${err}".`, "danger", 10000, "UsuariosAdmin");
     } finally {
       setLoading(false);

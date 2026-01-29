@@ -10,7 +10,7 @@ import "./Styles/ConfigAdminPanel.scss";
 
 
 export const ConfigAdminPanel = () => {
-  const { config, getConfig, versionBackend, actualizarConfig, generarBackup, reinicializarSistemaForzado, loading } = useConfigAdmin();
+  const { config, getConfig, versionBackend, updateConfig, generarBackup, reinicializarSistemaForzado, loading } = useConfigAdmin();
 
   const [tamanoMax, setTamanoMax] = useState(10);
   const [tokenExp, setTokenExp] = useState(60); // 👈 Nuevo estado (valor por defecto 60)
@@ -105,7 +105,7 @@ export const ConfigAdminPanel = () => {
   const handleGuardarConfig = async () => {
     setLoadingGuardar(true);
     try {
-      await actualizarConfig({
+      await updateConfig({
         CARPETA_PRINCIPAL: config.CARPETA_PRINCIPAL,
         TAMANO_MAX_MB: Number(tamanoMax),
         TOKEN_EXP_MINUTOS: Number(tokenExp),
