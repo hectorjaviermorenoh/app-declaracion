@@ -123,7 +123,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "updateAllDatosTributarios",
   "deleteDatoTributario",
   "moveDatoTributario",
-  "updateConfig",
+  "actualizarConfig",
   "generarBackupZIP",
   "limpiarLogsAntiguos",
   "inicializarSistemaForzado",
@@ -1102,8 +1102,8 @@ function doPost(e) {
         return subirArchivoProducto(e, isMultipart, usuario);
       case "subirArchivoFacturas":
         return subirArchivoFacturas(e, isMultipart, usuario);
-      case "updateConfig":
-        return updateConfig(data, usuario);
+      case "actualizarConfig":
+        return actualizarConfig(data, usuario);
       case "generarBackupZIP":
         return respuestaJSON(generarBackupZIP(usuario));
       case "limpiarLogsAntiguos":
@@ -1220,7 +1220,7 @@ function getConfig() {
     lock.releaseLock();
   }
 }
-function updateConfig(data, usuario) {
+function actualizarConfig(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1238,7 +1238,7 @@ function updateConfig(data, usuario) {
     };
 
     guardarJSON(JSON_CONFIGURACION, nuevaConfig);
-    registrarLog("updateConfig", correoEjecutor, {
+    registrarLog("actualizarConfig", correoEjecutor, {
       mensaje: "Configuración actualizada",
       nuevaConfig,
     });
@@ -1249,7 +1249,7 @@ function updateConfig(data, usuario) {
       datos: nuevaConfig,
     });
   } catch (err) {
-    manejarError(err, "updateConfig", usuario?.correo);
+    manejarError(err, "actualizarConfig", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error al actualizar la configuración.",

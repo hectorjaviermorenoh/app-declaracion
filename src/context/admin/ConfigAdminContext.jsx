@@ -34,10 +34,10 @@ export const ConfigAdminProvider = ({ children }) => {
   /*******************************
    * 💾 Actualizar configuración
    *******************************/
-  const updateConfig = async (nuevaConfig) => {
+  const actualizarConfig = async (nuevaConfig) => {
     setLoading(true);
     try {
-      const response = await apiPost("updateConfig", nuevaConfig);
+      const response = await apiPost("actualizarConfig", nuevaConfig);
       if (response.status === "ok") {
         setConfig(response.datos || nuevaConfig);
         showToast(response.mensaje || "✅ Configuración actualizada correctamente", "success", 2000, "ConfigAdmin");
@@ -45,7 +45,7 @@ export const ConfigAdminProvider = ({ children }) => {
         showToast(response.mensaje || "⚠️ No se pudo actualizar la configuración", "warning", 4000, "ConfigAdmin");
       }
     } catch (err) {
-      console.error("❌ updateConfig error:", err);
+      console.error("❌ actualizarConfig error:", err);
       showToast("❌ Error de conexión con el servidor al actualizar configuración", "danger", 4000, "ConfigAdmin");
     } finally {
       setLoading(false);
@@ -131,7 +131,7 @@ export const ConfigAdminProvider = ({ children }) => {
         loading,
         getConfig,
         versionBackend,
-        updateConfig,
+        actualizarConfig,
         reinicializarSistemaForzado,
         generarBackup,
       }}
