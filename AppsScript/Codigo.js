@@ -94,7 +94,7 @@ const ROLES_INICIALES = [
 const FUNCIONES_LOGICA_NEGOCIO = [
   // --- GET ---
   "getConfig",
-  "getRoles",
+  "obtenerRoles",
   "getUsuarios",
   "getDatosTributarios",
   "getLogs",
@@ -110,9 +110,9 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "subirArchivoFacturas",
   "updateFactura",
   "deleteFactura",
-  "addRol",
-  "updateRol",
-  "deleteRol",
+  "agregarRol",
+  "actualizarRol",
+  "eliminarRol",
   "addUsuario",
   "updateUsuario",
   "deleteUsuario",
@@ -144,7 +144,7 @@ const FUNCIONES_GENERALES = [
   "toggleUsuarioActivo",
   "inicializarSistema",
   "getArchivosPorAnio",
-  "getFuncionesLogicaNegocio",
+  "listarFuncionesLogicaNegocio",
   "getProductos",
 
 ];
@@ -955,12 +955,12 @@ function doGet(e) {
 
       case "getConfig":
         return getConfig();
-      case "getFuncionesLogicaNegocio":
-        return getFuncionesLogicaNegocio();
+      case "listarFuncionesLogicaNegocio":
+        return listarFuncionesLogicaNegocio();
       case "getUsuarios":
         return getUsuarios();
-      case "getRoles":
-        return getRoles();
+      case "obtenerRoles":
+        return obtenerRoles();
       case "getProductos":
         return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
         // return getProductos();
@@ -1108,12 +1108,12 @@ function doPost(e) {
         return respuestaJSON(generarBackupZIP(usuario));
       case "limpiarLogsAntiguos":
         return limpiarLogsAntiguos(usuario);
-      case "addRol":
-        return addRol(data, usuario);
-      case "updateRol":
-        return updateRol(data, usuario);
-      case "deleteRol":
-        return deleteRol(data, usuario);
+      case "agregarRol":
+        return agregarRol(data, usuario);
+      case "actualizarRol":
+        return actualizarRol(data, usuario);
+      case "eliminarRol":
+        return eliminarRol(data, usuario);
       case "addUsuario":
         return addUsuario(data, usuario);
       case "toggleUsuarioActivo":
@@ -1162,7 +1162,7 @@ function doPost(e) {
 /******************************
  * FUNCIONES DE LOGICA DEL NEGOCIO
  ******************************/
-function getFuncionesLogicaNegocio() {
+function listarFuncionesLogicaNegocio() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1183,7 +1183,7 @@ function getFuncionesLogicaNegocio() {
     });
 
   } catch (err) {
-    manejarError(err, "getFuncionesLogicaNegocio");
+    manejarError(err, "listarFuncionesLogicaNegocio");
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error interno al obtener las funciones de lógica de negocio.",
@@ -1262,7 +1262,7 @@ function actualizarConfig(data, usuario) {
 /******************************
  * 🔧 CRUD DE ROLES (versión final, integrada con doPost y token)
  ******************************/
-function getRoles() {
+function obtenerRoles() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1283,7 +1283,7 @@ function getRoles() {
       data: roles,
     });
   } catch (err) {
-    manejarError(err, "getRoles");
+    manejarError(err, "obtenerRoles");
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error interno al obtener los roles. Intenta nuevamente o contacta al administrador.",
@@ -1293,7 +1293,7 @@ function getRoles() {
     lock.releaseLock();
   }
 }
-function addRol(data, usuario) {
+function agregarRol(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1324,7 +1324,7 @@ function addRol(data, usuario) {
     roles.push(nuevo);
     guardarJSON(JSON_ROLES, roles);
 
-    registrarLog("addRol", correoUsuario, `Rol creado: ${nuevoRol}`);
+    registrarLog("agregarRol", correoUsuario, `Rol creado: ${nuevoRol}`);
 
     return respuestaJSON({
       status: "ok",
@@ -1332,7 +1332,7 @@ function addRol(data, usuario) {
       datos: roles,
     });
   } catch (err) {
-    manejarError(err, "addRol", usuario?.correo);
+    manejarError(err, "agregarRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error interno al crear el rol. Intenta nuevamente o contacta al administrador.",
@@ -1342,7 +1342,7 @@ function addRol(data, usuario) {
     lock.releaseLock();
   }
 }
-function updateRol(data, usuario) {
+function actualizarRol(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1373,7 +1373,7 @@ function updateRol(data, usuario) {
 
     guardarJSON(JSON_ROLES, roles);
 
-    registrarLog("updateRol", correoUsuario, `Permisos actualizados para el rol: ${rol}`);
+    registrarLog("actualizarRol", correoUsuario, `Permisos actualizados para el rol: ${rol}`);
 
     return respuestaJSON({
       status: "ok",
@@ -1381,7 +1381,7 @@ function updateRol(data, usuario) {
       datos: roles,
     });
   } catch (err) {
-    manejarError(err, "updateRol", usuario?.correo);
+    manejarError(err, "actualizarRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Error interno al actualizar el rol. Intenta nuevamente o contacta al administrador.",
@@ -1391,7 +1391,7 @@ function updateRol(data, usuario) {
     lock.releaseLock();
   }
 }
-function deleteRol(data, usuario) {
+function eliminarRol(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1425,14 +1425,14 @@ function deleteRol(data, usuario) {
     const nuevosRoles = roles.filter((r) => r.rol !== rol);
     guardarJSON(JSON_ROLES, nuevosRoles);
 
-    registrarLog("deleteRol", correoUsuario, `Rol eliminado: ${rol}`);
+    registrarLog("eliminarRol", correoUsuario, `Rol eliminado: ${rol}`);
     return respuestaJSON({
       status: "ok",
       mensaje: `🗑️ Rol "${rol}" eliminado correctamente.`,
       datos: nuevosRoles,
     });
   } catch (err) {
-    manejarError(err, "deleteRol", usuario?.correo);
+    manejarError(err, "eliminarRol", usuario?.correo);
     return respuestaJSON({
       status: "error",
       mensaje: "❌ Ocurrió un error interno al intentar eliminar el rol. Intenta nuevamente o contacta al administrador",
