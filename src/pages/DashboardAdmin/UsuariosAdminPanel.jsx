@@ -83,7 +83,7 @@ const UsuariosAdminPanel = () => {
 
 
   const handleToggleActivo = async (usuario) => {
-    await toggleActivo(usuario.correo, !usuario.activo);
+    await toggleActivo(usuario.correo, !usuario.activo, usuario.nombre);
   };
 
   if (!puedeVerUsuarios) return <NoPermiso />;
@@ -166,17 +166,48 @@ return (
                           }
                         />
                       </td>
-                      <td className="text-center" data-label="Acciones">
-                        {/* <Button size="sm" variant="outline-secondary" className="me-2" onClick={() => handleEditarUsuario(u)}>✏️</Button>
-                        <Button size="sm" variant="outline-danger" disabled={user?.correo === u.correo} onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}>🗑️</Button> */}
-                        {/* ********************************** */}
+                      {/* <td className="text-center" data-label="Acciones">
                         <div className="ico-edit-elim">
-                          <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
                           {user?.correo !== u.correo && (
-                          <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}></i>
+                            <>
+                              <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
+                              <i className="bi bi-x-circle accion-icon text-danger" title="Eliminar" onClick={() => {if (user?.correo === u.correo) return; setSelectedUsuario(u); setShowDeleteModal(true);}}></i>
+                            </>
                           )}
                         </div>
-                        {/* ********************************** */}
+                      </td> */}
+
+                      <td className="text-center" data-label="Acciones">
+                        <div className="ico-edit-elim">
+                          {user?.correo === u.correo ? (
+                            // Caso 1: Es el usuario que tiene la sesión iniciada
+                            <Badge bg="light" text="dark" className="border shadow-sm">
+                              Tu sesión
+                            </Badge>
+                          ) : u.nombre.toLowerCase() === "administrador" ? (
+                            // Caso 2: Es el administrador raíz (todopoderoso)
+                            <Badge bg="dark" text="white" className="shadow-sm">
+                              <i className="bi bi-shield-lock-fill me-1"></i> Restringido
+                            </Badge>
+                          ) : (
+                            // Caso 3: Usuario normal (permitir acciones)
+                            <>
+                              <i
+                                className="bi bi-pencil-square accion-icon"
+                                title="Editar"
+                                onClick={() => handleEditarUsuario(u)}
+                              ></i>
+                              <i
+                                className="bi bi-x-circle accion-icon text-danger"
+                                title="Eliminar"
+                                onClick={() => {
+                                  setSelectedUsuario(u);
+                                  setShowDeleteModal(true);
+                                }}
+                              ></i>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -213,7 +244,7 @@ return (
                       onChange={() => handleToggleActivo(u)}
                       label={u.activo ? "Activo" : "Inactivo"}
                     />
-                    <div className="d-flex gap-2 mt-3">
+                    {/* <div className="d-flex gap-2 mt-3">
                       <span className="label-edit-elim-span">Acciones:</span>
                       <div className="ico-edit-elim">
                         <i className="bi bi-pencil-square accion-icon" title="Editar" onClick={() => handleEditarUsuario(u)}></i>
@@ -223,6 +254,35 @@ return (
                       </div>
 
 
+                    </div> */}
+
+                    <div className="d-flex gap-2 mt-3">
+                      <span className="label-edit-elim-span">Acciones:</span>
+                      <div className="ico-edit-elim">
+                        {user?.correo === u.correo ? (
+                          <span className="text-muted small fw-bold">Sesión activa</span>
+                        ) : u.nombre.toLowerCase() === "administrador" ? (
+                          <span className="text-danger small fw-bold span-i-restri">
+                            <i className="bi bi-shield-lock-fill me-1"></i> Restringido
+                          </span>
+                        ) : (
+                          <>
+                            <i
+                              className="bi bi-pencil-square accion-icon"
+                              title="Editar"
+                              onClick={() => handleEditarUsuario(u)}
+                            ></i>
+                            <i
+                              className="bi bi-x-circle accion-icon text-danger"
+                              title="Eliminar"
+                              onClick={() => {
+                                setSelectedUsuario(u);
+                                setShowDeleteModal(true);
+                              }}
+                            ></i>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

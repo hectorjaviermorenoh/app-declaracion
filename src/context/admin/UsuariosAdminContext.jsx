@@ -77,7 +77,8 @@ export const UsuariosAdminProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("❌ agregarUsuario error:", err);
-      showToast("❌ Error de conexión al crear usuario.", "danger", 4000, "UsuariosAdmin");
+      const mensajeError = err.mensaje || err.message || "Error inesperado al procesar la solicitud";
+      showToast(mensajeError, "danger", 5000, "UsuariosAdmin");
     } finally {
       setLoading(false);
     }
@@ -109,13 +110,15 @@ export const UsuariosAdminProvider = ({ children }) => {
   /*******************************
    * 🔄 Activar / Desactivar usuario
    *******************************/
-  const toggleActivo = async (correo, activo) => {
+  const toggleActivo = async (correo, activo, nombre) => {
     setLoading(true);
     try {
-      const payload = { correo, activo };
+      const payload = { correo, activo, nombre };
       const response = await apiPost("toggleUsuarioActivo", payload);
       if (response.status === "ok") {
         setUsuarios(response.datos || []);
+        console.log("nombre", nombre);
+
         showToast(response.mensaje || `🔁 Estado de "${correo}" actualizado.`, "success", 2000, "UsuariosAdmin");
       } else {
         showToast(response.mensaje || `⚠️ No se pudo cambiar el estado de "${correo}".`, "warning", 4000, "UsuariosAdmin");

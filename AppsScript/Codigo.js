@@ -242,35 +242,6 @@ function inicializarSistema() {
   }
 }
 /******************************
- * FUNCIÓN DE INICIALIZACIÓN SISTEMA SOLO ARCHIVOS
- ******************************/
-// function inicializarSistemaSeguro(data) {
-//   const correo = Session.getActiveUser().getEmail() || data.correo || "";
-
-//   // 1. Validar admin
-//   if (!esAdmin(correo)) {
-//     return respuestaJSON({ status: "error", mensaje: "⛔ No autorizado", correo });
-//   }
-
-//   // 2. Validar confirmación
-//   if (!data.confirmacion || data.confirmacion !== "INICIALIZAR") {
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "❌ Debe confirmar escribiendo INICIALIZAR"
-//     });
-//   }
-
-//   // 3. Inicializar sistema
-//   inicializarSistemaForzado();
-
-
-//   return respuestaJSON({
-//     status: "ok",
-//     mensaje: "✅ Sistema reinicializado correctamente inicializarSistemaSeguro",
-//     correo
-//   });
-// }
-/******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA FORZADO Y BORRADO DE CARPETAS
  ******************************/
 function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
@@ -356,18 +327,9 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
     lock.releaseLock();
   }
 }
-
 /******************************
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
-// function esAdmin(correo) {
-//   let usuarios = leerJSON(JSON_USUARIOS);
-//   let user = usuarios.find(u => {
-//     return u.correo && u.correo.toLowerCase().trim() === correo.toLowerCase().trim();
-//   });
-//   return user && user.rol === "administrador";
-// }
-
 function verificarTokenYAutorizar(token) {
   const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
@@ -1503,7 +1465,18 @@ function agregarUsuario(data, usuario) {
         'emailAddress': correo
       }, carpetaId, { 'sendNotificationEmail': false });
     } catch (e) {
+      const errorMsg = e.message.toLowerCase();
+
+      if (errorMsg.includes("no tiene una cuenta de google") || 
+          errorMsg.includes("does not have a google account")) {
+        return respuestaJSON({ 
+          status: "error", 
+          mensaje: `❌ El correo "${correo}" no está vinculado a una cuenta de Google válida.` 
+        });
+      }
+
       throw new Error("Error al asignar carpeta: " + e.message);
+
     }
 
     // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
@@ -1536,7 +1509,12 @@ function agregarUsuario(data, usuario) {
             }
           });
         } catch (e) {
-          console.warn(`Intento de ocultar ${nombreArchivo}: ${e.message}`);
+          return respuestaJSON({ 
+            status: "error", 
+            mensaje: `❌ Error de seguridad: No se pudo restringir el acceso al archivo "${nombreArchivo}".`,
+            detalle: e.message 
+          });
+
         }
       }
     });
@@ -1580,6 +1558,10 @@ function actualizarUsuario(data, usuario) {
     usuarios[index].nombre = nombre || usuarios[index].nombre;
     usuarios[index].rol = rol || usuarios[index].rol;
 
+    if (nombre === "Administrador") {
+      return respuestaJSON({ status: "error", mensaje: "🚫 No se puede Modificar Administrador." });
+    }
+
     guardarJSON(JSON_USUARIOS, usuarios);
     registrarLog("actualizarUsuario", correoEjecutor, `Usuario actualizado: ${correo}`);
 
@@ -1599,292 +1581,22 @@ function actualizarUsuario(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
-// toggle original
-// function toggleUsuarioActivo(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     const usuarios = leerJSON(JSON_USUARIOS) || [];
-//     const { correo, activo } = data;
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     const index = usuarios.findIndex((u) => u.correo === correo);
-//     if (index === -1)
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
-//       });
-
-//     usuarios[index].activo = Boolean(activo);
-//     guardarJSON(JSON_USUARIOS, usuarios);
-
-//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} correctamente.`,
-//       datos: usuarios,
-//     });
-//   } catch (err) {
-//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "❌ Error al cambiar el estado del usuario.",
-//       detalle: err,
-//     });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
-// toggle mejorado
-// function toggleUsuarioActivo(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     const usuarios = leerJSON(JSON_USUARIOS) || [];
-//     const { correo, activo } = data; // 'activo' es true o false
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
-//     if (index === -1) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
-//       });
-//     }
-
-//     // 1️⃣ Actualizar estado en el JSON
-//     usuarios[index].activo = Boolean(activo);
-//     guardarJSON(JSON_USUARIOS, usuarios);
-
-//     // 2️⃣ Obtener ID de la carpeta desde configuración
-//     const config = leerJSON(JSON_CONFIGURACION);
-//     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
-//     if (!carpetaId) throw new Error("ID de carpeta no encontrado en configuración.");
-
-//     // 3️⃣ Sincronizar permisos con Google Drive
-//     if (activo === true) {
-//       // --- LÓGICA DE ACTIVACIÓN (Añadir permiso Lector) ---
-//       try {
-//         Drive.Permissions.create({
-//           'role': 'reader',
-//           'type': 'user',
-//           'emailAddress': correo
-//         }, carpetaId, { 'sendNotificationEmail': false });
-        
-//         // Opcional: Ejecutar aquí la lógica de ocultar archivos JSON si es necesario
-//         Logger.log(`✅ Permisos de lectura restaurados para: ${correo}`);
-//       } catch (e) {
-//         throw new Error("Error al asignar carpeta: " + e.message);
-//       }
-
-//       // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
-//       Utilities.sleep(2000); // Aumentamos a 2 segundos por seguridad
-
-//       // 3️⃣ PROTECCIÓN: Quitar acceso a los JSON
-//       const archivosProtegidos = [
-//         JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
-//         JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
-//         JSON_LOGS, JSON_DATOS_TRIBUTARIOS
-//       ];
-
-//       archivosProtegidos.forEach(nombreArchivo => {
-//         const archivos = carpeta.getFilesByName(nombreArchivo);
-//         while (archivos.hasNext()) { // Usamos while por si hay duplicados
-//           const archivo = archivos.next();
-//           const archivoId = archivo.getId();
-          
-//           try {
-//             // MÉTODO DEFINITIVO: 
-//             // Intentamos remover al usuario usando DriveApp (más sencillo para 'readers')
-//             // Si no funciona, usamos el borrado por lista de permisos.
-//             archivo.removeViewer(correo); 
-            
-//             // Refuerzo con API Avanzada
-//             const permissions = Drive.Permissions.list(archivoId).permissions;
-//             permissions.forEach(p => {
-//               if (p.emailAddress?.toLowerCase() === correo.toLowerCase()) {
-//                 Drive.Permissions.delete(archivoId, p.id);
-//               }
-//             });
-//           } catch (e) {
-//             console.warn(`Intento de ocultar ${nombreArchivo}: ${e.message}`);
-//           }
-//         }
-//       });
-
-
-
-//     } else {
-//       // --- LÓGICA DE DESACTIVACIÓN (Quitar todo permiso) ---
-//       try {
-//         const response = Drive.Permissions.list(carpetaId);
-//         const permissions = response.permissions;
-
-//         const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
-
-//       if (permiso) {
-//         // Eliminamos el permiso específico
-//         Drive.Permissions.delete(carpetaId, permiso.id);
-//       } else {
-//         // Si no aparece en la lista, intentamos el método tradicional por si acaso
-//         const carpeta = DriveApp.getFolderById(carpetaId);
-//         carpeta.removeViewer(correo);
-//         carpeta.removeEditor(correo);
-//       }
-      
-//       } catch (e) {
-//         throw new Error("Aviso: No se pudo eliminar el permiso (quizás no tenía): " + e.message);
-//       }
-//     }
-
-//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
-
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} y permisos sincronizados.`,
-//       datos: usuarios,
-//     });
-//   } catch (err) {
-//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "❌ Error al cambiar el estado del usuario.",
-//       detalle: err,
-//     });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
-// function toggleUsuarioActivo(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     const usuarios = leerJSON(JSON_USUARIOS) || [];
-//     const { correo, activo } = data; // 'activo' es true o false
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
-//     if (index === -1) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
-//       });
-//     }
-
-//     // 1️⃣ Actualizar estado en el JSON
-//     usuarios[index].activo = Boolean(activo);
-//     guardarJSON(JSON_USUARIOS, usuarios);
-
-//     // 2️⃣ Obtener ID de la carpeta desde configuración
-//     const config = leerJSON(JSON_CONFIGURACION);
-//     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
-//     if (!carpetaId) throw new Error("ID de carpeta no encontrado en configuración.");
-
-//     // 3️⃣ Sincronizar permisos con Google Drive
-//     if (activo === true) {
-//       // --- LÓGICA DE ACTIVACIÓN ---
-//       try {
-//         Drive.Permissions.create({
-//           'role': 'reader',
-//           'type': 'user',
-//           'emailAddress': correo
-//         }, carpetaId, { 'sendNotificationEmail': false });
-        
-//         Logger.log(`✅ Permisos de lectura restaurados para: ${correo}`);
-//       } catch (e) {
-//         // Si el permiso ya existe, Google dará error, lo ignoramos para continuar con la protección
-//         throw new Error("Aviso al crear permiso: " + e.message);
-//       }
-
-//       // Espera para propagación
-//       Utilities.sleep(2000); 
-
-//       // --- PROTECCIÓN DE ARCHIVOS JSON ---
-//       // IMPORTANTE: Definimos el objeto carpeta que faltaba
-//       const carpeta = DriveApp.getFolderById(carpetaId);
-//       const archivosProtegidos = [
-//         JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, 
-//         JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, 
-//         JSON_LOGS, JSON_DATOS_TRIBUTARIOS
-//       ];
-
-//       archivosProtegidos.forEach(nombreArchivo => {
-//         const archivos = carpeta.getFilesByName(nombreArchivo);
-//         while (archivos.hasNext()) {
-//           const archivo = archivos.next();
-//           const archivoId = archivo.getId();
-//           try {
-//             // Quitamos visibilidad
-//             archivo.removeViewer(correo); 
-            
-//             // Refuerzo con API v3 para eliminar cualquier rastro
-//             const permissions = Drive.Permissions.list(archivoId).permissions;
-//             const pUser = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
-//             if (pUser) {
-//               Drive.Permissions.delete(archivoId, pUser.id);
-//             }
-//           } catch (e) {
-//             console.warn(`Ocultando ${nombreArchivo}: ${e.message}`);
-//           }
-//         }
-//       });
-
-//     } else {
-//       // --- LÓGICA DE DESACTIVACIÓN (Quitar todo permiso) ---
-//       try {
-//         const response = Drive.Permissions.list(carpetaId);
-//         const permissions = response.permissions;
-//         const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
-
-//         if (permiso) {
-//           Drive.Permissions.delete(carpetaId, permiso.id);
-//           Logger.log(`🚫 Acceso revocado a carpeta para: ${correo}`);
-//         }
-//       } catch (e) {
-//         throw new Error("No se pudo eliminar el permiso: " + e.message);
-//       }
-//     }
-
-//     registrarLog("toggleUsuarioActivo", correoEjecutor, `Usuario ${activo ? "activado" : "desactivado"}: ${correo}`);
-
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: `🔁 Usuario "${correo}" ${activo ? "activado" : "desactivado"} y permisos sincronizados.`,
-//       datos: usuarios,
-//     });
-
-//   } catch (err) {
-//     manejarError(err, "toggleUsuarioActivo", usuario?.correo);
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "❌ Error al cambiar el estado del usuario.",
-//       detalle: err.message || String(err),
-//     });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
 function toggleUsuarioActivo(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
-    const { correo, activo } = data;
+    const { correo, activo, nombre } = data;
     const correoEjecutor = usuario?.correo || "sistema";
     let driveStatus = "";
 
     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
     if (index === -1) return respuestaJSON({ status: "error", mensaje: "Usuario no encontrado." });
+
+    if (nombre === "Administrador") {
+      return respuestaJSON({ status: "error", mensaje: "🚫 No se puede activar o desactivar Administrador." });
+    }
 
     // 1️⃣ Actualizar estado en el JSON
     usuarios[index].activo = Boolean(activo);
@@ -1986,90 +1698,6 @@ function toggleUsuarioActivo(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
-// function eliminarUsuario(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     const usuarios = leerJSON(JSON_USUARIOS) || [];
-//     const { correo } = data;
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     if (correo === correoEjecutor) {
-//       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario" });
-//     }
-
-//     if (!correo)
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: "⚠️ Debe especificar el correo del usuario a eliminar.",
-//       });
-
-//     const usuarioAEliminar = usuarios.find((u) => u.correo === correo);
-//     if (!usuarioAEliminar)
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ No se encontró el usuario "${correo}".`,
-//       });
-
-//     if (usuarioAEliminar.rol === "administrador")
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: "🚫 No se puede eliminar un usuario con rol administrador.",
-//       });
-
-//     const nuevosUsuarios = usuarios.filter((u) => u.correo !== correo);
-//     guardarJSON(JSON_USUARIOS, nuevosUsuarios);
-
-//      const carpetas = obtenerOCrearCarpetaRaiz();
-
-//     // const carpetas = DriveApp.getFoldersByName(CARPETA_PRINCIPAL);
-//     if (carpetas.hasNext()) {
-//       const carpeta = carpetas.next();
-
-//       try {
-//         carpeta.removeEditor(correo);
-//       } catch (e) {
-//         if (e.message?.includes("No such user")) {
-//           const err = new Error(
-//             `El usuario "${correo}" no tenía permisos en la carpeta`
-//           );
-//           err.name = "PermisoInexistenteError";
-
-//           // 📝 Se registra el warning, pero NO se interrumpe el flujo
-//           manejarError(err, "eliminarUsuario", usuario?.correo);
-//         } else {
-//           throw e; // otros errores sí son críticos
-//         }
-//       }
-
-//     } else {
-//       const err = new Error(`No se encontró la carpeta: ${CARPETA_PRINCIPAL}`);
-//       err.name = "CarpetaNoEncontradaError";
-//       throw err;
-//     }
-
-//     registrarLog("eliminarUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: `🗑️ Usuario "${correo}" eliminado correctamente.`,
-//       datos: nuevosUsuarios,
-//     });
-//   } catch (err) {
-//     manejarError(err, "eliminarUsuario", usuario?.correo);
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: "❌ Error al eliminar usuario.",
-//       detalle: String(err.message || err)
-//     });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
 function eliminarUsuario(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2151,8 +1779,6 @@ function eliminarUsuario(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
 // Productos
 function addProducto(data, usuario) {
   const lock = LockService.getScriptLock();
@@ -2639,80 +2265,6 @@ function deleteRegistroProducto(data, usuario) {
     lock.releaseLock();
   }
 }
-
-// funcion original ok
-// function editRegistroProducto(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     const correoEjecutor = usuario?.correo || "sistema";
-//     const registroId = data.registroId;
-
-//     if (!registroId) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: "ID de registro no proporcionado"
-//       });
-//     }
-
-//     // Leer bddatos.json
-//     const datos = leerJSON(JSON_BDD_DATOS);
-
-//     // Buscar registro
-//     const index = datos.findIndex(r => r.registroId === registroId);
-//     if (index === -1) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: "Registro no encontrado"
-//       });
-//     }
-
-//     const registroActual = datos[index];
-
-//     // 🔹 Actualizar SOLO campos editables
-//     const registroEditado = {
-//       ...registroActual,
-//       entidad: data.entidad ?? registroActual.entidad,
-//       nombreProducto: data.nombreProducto ?? registroActual.nombreProducto,
-//       descripcion: data.descripcion ?? registroActual.descripcion,
-//       tipo: data.tipo ?? registroActual.tipo,
-//       anio: data.anio ?? registroActual.anio,
-//       fechaEdicion: new Date().toISOString()
-//     };
-
-//     // Reemplazar registro
-//     datos[index] = registroEditado;
-
-//     // Guardar JSON
-//     guardarJSON(JSON_BDD_DATOS, datos);
-
-//     // Log
-//     registrarLog("editRegistroProducto", correoEjecutor, {
-//       registroId,
-//       antes: registroActual,
-//       despues: registroEditado
-//     });
-
-//     // Respuesta al frontend
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: "Registro editado correctamente",
-//       registro: registroEditado
-//     });
-
-//   } catch (e) {
-//     return respuestaJSON({
-//       status: "error",
-//       mensaje: e.message || "Error editando el registro"
-//     });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
-
-
 // funcionando cambio de link
 function editRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
@@ -2825,11 +2377,6 @@ function editRegistroProducto(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
-
-
 function getArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
@@ -2901,58 +2448,6 @@ function getFacturasPorAnio(anio) {
     data: filtrado,
   });
 }
-
-
-
-
-
-// funciona original ok sin cambio de link
-// function updateFactura(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     let bddatos = leerJSON(JSON_BDD_FACTURAS);
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     const { registroId, entidad, descripcion, valor, metodoPago } = data;
-
-//     if (!registroId) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: "❌ Se requiere el registroId para actualizar la factura."
-//       });
-//     }
-
-//     const index = bddatos.findIndex(f => f.registroId === registroId);
-//     if (index === -1) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `❌ No se encontró la factura con ID ${registroId}.`
-//       });
-//     }
-
-//     // --- Actualizar campos ---
-//     if (entidad !== undefined) bddatos[index].entidad = entidad;
-//     if (descripcion !== undefined) bddatos[index].descripcion = descripcion;
-//     if (valor !== undefined) bddatos[index].valor = Number(valor);
-//     if (metodoPago !== undefined) bddatos[index].metodoPago = metodoPago;
-
-//     guardarJSON(JSON_BDD_FACTURAS, bddatos);
-
-//     registrarLog("updateFactura", correoEjecutor, { registroId });
-
-//     return respuestaJSON({
-//       status: "ok",
-//       mensaje: "✅ Factura actualizada correctamente.",
-//       datos: bddatos[index]
-//     });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
 // funcion con cambio de link
 function updateFactura(data, usuario) {
   const lock = LockService.getScriptLock();
@@ -3055,9 +2550,6 @@ function updateFactura(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-
 function deleteFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -3155,51 +2647,6 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-// function addDatoTributario(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // hasta 30s esperando
-
-//   try {
-//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     // 🔎 Validar duplicados en label o valor normalizados
-//     const yaExiste = datos.some(d =>
-//       normalizarTexto(d.label) === normalizarTexto(data.label) ||
-//       (normalizarTexto(d.label) === normalizarTexto(data.label) && normalizarTexto(d.valor) === normalizarTexto(data.valor))
-//     );
-
-//     if (yaExiste) {
-//       return respuestaJSON({
-//         status: "error",
-//         mensaje: `⚠️ Ya existe un dato tributario con el mismo label o valor`
-//       });
-//     }
-
-//     // 🔹 Calcular el orden (último + 1)
-//     const maxOrden = datos.length > 0 ? Math.max(...datos.map(d => d.orden || 0)) : 0;
-
-//     // 📦 Crear nuevo registro (guardamos lo que llega sin cambios)
-//     const nuevo = {
-//       id: data.id || ("dato" + new Date().getTime()),
-//       label: data.label || "",
-//       valor: data.valor || "",
-//       orden: maxOrden + 1
-//     };
-
-//     datos.push(nuevo);
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-//     // ✅ Registrar log
-//     registrarLog("addDatoTributario", correoEjecutor, {
-//       datoTributarioAdicionado: nuevo
-//     });
-
-//     return respuestaJSON({ status: "ok", mensaje: "Dato agregado", datos });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
 function updateAllDatosTributarios(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -3234,101 +2681,6 @@ function updateAllDatosTributarios(data, usuario) {
     lock.releaseLock();
   }
 }
-// function updateDatoTributario(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // hasta 30s esperando
-
-//   try {
-//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     const idx = datos.findIndex(d => d.id === data.id);
-//     if (idx === -1) return respuestaJSON({ status: "error", mensaje: "Dato no encontrado" });
-
-//     // ⚡ Solo persistir estos campos
-//     const dataLimpia = {
-//       id: datos[idx].id,                 // nunca cambia
-//       orden: data.orden ?? datos[idx].orden, // conservar si no viene
-//       label: data.label ?? datos[idx].label,
-//       valor: data.valor ?? datos[idx].valor
-//     };
-
-//     datos[idx] = dataLimpia;
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-//      // ✅ Registrar log
-//     registrarLog("updateDatoTributario", correoEjecutor, {
-//       datoTributarioActualizado: data
-//     });
-//     return respuestaJSON({ status: "ok", mensaje: "Dato actualizado", datos });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-// function deleteDatoTributario(data, usuario) {
-
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000); // hasta 30s esperando
-
-//   try {
-//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     datos = datos.filter(d => d.id !== data.id);
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-//     // ✅ Registrar log
-//     registrarLog("deleteDatoTributario", correoEjecutor, {
-//       datoTributarioBorrado: data.id || data
-//     });
-//     return respuestaJSON({ status: "ok", mensaje: "Dato eliminado", datos });
-
-//   } finally {
-//     lock.releaseLock();
-//   }
-
-// }
-// function moveDatoTributario(data, usuario) {
-//   const { id, direction } = data;  // 👈 desestructurar el objeto
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-
-//   try {
-//     let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
-//     const correoEjecutor = usuario?.correo || "sistema";
-
-//     // Ordenarlos antes de mover
-//     datos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
-
-//     const index = datos.findIndex(d => d.id === id);
-//     if (index === -1) {
-//       return respuestaJSON({ status: "error", mensaje: "❌ No se encontró el dato" });
-//     }
-
-//     const targetIndex = index + direction;
-//     if (targetIndex < 0 || targetIndex >= datos.length) {
-//       return respuestaJSON({ status: "error", mensaje: "⚠️ Movimiento inválido" });
-//     }
-
-
-//     // Intercambiar orden
-//     const tempOrden = datos[index].orden;
-//     datos[index].orden = datos[targetIndex].orden;
-//     datos[targetIndex].orden = tempOrden;
-
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, datos);
-
-//     registrarLog("moveDatoTributario", correoEjecutor, {
-//       idMovido: id,
-//       direccion: direction
-//     });
-
-//     return respuestaJSON({ status: "ok", mensaje: "Dato movido", datos });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
 // Manejo de logs
 function getLogs() {
   const lock = LockService.getScriptLock();
@@ -3367,7 +2719,6 @@ function getLogs() {
     lock.releaseLock();
   }
 }
-
 function limpiarLogsAntiguos(usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
