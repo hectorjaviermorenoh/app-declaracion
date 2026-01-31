@@ -332,7 +332,10 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
  ******************************/
 function verificarTokenYAutorizar(token) {
   // const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
-  const CLIENT_ID = "64855448689";
+
+const responseGithub = UrlFetchApp.fetch('https://hectorjaviermorenoh.github.io/app-declaracion/idCliente.json');
+  const { idCliente: CLIENT_ID } = JSON.parse(responseGithub.getContentText());
+
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
   
   try {
