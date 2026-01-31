@@ -18,7 +18,7 @@ export function LogsAdminProvider({ children }) {
     setLoading(true);
 
     try {
-      const response = await apiGet("getLogs");
+      const response = await apiGet("obtenerLogs");
       if (response.status === "ok") {
         setLogs(response.logs || []);
       } else {
@@ -26,7 +26,7 @@ export function LogsAdminProvider({ children }) {
         // return [];
       }
     } catch (err) {
-      console.error("❌ getLogs error:", err);
+      console.error("❌ obtenerLogs error:", err);
       showToast("❌ Error de conexión al cargar logs.", "danger", 4000, "LogsAdmin");
       // return [];
     } finally {

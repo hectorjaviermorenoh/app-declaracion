@@ -47,8 +47,8 @@ const ROLES_INICIALES = [
   {
     "rol": "Contador",
     "permisos": [
-      "getDatosTributarios",
-      "getProductosPorArchivo",
+      "obtenerTributarios",
+      "obtenerProductosPorArchivo",
       "subirArchivoProducto",
       "replaceArchivo",
       "subirArchivoFacturas",
@@ -56,19 +56,19 @@ const ROLES_INICIALES = [
       "deleteProducto",
       "addDatoTributario",
       "updateDatoTributario",
-      "updateAllDatosTributarios",
+      "actualizarDatosTributarios",
       "deleteDatoTributario",
       "moveDatoTributario",
-      "getFacturasPorAnio",
-      "updateFactura",
-      "deleteFactura",
+      "obtenerFacturasPorAnio",
+      "actualizarFactura",
+      "eliminarFactura",
     ]
   },
   {
     "rol": "Declarante",
     "permisos": [
-      "getDatosTributarios",
-      "getProductosPorArchivo",
+      "obtenerTributarios",
+      "obtenerProductosPorArchivo",
       "subirArchivoProducto",
       "replaceArchivo",
       "subirArchivoFacturas",
@@ -76,12 +76,12 @@ const ROLES_INICIALES = [
       "deleteProducto",
       "addDatoTributario",
       "updateDatoTributario",
-      "updateAllDatosTributarios",
+      "actualizarDatosTributarios",
       "deleteDatoTributario",
       "moveDatoTributario",
-      "getFacturasPorAnio",
-      "updateFactura",
-      "deleteFactura",
+      "obtenerFacturasPorAnio",
+      "actualizarFactura",
+      "eliminarFactura",
     ]
   }
 ];
@@ -96,20 +96,20 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "obtenerConfig",
   "obtenerRoles",
   "obtenerUsuarios",
-  "getDatosTributarios",
-  "getLogs",
-  "getProductosPorArchivo",
-  "getFacturasPorAnio",
+  "obtenerTributarios",
+  "obtenerLogs",
+  "obtenerProductosPorArchivo",
+  "obtenerFacturasPorAnio",
 
 
   // --- POST ---
   "subirArchivoProducto",
   "replaceArchivo",
-  "deleteRegistroProducto",
-  "editRegistroProducto",
+  "eliminarRegistroProducto",
+  "editarRegistroProducto",
   "subirArchivoFacturas",
-  "updateFactura",
-  "deleteFactura",
+  "actualizarFactura",
+  "eliminarFactura",
   "agregarRol",
   "actualizarRol",
   "eliminarRol",
@@ -120,7 +120,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "deleteProducto",
   "addDatoTributario",
   "updateDatoTributario",
-  "updateAllDatosTributarios",
+  "actualizarDatosTributarios",
   "deleteDatoTributario",
   "moveDatoTributario",
   "actualizarConfig",
@@ -143,9 +143,9 @@ const FUNCIONES_GENERALES = [
   "normalizarNombreArchivo",
   "toggleUsuarioActivo",
   "inicializarSistema",
-  "getArchivosPorAnio",
+  "obtenerArchivosPorAnio",
   "listarFuncionesLogicaNegocio",
-  "getProductos",
+  "obtenerProductos",
 
 ];
 
@@ -331,7 +331,8 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
 function verificarTokenYAutorizar(token) {
-  const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
+  // const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
+  const CLIENT_ID = "64855448689";
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
   
   try {
@@ -886,7 +887,7 @@ function doGet(e) {
       return respuestaJSON({ autorizado: false, mensaje: "Token de sesión requerido" });
     }
     
-    usuario = verificarTokenPropio(token); // 👈 USA EL NUEVO VALIDADOR
+    usuario = verificarTokenPropio(token);
     
     if (!usuario.autorizado) {
       return respuestaJSON({ autorizado: false, mensaje: usuario.mensaje });
@@ -923,36 +924,33 @@ function doGet(e) {
         return obtenerUsuarios();
       case "obtenerRoles":
         return obtenerRoles();
-      case "getProductos":
-        return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
-        // return getProductos();
-
-      case "getDatosTributarios":
-        return getDatosTributarios();
-
-      case "getLogs":
-        return getLogs();
-
-      case "getArchivosPorAnio":
+      case "obtenerProductos":
+        // return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
+        return obtenerProductos();
+      case "obtenerTributarios":
+        return obtenerTributarios();
+      case "obtenerLogs":
+        return obtenerLogs();
+      case "obtenerArchivosPorAnio":
         const anio = e.parameter.anio;
         if (!anio) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
         }
-        return getArchivosPorAnio(anio);
+        return obtenerArchivosPorAnio(anio);
 
-      case "getFacturasPorAnio":
+      case "obtenerFacturasPorAnio":
         const anioF = e.parameter.anio;
         if (!anioF) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
         }
-        return getFacturasPorAnio(anioF);
+        return obtenerFacturasPorAnio(anioF);
 
-      case "getProductosPorArchivo":
+      case "obtenerProductosPorArchivo":
         const archivoId = e.parameter.archivoId;
         if (!archivoId) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar archivoId" });
         }
-        return getProductosPorArchivo(archivoId);
+        return obtenerProductosPorArchivo(archivoId);
 
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backens" });
@@ -1037,7 +1035,7 @@ function doPost(e) {
     // --- 3. SWITCH DE ACCIONES ---
     // Ahora 'usuario' está disponible para todas las funciones que lo necesiten
     switch (accion) {
-      case "googleLogin": // 👈 NUEVA ACCIÓN
+      case "googleLogin":
         return handleGoogleLogin(data);
 
       case "inicializarSistemaForzado":
@@ -1048,7 +1046,6 @@ function doPost(e) {
           return respuestaJSON({ status: "error", mensaje: "⚠️ Confirmación inválida, escriba INICIALIZAR" });
         }
 
-        // --- 👇 CORRECCIÓN 3 ---
         if (usuario.rol !== "administrador") {
           return respuestaJSON({
             status: "sin_permiso",
@@ -1090,28 +1087,26 @@ function doPost(e) {
         return deleteProducto(data.id, usuario);
       case "replaceArchivo":
         return replaceArchivo(data, usuario);
-      case "deleteRegistroProducto":
-        return deleteRegistroProducto(data, usuario);
-      case "editRegistroProducto":
-        return editRegistroProducto(data, usuario);
+      case "eliminarRegistroProducto":
+        return eliminarRegistroProducto(data, usuario);
+      case "editarRegistroProducto":
+        return editarRegistroProducto(data, usuario);
       case "inicializarSistema":
         return inicializarSistemaSeguro(data, usuario);
       case "addDatoTributario":
         return addDatoTributario(data, usuario);
       case "updateDatoTributario":
         return updateDatoTributario(data, usuario);
-      case "updateAllDatosTributarios":
-        return updateAllDatosTributarios(data, usuario);
+      case "actualizarDatosTributarios":
+        return actualizarDatosTributarios(data, usuario);
       case "deleteDatoTributario":
         return deleteDatoTributario(data, usuario);
       case "moveDatoTributario":
         return moveDatoTributario(data, usuario);
-      case "updateFactura":
-        return updateFactura(data, usuario);
-
-      case "deleteFactura":
-        return deleteFactura(data, usuario);
-
+      case "actualizarFactura":
+        return actualizarFactura(data, usuario);
+      case "eliminarFactura":
+        return eliminarFactura(data, usuario);
       default:
         return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backend post" });
     }
@@ -2180,7 +2175,7 @@ function replaceArchivo(data, usuario) {
     lock.releaseLock();
   }
 }
-function deleteRegistroProducto(data, usuario) {
+function eliminarRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2234,7 +2229,7 @@ function deleteRegistroProducto(data, usuario) {
     guardarJSON(JSON_BDD_DATOS, datos);
 
     // Log
-    registrarLog("deleteRegistroProducto", correoEjecutor, {
+    registrarLog("eliminarRegistroProducto", correoEjecutor, {
       registroId,
       nombreArchivo,
       fileId,
@@ -2266,7 +2261,7 @@ function deleteRegistroProducto(data, usuario) {
   }
 }
 // funcionando cambio de link
-function editRegistroProducto(data, usuario) {
+function editarRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2361,7 +2356,7 @@ function editRegistroProducto(data, usuario) {
       };
     }
 
-    registrarLog("editRegistroProducto", correoEjecutor, infoLog);
+    registrarLog("editarRegistroProducto", correoEjecutor, infoLog);
 
     return respuestaJSON({
       status: "ok",
@@ -2377,7 +2372,7 @@ function editRegistroProducto(data, usuario) {
     lock.releaseLock();
   }
 }
-function getArchivosPorAnio(anio) {
+function obtenerArchivosPorAnio(anio) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
 
@@ -2405,7 +2400,7 @@ function getArchivosPorAnio(anio) {
   return respuestaJSON({ status: "ok", anio, archivos: resultado });
   
 }
-function getProductos() {
+function obtenerProductos() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2438,7 +2433,7 @@ function getProductos() {
     lock.releaseLock();
   }
 }
-function getFacturasPorAnio(anio) {
+function obtenerFacturasPorAnio(anio) {
   let data = leerJSON(JSON_BDD_FACTURAS);
 
   const filtrado = data.filter(f => String(f.anio) === String(anio));
@@ -2449,7 +2444,7 @@ function getFacturasPorAnio(anio) {
   });
 }
 // funcion con cambio de link
-function updateFactura(data, usuario) {
+function actualizarFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2534,7 +2529,7 @@ function updateFactura(data, usuario) {
       };
     }
 
-    registrarLog("updateFactura", correoEjecutor, infoLog);
+    registrarLog("actualizarFactura", correoEjecutor, infoLog);
 
     return respuestaJSON({
       status: "ok",
@@ -2550,7 +2545,7 @@ function updateFactura(data, usuario) {
     lock.releaseLock();
   }
 }
-function deleteFactura(data, usuario) {
+function eliminarFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2587,7 +2582,7 @@ function deleteFactura(data, usuario) {
     const nuevos = bddatos.filter(f => f.registroId !== registroId);
     guardarJSON(JSON_BDD_FACTURAS, nuevos);
 
-    registrarLog("deleteFactura", correoEjecutor, { registroId });
+    registrarLog("eliminarFactura", correoEjecutor, { registroId });
 
     return respuestaJSON({
       status: "ok",
@@ -2599,7 +2594,7 @@ function deleteFactura(data, usuario) {
     lock.releaseLock();
   }
 }
-function getProductosPorArchivo(fileId) {
+function obtenerProductosPorArchivo(fileId) {
   const bddatos = leerJSON(JSON_BDD_DATOS);
   const productos = leerJSON(JSON_PRODUCTOS);
 
@@ -2627,7 +2622,7 @@ function getProductosPorArchivo(fileId) {
 
   return respuestaJSON({ status: "ok", fileId, productos: resultado });
 }
-function getDatosTributarios() {
+function obtenerTributarios() {
   let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
 
   // ⚡ Normalizar: asignar orden único si falta
@@ -2647,7 +2642,7 @@ function getDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-function updateAllDatosTributarios(data, usuario) {
+function actualizarDatosTributarios(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -2670,7 +2665,7 @@ function updateAllDatosTributarios(data, usuario) {
     // Guardar en el archivo JSON
     guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
 
-    registrarLog("updateAllDatosTributarios", usuario?.correo || "sistema", {
+    registrarLog("actualizarDatosTributarios", usuario?.correo || "sistema", {
       cantidad: arrayParaGuardar.length
     });
 
@@ -2682,7 +2677,7 @@ function updateAllDatosTributarios(data, usuario) {
   }
 }
 // Manejo de logs
-function getLogs() {
+function obtenerLogs() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
 

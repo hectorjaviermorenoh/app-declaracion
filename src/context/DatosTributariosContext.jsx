@@ -17,7 +17,7 @@ export function DatosTributariosProvider({ children }) {
   const getDatos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiGet("getDatosTributarios");
+      const data = await apiGet("obtenerTributarios");
       if (data.status === "ok") {
         // Ordenamos por el campo 'orden' antes de guardar
         const sortedData = (data.data || []).sort((a, b) => a.orden - b.orden);
@@ -46,7 +46,7 @@ export function DatosTributariosProvider({ children }) {
     setLoading(true);
     try {
       // Enviamos un objeto que contiene el array, esto es más compatible con apiPost
-      const res = await apiPost("updateAllDatosTributarios", { data: datos });
+      const res = await apiPost("actualizarDatosTributarios", { data: datos });
 
       if (res.status === "ok") {
         setOriginales(JSON.parse(JSON.stringify(datos)));

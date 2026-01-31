@@ -16,7 +16,7 @@ export function ProductosProvider({ children }) {
   const fetchArchivosPorAnio = useCallback(async (anio) => {
     setLoadingProductos(true);
     try {
-      const data = await apiGet("getArchivosPorAnio", { anio });
+      const data = await apiGet("obtenerArchivosPorAnio", { anio });
       if (data && data.status === "ok") return data.archivos || [];
       return data.archivos || [];
     } catch (e) {
@@ -30,7 +30,7 @@ export function ProductosProvider({ children }) {
   const getProductos = useCallback(async () => {
     setLoadingProductos(true);
     try {
-      const data = await apiGet("getProductos");
+      const data = await apiGet("obtenerProductos");
 
       if (data && data.status === "ok") {
         return data.data || []
@@ -47,7 +47,7 @@ export function ProductosProvider({ children }) {
   const refreshProductos = useCallback(async () => {
     setLoadingProductos(true);
     try {
-      const data = await apiGet("getProductos");
+      const data = await apiGet("obtenerProductos");
       const productosRaw = data.data || [];
 
       const archivos = await fetchArchivosPorAnio(String(anioAnterior));
@@ -257,7 +257,7 @@ export function ProductosProvider({ children }) {
       // setLoadingProductos(true);
 
       try {
-        const data = await apiPost("deleteRegistroProducto", {id: registroId,});
+        const data = await apiPost("eliminarRegistroProducto", {id: registroId,});
 
         if (data?.status === "ok") {
           const { eliminado } = data;
@@ -289,7 +289,7 @@ export function ProductosProvider({ children }) {
       // setLoadingProductos(true);
 
       try {
-        const data = await apiPost("editRegistroProducto", payload);
+        const data = await apiPost("editarRegistroProducto", payload);
 
         if (data?.status === "ok") {
           showToast(`✅ ${data.mensaje}`,"success",3000,"Archivos");
@@ -312,9 +312,6 @@ export function ProductosProvider({ children }) {
     },
     [showToast]
   );
-
-
-
 
   return (
     <ProductosContext.Provider

@@ -11,7 +11,7 @@ export function FacturasProvider({ children }) {
   const fetchFacturasPorAnio = useCallback(async (anio) => {
     setLoading(true);
     try {
-      const data = await apiGet("getFacturasPorAnio", { anio });
+      const data = await apiGet("obtenerFacturasPorAnio", { anio });
       if (data && data.status === "ok") return data.data || [];
       return data.data || [];
     } catch (e) {
@@ -85,7 +85,7 @@ export function FacturasProvider({ children }) {
   const updateFactura = useCallback(async (facturaEditada) => {
     setLoading(true);
     try {
-      const data = await apiPost("updateFactura", facturaEditada);
+      const data = await apiPost("actualizarFactura", facturaEditada);
 
       if (data.status === "ok") {
         return {
@@ -97,7 +97,7 @@ export function FacturasProvider({ children }) {
 
       return { ok: false, mensaje: data.mensaje || "No se pudo actualizar la factura" };
     } catch (e) {
-      console.error("❌ updateFactura:", e.message);
+      console.error("❌ actualizarFactura:", e.message);
       return { ok: false, mensaje: "Error al actualizar la factura" };
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export function FacturasProvider({ children }) {
   const deleteFactura = useCallback(async (registroId) => {
     setLoading(true);
     try {
-      const data = await apiPost("deleteFactura", { registroId });
+      const data = await apiPost("eliminarFactura", { registroId });
 
       if (data.status === "ok") {
         return {
@@ -120,7 +120,7 @@ export function FacturasProvider({ children }) {
 
       return { ok: false, mensaje: data.mensaje || "Error al eliminar la factura" };
     } catch (e) {
-      console.error("❌ deleteFactura:", e.message);
+      console.error("❌ eliminarFactura:", e.message);
       return { ok: false, mensaje: "Error al eliminar la factura" };
     } finally {
       setLoading(false);
