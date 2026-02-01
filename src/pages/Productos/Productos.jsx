@@ -130,7 +130,6 @@ export default function Productos() {
      Confirm UploadModal
   ============================== */
   const handleUploadConfirm = async (anio, aplicaVarios, file, replaceOnlyThis) => {
-    setShowUploadModal(false);
     setArchivo(file);
     setAnioSeleccionado(anio);
 
@@ -157,6 +156,8 @@ export default function Productos() {
         file,
       });
     }
+
+    setShowUploadModal(false);
   };
 
   /* =============================
@@ -272,6 +273,7 @@ export default function Productos() {
           onConfirm={handleUploadConfirm}
           title={showTitle}
           anioDefault={showTitle === "Remplazar archivo" ? anioAnterior : ""}
+
         />
 
         <SelectProductosModal

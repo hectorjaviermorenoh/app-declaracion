@@ -1,6 +1,6 @@
 // src/components/productos/UploadModal/UploadModal.jsx
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import "./UploadModal.scss";
 
 import { useFormValidator } from "../../../hooks/useFormValidator";
@@ -15,7 +15,7 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
   // const currentYear = new Date().getFullYear() - 1;
   const currentYear = String(new Date().getFullYear() - 1);
 
-
+  const [loading, setLoading] = useState(false);
 
   const [anio, setAnio] = useState("");
   const [aplicaVarios, setAplicaVarios] = useState(false);
@@ -30,10 +30,11 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
       setAplicaVarios(false);
       setFile(null);
       setReplaceOnlyThis(false);
+      setLoading(false);
     }
-  }, [show, anioDefault]);
+  }, [show, anioDefault, currentYear, clearErrors]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     clearErrors();
 
     const camposAValidar = {
@@ -42,13 +43,22 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
     };
 
     const isValid = validateForm(camposAValidar);
-
     if (!isValid) return;
 
-    const effectiveAplicaVarios =
-      title === "Remplazar archivo" ? false : aplicaVarios;
+    setLoading(true);
 
-    onConfirm(anio, effectiveAplicaVarios, file, replaceOnlyThis);
+    try {
+      const effectiveAplicaVarios =
+        title === "Remplazar archivo" ? false : aplicaVarios;
+
+      await onConfirm(anio, effectiveAplicaVarios, file, replaceOnlyThis);
+
+    } catch (error) {
+      console.log("Error en el modal:", error);
+    } finally {
+      setLoading(false);
+    }
+
   };
 
   return (
@@ -117,11 +127,19 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={handleSubmit}>
-          {title === "Remplazar archivo" ? "Reemplazar" : "Subir"}
+        <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+
+          {loading ? (
+            <>
+              <Spinner size="sm" /> Procesando...
+            </>
+          ) : (
+            title === "Remplazar archivo" ? "Reemplazar" : "Cargar archivo"
+          )}
+
         </Button>
       </Modal.Footer>
     </Modal>

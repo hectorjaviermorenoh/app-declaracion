@@ -16,6 +16,7 @@ const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
 const ZEICHENSCHLUESSEL = "528138845199053779904519";
+const URL_PRODUCCION = "https://hectorjaviermorenoh.github.io/app-declaracion";
 
 /******************************
  * CONSTANTE DE CONFIGURACIONES INICIALES
@@ -24,7 +25,7 @@ const CONFIG_INICIAL = {
   CARPETA_PRINCIPAL: "",
   TAMANO_MAX_MB: 10,
   TIPOS_PERMITIDOS: ["pdf", "jpg", "jpeg", "png", "docx", "txt", "xlsx"],
-  TOKEN_EXP_MINUTOS: 60 // 👈 Nuevo: Valor por defecto (1 hora)
+  TOKEN_EXP_MINUTOS: 60 // Valor por defecto (1 hora)
 };
 
 const DATOS_TRIBUTARIOS_INICIALES = [
@@ -331,9 +332,8 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
 function verificarTokenYAutorizar(token) {
-  // const CLIENT_ID = "648554486893-4b33o1cei2rfhv8ehn917ovf60h1u9q4.apps.googleusercontent.com";
 
-  const responseGithub = UrlFetchApp.fetch('https://hectorjaviermorenoh.github.io/app-declaracion/idCliente.json');
+  const responseGithub = UrlFetchApp.fetch(`${URL_PRODUCCION}/idCliente.json`);
   const { idCliente: CLIENT_ID } = JSON.parse(responseGithub.getContentText());
 
 

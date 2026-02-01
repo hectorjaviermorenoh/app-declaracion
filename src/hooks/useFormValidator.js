@@ -1,5 +1,5 @@
 // src/hooks/useFormValidator.js
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { validators } from "../utils/formValidator";
 
 export function useFormValidator() {
@@ -7,7 +7,8 @@ export function useFormValidator() {
   // errors = { entidad: "El campo es obligatorio", valor: "Debe ser número" }
   const [errors, setErrors] = useState({});
 
-  const validateField = (name, value) => {
+  // const validateField = (name, value) => {
+  const validateField = useCallback((name, value) => {
     const validator = validators[name];
     if (!validator) return;
 
@@ -22,9 +23,9 @@ export function useFormValidator() {
       }
       return updated;
     });
-  };
+  }, []);
 
-  const validateForm = (values) => {
+  const validateForm = useCallback((values) => {
     const newErrors = {};
 
     for (const [field, value] of Object.entries(values)) {
@@ -38,17 +39,18 @@ export function useFormValidator() {
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
-  };
+  }, []);
 
-  const clearError = (field) => {
+
+  const clearError = useCallback((field) => {
     setErrors(prev => {
       const copy = { ...prev };
       delete copy[field];
       return copy;
     });
-  };
+  }, []);
 
-  const clearErrors = () => setErrors({});
+  const clearErrors = useCallback(() => setErrors({}), []);
 
   return {
     errors,            // objeto final para FormErrorList
