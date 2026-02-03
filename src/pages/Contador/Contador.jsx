@@ -5,10 +5,20 @@ import { useProductos } from "../../context/ProductosContext.jsx";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import EditRegistroProducto from "../../components/Modals/EditRegistroProductoModal/EditRegistroProductoModal";
 import ContadorSkeleton from "../../components/Skeletons/ContadorSkeleton/ContadorSkeleton";
+import { usePermisos } from "../../hooks/usePermisos.js";
 
 import "./Contador.scss";
 
 function Contador() {
+
+  const { puede } = usePermisos();
+  const editRecord = puede("editarRegistroProducto");
+  const deleteRecord = puede("eliminarRegistroProducto");
+
+  console.log("editar", editRecord);
+  console.log("borrar", deleteRecord);
+
+
 
   const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
 
@@ -166,232 +176,7 @@ function Contador() {
   };
 
 
-
-  // return (
-  //   <div className="contador-container">
-  //     <div className="container mt-4">
-  //       <h2 className="mb-3">📂 Archivos del año {anio}</h2>
-
-  //       <div className="mb-3">
-  //         <label>Año:</label>
-  //         <select
-  //           value={anio}
-  //           onChange={(e) => setAnio(e.target.value)}
-  //           className="form-select w-auto d-inline ms-2"
-  //         >
-  //           {Array.from({ length: 15 }).map((_, i) => {
-  //             const y = currentYear - i;
-  //             return (
-  //               <option key={y} value={y}>
-  //                 {y}
-  //               </option>
-  //             );
-  //           })}
-  //         </select>
-  //       </div>
-
-  //       {loading ? (
-  //         <div className="Contador-Loading-CargandoContador">
-  //           <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-  //           <p>Cargando Registros...</p>
-  //         </div>
-  //       ) : filteredArchivos.length === 0 ? (
-  //         <p>No hay archivos para este año.</p>
-  //       ) : (
-
-
-  //         <>
-  //           {!isMobile && (
-  //             <div className="table-responsive archivos-por-anio">
-  //               <table className="table table-bordered table-hover">
-  //                 <thead className="table-light">
-  //                   <tr>
-  //                     <th className="thicon"></th>
-  //                     <th>
-  //                       Entidad
-  //                       <select
-  //                         className="form-select form-select-sm mt-1"
-  //                         value={filters.entidad}
-  //                         onChange={(e) =>
-  //                           setFilters({ ...filters, entidad: e.target.value })
-  //                         }
-  //                       >
-  //                         <option value="">Todas</option>
-  //                         {entidades.map((ent) => (
-  //                           <option key={ent.value} value={ent.value}>
-  //                             {ent.label}
-  //                           </option>
-  //                         ))}
-  //                       </select>
-  //                     </th>
-
-  //                     <th>
-  //                       Nombre del producto
-  //                       <select
-  //                         className="form-select form-select-sm mt-1"
-  //                         value={filters.nombreProducto}
-  //                         onChange={(e) =>
-  //                           setFilters({ ...filters, nombreProducto: e.target.value })
-  //                         }
-  //                       >
-  //                         <option value="">Todos</option>
-  //                         {productos.map((prod) => (
-  //                           <option key={prod.value} value={prod.value}>
-  //                             {prod.label}
-  //                           </option>
-  //                         ))}
-  //                       </select>
-  //                     </th>
-
-  //                     <th>
-  //                       Tipo
-  //                       <select
-  //                         className="form-select form-select-sm mt-1"
-  //                         value={filters.tipo}
-  //                         onChange={(e) =>
-  //                           setFilters({ ...filters, tipo: e.target.value })
-  //                         }
-  //                       >
-  //                         <option value="">Todos</option>
-  //                         {tipos.map((t) => (
-  //                           <option key={t.value} value={t.value}>
-  //                             {t.label}
-  //                           </option>
-  //                         ))}
-  //                       </select>
-  //                     </th>
-
-  //                     <th>Descripción</th>
-
-  //                     <th className="th-acciones"></th>
-  //                   </tr>
-  //                 </thead>
-  //                 <tbody>
-  //                   {filteredArchivos.map((a) => (
-  //                     <tr
-  //                       key={a.registroId}
-  //                       onClick={() => window.open(a.link, "_blank")}
-  //                     >
-  //                       <td className="icono">{getFileIcon(a.nombreArchivo)}</td>
-  //                       <td>{a.entidad || "-"}</td>
-  //                       <td>{a.nombreProducto}</td>
-  //                       <td>{a.tipo || "-"}</td>
-  //                       <td>{a.descripcion || "-"}</td>
-  //                       <td className="acciones">
-  //                         <i
-  //                           className="bi bi-pencil-square accion-icon"
-  //                           title="Editar"
-  //                           onClick={(e) => {
-  //                             e.stopPropagation();
-  //                             setRegistroSeleccionado(a);
-  //                             setShowEditModal(true);
-  //                             // futuro modal editar
-  //                           }}
-  //                         ></i>
-
-  //                         <i
-  //                           className="bi bi-x-circle accion-icon text-danger"
-  //                           title="Eliminar"
-  //                           onClick={(e) => {
-  //                             e.stopPropagation();
-  //                             setRegistroSeleccionado(a);
-  //                             setShowDeleteModal(true);
-  //                           }}
-  //                         ></i>
-  //                       </td>
-
-  //                     </tr>
-  //                   ))}
-  //                 </tbody>
-  //               </table>
-  //             </div>
-  //           )}
-
-  //           {isMobile && (
-  //             <div className="accordion-mobile">
-  //               {filteredArchivos.map((a, idx) => (
-  //                 <div
-  //                   key={a.registroId}
-  //                   className="archivo-card"
-  //                 >
-  //                   <div
-  //                     className="accordion-header"
-  //                     onClick={() => toggleOpen(idx)}
-  //                   >
-  //                     <span className="icono">{getFileIcon(a.nombreArchivo)}</span>
-
-  //                     <div className="ms-2 flex-grow-1">
-  //                       <div className="fw-bold">{a.entidad}</div>
-  //                       <div className="text-muted small">{a.nombreProducto}</div>
-  //                     </div>
-
-  //                     <span className="arrow">
-  //                       {openItem === idx ? "▲" : "▼"}
-  //                     </span>
-  //                   </div>
-
-  //                   {openItem === idx && (
-  //                     <div className="accordion-body">
-  //                       <p><strong>Entidad:</strong> {a.entidad}</p>
-  //                       <p><strong>Producto:</strong> {a.nombreProducto}</p>
-  //                       <p><strong>Tipo:</strong> {a.tipo}</p>
-  //                       <p><strong>Descripción:</strong> {a.descripcion || "-"}</p>
-
-  //                       <button
-  //                         className="btn btn-primary btn-sm w-100 mt-2"
-  //                         onClick={() => window.open(a.link, "_blank")}
-  //                       >
-  //                         📄 Abrir archivo
-  //                       </button>
-  //                     </div>
-  //                   )}
-  //                 </div>
-  //               ))}
-  //             </div>
-  //           )}
-  //         </>
-
-  //       )}
-  //     </div>
-
-  //     <ConfirmActionModal
-  //       show={showDeleteModal}
-  //       onHide={() => setShowDeleteModal(false)}
-  //       title="Eliminar factura"
-  //       message={
-  //         <>
-  //           ¿Seguro que deseas eliminar el producto nombre {" "}
-  //           <strong>{registroSeleccionado?.nombreProducto}</strong> entidad{" "}
-  //           <strong>{registroSeleccionado?.entidad}</strong>?
-  //         </>
-  //       }
-  //       confirmLabel="Eliminar"
-  //       confirmVariant="danger"
-  //       onConfirm={handleDelete}
-  //     />
-
-  //     <EditRegistroProducto
-  //       show={showEditModal}
-  //       onHide={() => setShowEditModal(false)}
-  //       registro={registroSeleccionado}
-  //       onUpdated={(registroActualizado) => {
-  //         setArchivos((prev) =>
-  //           prev.map((a) =>
-  //             a.registroId === registroActualizado.registroId
-  //               ? { ...a, ...registroActualizado }
-  //               : a
-  //           )
-  //         );
-  //       }}
-  //     />
-
-
-  //   </div>
-
-
-  // );
-
-return (
+  return (
     <div className="contador-container">
       <div className="container mt-4">
         <h2 className="mb-3">📂 Archivos del año {anio}</h2>
@@ -511,18 +296,21 @@ return (
                       <td>{a.descripcion || "-"}</td>
                       <td className="acciones">
                         <i
-                          className="bi bi-pencil-square accion-icon"
-                          title="Editar"
+                          className={`bi bi-pencil-square accion-icon ${!editRecord ? 'disabled-icon' : ''}`}
+                          title={editRecord ? "Editar" : "No tienes permisos para editar"}
                           onClick={(e) => {
+                            if (!editRecord) return;
                             e.stopPropagation();
                             setRegistroSeleccionado(a);
                             setShowEditModal(true);
                           }}
                         ></i>
                         <i
-                          className="bi bi-x-circle accion-icon text-danger"
+                          className={`bi bi-x-circle accion-icon text-danger ${!deleteRecord ? 'disabled-icon' : ''}`}
                           title="Eliminar"
+                          title={deleteRecord ? "Eliminar" : "No tienes permisos para eliminar"}
                           onClick={(e) => {
+                            if (!deleteRecord) return;
                             e.stopPropagation();
                             setRegistroSeleccionado(a);
                             setShowDeleteModal(true);
@@ -616,10 +404,6 @@ return (
       />
     </div>
   );
-
-
-
-
 
 }
 

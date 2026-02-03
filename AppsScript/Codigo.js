@@ -51,15 +51,11 @@ const ROLES_INICIALES = [
       "obtenerTributarios",
       "obtenerProductosPorArchivo",
       "subirArchivoProducto",
-      "replaceArchivo",
+      "remplaceArchivo",
       "subirArchivoFacturas",
-      "addProducto",
-      "deleteProducto",
-      "addDatoTributario",
-      "updateDatoTributario",
+      "agregarProducto",
+      "eliminarProducto",
       "actualizarDatosTributarios",
-      "deleteDatoTributario",
-      "moveDatoTributario",
       "obtenerFacturasPorAnio",
       "actualizarFactura",
       "eliminarFactura",
@@ -71,15 +67,11 @@ const ROLES_INICIALES = [
       "obtenerTributarios",
       "obtenerProductosPorArchivo",
       "subirArchivoProducto",
-      "replaceArchivo",
+      "remplaceArchivo",
       "subirArchivoFacturas",
-      "addProducto",
-      "deleteProducto",
-      "addDatoTributario",
-      "updateDatoTributario",
+      "agregarProducto",
+      "eliminarProducto",
       "actualizarDatosTributarios",
-      "deleteDatoTributario",
-      "moveDatoTributario",
       "obtenerFacturasPorAnio",
       "actualizarFactura",
       "eliminarFactura",
@@ -105,7 +97,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
 
   // --- POST ---
   "subirArchivoProducto",
-  "replaceArchivo",
+  "remplaceArchivo",
   "eliminarRegistroProducto",
   "editarRegistroProducto",
   "subirArchivoFacturas",
@@ -117,13 +109,9 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "agregarUsuario",
   "actualizarUsuario",
   "eliminarUsuario",
-  "addProducto",
-  "deleteProducto",
-  "addDatoTributario",
-  "updateDatoTributario",
+  "agregarProducto",
+  "eliminarProducto",
   "actualizarDatosTributarios",
-  "deleteDatoTributario",
-  "moveDatoTributario",
   "actualizarConfig",
   "generarBackupZIP",
   "limpiarLogsAntiguos",
@@ -1085,28 +1073,20 @@ function doPost(e) {
         return actualizarUsuario(data, usuario);
       case "eliminarUsuario":
         return eliminarUsuario(data, usuario);
-      case "addProducto":
-        return addProducto(data, usuario);
-      case "deleteProducto":
-        return deleteProducto(data.id, usuario);
-      case "replaceArchivo":
-        return replaceArchivo(data, usuario);
+      case "agregarProducto":
+        return agregarProducto(data, usuario);
+      case "eliminarProducto":
+        return eliminarProducto(data.id, usuario);
+      case "remplaceArchivo":
+        return remplaceArchivo(data, usuario);
       case "eliminarRegistroProducto":
         return eliminarRegistroProducto(data, usuario);
       case "editarRegistroProducto":
         return editarRegistroProducto(data, usuario);
       case "inicializarSistema":
         return inicializarSistemaSeguro(data, usuario);
-      case "addDatoTributario":
-        return addDatoTributario(data, usuario);
-      case "updateDatoTributario":
-        return updateDatoTributario(data, usuario);
       case "actualizarDatosTributarios":
         return actualizarDatosTributarios(data, usuario);
-      case "deleteDatoTributario":
-        return deleteDatoTributario(data, usuario);
-      case "moveDatoTributario":
-        return moveDatoTributario(data, usuario);
       case "actualizarFactura":
         return actualizarFactura(data, usuario);
       case "eliminarFactura":
@@ -1779,7 +1759,7 @@ function eliminarUsuario(data, usuario) {
   }
 }
 // Productos
-function addProducto(data, usuario) {
+function agregarProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -1808,7 +1788,7 @@ function addProducto(data, usuario) {
       productos.push(nuevoProd);
       resultados.push({ nombre: p.nombre, status: "ok", mensaje: "Producto agregado", id: nuevoProd.id });
 
-      registrarLog("addProducto", correoEjecutor, { producto: nuevoProd });
+      registrarLog("agregarProducto", correoEjecutor, { producto: nuevoProd });
     });
 
     guardarJSON(JSON_PRODUCTOS, productos);
@@ -1821,7 +1801,7 @@ function addProducto(data, usuario) {
     lock.releaseLock();
   }
 }
-function deleteProducto(id, usuario) {
+function eliminarProducto(id, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
@@ -1836,7 +1816,7 @@ function deleteProducto(id, usuario) {
     guardarJSON(JSON_PRODUCTOS, nuevos);
 
     // ✅ Registrar log
-    registrarLog("deleteProducto", correoEjecutor, {
+    registrarLog("eliminarProducto", correoEjecutor, {
       productoEliminado: eliminado || id
     });
     return respuestaJSON({ status: "ok", mensaje: "Producto eliminado", productos: nuevos });
@@ -2078,7 +2058,7 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     lock.releaseLock();
   }
 }
-function replaceArchivo(data, usuario) {
+function remplaceArchivo(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2157,7 +2137,7 @@ function replaceArchivo(data, usuario) {
         : r.productoId;
     });
 
-    registrarLog("replaceArchivo", correoEjecutor, {
+    registrarLog("remplaceArchivo", correoEjecutor, {
       nuevoFileId: file.getId(),
       nuevoNombre: nombreNormalizado,
       productosAfectados,

@@ -83,14 +83,6 @@
     margin-top: 1rem;
   }
 
-
-  // .icono {
-  //   background-color: blue !important;
-  // }
-
-  // ***************************************************************
-
-
   /* ----- CARD / ACCORDION PARA CELULARES ----- */
   .accordion-mobile {
     margin-top: 1rem;
@@ -163,11 +155,33 @@
   }
 
   .acciones {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+    // 1. Quitamos flex del td para recuperar el centrado vertical nativo de la tabla
+    text-align: center;
+    vertical-align: middle !important;
+    white-space: nowrap; // Evita que los iconos se pongan uno debajo del otro
+
+    .accion-icon {
+      // 2. En lugar de inline, usamos inline-flex
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      // 3. Espaciado manual (ya que gap solo funciona con flex)
+      margin: 0 8px;
+
+      // 4. Resetear la altura de línea para evitar el desplazamiento hacia abajo
+      line-height: 1;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+
+      &:hover:not(.disabled-icon) {
+        transform: scale(1.2);
+      }
+    }
   }
+
+
 
   .accion-icon {
     font-size: 1.1rem;
@@ -178,6 +192,12 @@
   .accion-icon:hover {
     transform: scale(1.15);
     opacity: 0.85;
+  }
+
+  .disabled-icon {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    // pointer-events: none; //<-- Quítala si quieres ver el title
   }
 
 

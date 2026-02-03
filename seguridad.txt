@@ -1,5 +1,5 @@
-import { usePermisos } from "../../hooks/usePermisos.js";
-import NoPermiso from "../../components/NoPermiso/NoPermiso";
+import { usePermisos } from "../../hooks/usePermisos.js";  // Se le manda la funcion (permiso) para ver si esta autorizado
+import NoPermiso from "../../components/NoPermiso/NoPermiso"; //Retorna Fragmento html para mostrar si no esta autorizado
 
   const { puede } = usePermisos();
   const puedeVerLogs = puede("getLogs");

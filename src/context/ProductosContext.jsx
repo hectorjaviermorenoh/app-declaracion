@@ -93,7 +93,7 @@ export function ProductosProvider({ children }) {
     async ({ nombre, descripcion, entidad, tipo }) => {
       setLoadingProductos(true);
       try {
-        const data = await apiPost("addProducto", {
+        const data = await apiPost("agregarProducto", {
           nombre,
           descripcion,
           entidad,
@@ -111,7 +111,7 @@ export function ProductosProvider({ children }) {
           data,
         };
       } catch (e) {
-        console.error("❌ addProducto:", e.message);
+        console.error("❌ agregarProducto:", e.message);
         return { ok: false, mensaje: "Error al agregar producto" };
       } finally {
         setLoadingProductos(false);
@@ -124,7 +124,7 @@ export function ProductosProvider({ children }) {
     async (productoId) => {
       setLoadingProductos(true);
       try {
-        const data = await apiPost("deleteProducto", { id: productoId });
+        const data = await apiPost("eliminarProducto", { id: productoId });
 
         if (data.status === "ok") {
           showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
@@ -145,7 +145,7 @@ export function ProductosProvider({ children }) {
         };
       } catch (e) {
         showToast("❌ Error eliminando producto", "error", 3000, "Productos");
-        console.error("❌ deleteProducto:", e.message);
+        console.error("❌ eliminarProducto:", e.message);
         return { ok: false, mensaje: "❌ Error al eliminar producto" };
       } finally {
         setLoadingProductos(false);
@@ -206,7 +206,7 @@ export function ProductosProvider({ children }) {
     [refreshProductos]
   );
 
-  const replaceArchivo = useCallback(
+  const remplaceArchivo = useCallback(
     async (productoId, anio, file, replaceOnlyThis = false, nombreProducto = "") => {
       if (!file) return { ok: false, mensaje: "Seleccione un archivo para reemplazar" };
 
@@ -226,7 +226,7 @@ export function ProductosProvider({ children }) {
           },
         };
 
-        const data = await apiPost("replaceArchivo", payload);
+        const data = await apiPost("remplaceArchivo", payload);
 
         if (data.status === "ok" || data.success === true) {
           await refreshProductos();
@@ -235,7 +235,7 @@ export function ProductosProvider({ children }) {
 
         return { ok: false, mensaje: data.mensaje || "Error al reemplazar", data };
       } catch (e) {
-        console.error("❌ replaceArchivo:", e.message);
+        console.error("❌ remplaceArchivo:", e.message);
         return { ok: false, mensaje: "Error al reemplazar archivo" };
       } finally {
         setLoadingProductos(false);
@@ -321,7 +321,7 @@ export function ProductosProvider({ children }) {
         refreshProductos,
         anioAnterior,
         subirArchivo,
-        replaceArchivo,
+        remplaceArchivo,
         fetchArchivosPorAnio,
         addProducto,
         deleteProducto,

@@ -9,17 +9,25 @@ import { useProductos } from "../../context/ProductosContext.jsx";
 import { useToast } from "../../context/ToastContext";
 import { confirmarAccion } from "../../utils/alerts.js";
 import ProductSkeleton from "../../components/Skeletons/ProductSkeleton/ProductSkeleton";
+import { usePermisos } from "../../hooks/usePermisos.js";
 import "./Productos.scss";
 
 export default function Productos() {
   const isMobile = window.innerWidth < 2000;
+
+  const { puede } = usePermisos();
+  const puedesubirArchivo = puede("subirArchivoProducto");
+  const puedeRemplazarArchivo = puede("remplaceArchivo");
+  const puedeEliminarProducto = puede("eliminarProducto");
+  const puedeAgregarProducto = puede("agregarProducto");
+
   const {
     registroProductos,
     loading,
     anioAnterior,
     refreshProductos,
     subirArchivo,
-    replaceArchivo,
+    remplaceArchivo,
     deleteProducto,
   } = useProductos();
 
@@ -79,7 +87,7 @@ export default function Productos() {
     const accion =
       tipo === "reemplazar"
         ? () =>
-            replaceArchivo(
+            remplaceArchivo(
               productoIds[0],
               anio,
               file,
@@ -110,7 +118,7 @@ export default function Productos() {
 
       const r2 =
         tipo === "reemplazar"
-          ? await replaceArchivo(
+          ? await remplaceArchivo(
               productoIds[0],
               anio,
               file,
@@ -200,7 +208,10 @@ export default function Productos() {
             <button
               type="button"
               className="btn-close position-absolute top-0 end-0 m-2"
+              disabled={!puedeEliminarProducto} // Si es un <button> normal de HTML
+              style={!puedeEliminarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
               onClick={() => {
+                if(!puedeEliminarProducto) return;
                 setSelectedProducto(prod);
                 setShowDeleteModal(true);
               }}
@@ -227,6 +238,8 @@ export default function Productos() {
                 <Button
                   variant="warning"
                   size="sm"
+                  disabled={!puedeRemplazarArchivo}
+                  title={!puedeRemplazarArchivo ? "No tienes permisos para remplazar" : ""}
                   onClick={() => {
                     setShowTitle("Remplazar archivo");
                     handleUpload(prod);
@@ -239,6 +252,8 @@ export default function Productos() {
               <Button
                 variant="primary"
                 size="sm"
+                disabled={!puedesubirArchivo}
+                title={!puedesubirArchivo ? "No tienes permisos para subir archivos" : ""}
                 onClick={() => {
                   setShowTitle("Subir Archivo");
                   handleUpload(prod);
@@ -261,7 +276,13 @@ export default function Productos() {
 
 
         {isMobile && (
-          <button className="fab-subir" onClick={() => setShowAddModal(true)}>
+          <button
+          className="fab-subir"
+          disabled={!puedeAgregarProducto} // Si es un <button> normal de HTML
+          title={!puedeAgregarProducto ? "No tienes permisos para agregar productos" : ""}
+          style={!puedeAgregarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+          onClick={() => setShowAddModal(true)}
+          >
             <i className="bi bi-plus-lg"></i>
           </button>
         )}
