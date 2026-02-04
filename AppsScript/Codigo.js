@@ -48,10 +48,10 @@ const ROLES_INICIALES = [
   {
     "rol": "Contador",
     "permisos": [
-      "obtenerTributarios",
+      "obtenerDatosTributarios",
       "obtenerProductosPorArchivo",
       "subirArchivoProducto",
-      "remplaceArchivo",
+      "remplazarArchivoProducto",
       "subirArchivoFacturas",
       "agregarProducto",
       "eliminarProducto",
@@ -64,10 +64,10 @@ const ROLES_INICIALES = [
   {
     "rol": "Declarante",
     "permisos": [
-      "obtenerTributarios",
+      "obtenerDatosTributarios",
       "obtenerProductosPorArchivo",
       "subirArchivoProducto",
-      "remplaceArchivo",
+      "remplazarArchivoProducto",
       "subirArchivoFacturas",
       "agregarProducto",
       "eliminarProducto",
@@ -89,7 +89,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   "obtenerConfig",
   "obtenerRoles",
   "obtenerUsuarios",
-  "obtenerTributarios",
+  "obtenerDatosTributarios",
   "obtenerLogs",
   "obtenerProductosPorArchivo",
   "obtenerFacturasPorAnio",
@@ -97,7 +97,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
 
   // --- POST ---
   "subirArchivoProducto",
-  "remplaceArchivo",
+  "remplazarArchivoProducto",
   "eliminarRegistroProducto",
   "editarRegistroProducto",
   "subirArchivoFacturas",
@@ -919,8 +919,8 @@ function doGet(e) {
       case "obtenerProductos":
         // return respuestaJSON({status: "ok", data: leerJSON(JSON_PRODUCTOS)});
         return obtenerProductos();
-      case "obtenerTributarios":
-        return obtenerTributarios();
+      case "obtenerDatosTributarios":
+        return obtenerDatosTributarios();
       case "obtenerLogs":
         return obtenerLogs();
       case "obtenerArchivosPorAnio":
@@ -1077,8 +1077,8 @@ function doPost(e) {
         return agregarProducto(data, usuario);
       case "eliminarProducto":
         return eliminarProducto(data.id, usuario);
-      case "remplaceArchivo":
-        return remplaceArchivo(data, usuario);
+      case "remplazarArchivoProducto":
+        return remplazarArchivoProducto(data, usuario);
       case "eliminarRegistroProducto":
         return eliminarRegistroProducto(data, usuario);
       case "editarRegistroProducto":
@@ -2058,7 +2058,7 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     lock.releaseLock();
   }
 }
-function remplaceArchivo(data, usuario) {
+function remplazarArchivoProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -2137,7 +2137,7 @@ function remplaceArchivo(data, usuario) {
         : r.productoId;
     });
 
-    registrarLog("remplaceArchivo", correoEjecutor, {
+    registrarLog("remplazarArchivoProducto", correoEjecutor, {
       nuevoFileId: file.getId(),
       nuevoNombre: nombreNormalizado,
       productosAfectados,
@@ -2606,7 +2606,7 @@ function obtenerProductosPorArchivo(fileId) {
 
   return respuestaJSON({ status: "ok", fileId, productos: resultado });
 }
-function obtenerTributarios() {
+function obtenerDatosTributarios() {
   let datos = leerJSON(JSON_DATOS_TRIBUTARIOS);
 
   // ⚡ Normalizar: asignar orden único si falta

@@ -226,7 +226,7 @@ export function ProductosProvider({ children }) {
           },
         };
 
-        const data = await apiPost("remplaceArchivo", payload);
+        const data = await apiPost("remplazarArchivoProducto", payload);
 
         if (data.status === "ok" || data.success === true) {
           await refreshProductos();
@@ -235,7 +235,7 @@ export function ProductosProvider({ children }) {
 
         return { ok: false, mensaje: data.mensaje || "Error al reemplazar", data };
       } catch (e) {
-        console.error("❌ remplaceArchivo:", e.message);
+        console.error("❌ remplazarArchivoProducto:", e.message);
         return { ok: false, mensaje: "Error al reemplazar archivo" };
       } finally {
         setLoadingProductos(false);

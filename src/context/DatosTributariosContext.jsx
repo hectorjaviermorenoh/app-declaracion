@@ -17,7 +17,7 @@ export function DatosTributariosProvider({ children }) {
   const getDatos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiGet("obtenerTributarios");
+      const data = await apiGet("obtenerDatosTributarios");
       if (data.status === "ok") {
         // Ordenamos por el campo 'orden' antes de guardar
         const sortedData = (data.data || []).sort((a, b) => a.orden - b.orden);
@@ -31,7 +31,7 @@ export function DatosTributariosProvider({ children }) {
       showToast(data.mensaje || "Error al obtener datos", "error");
       return { ok: false };
     } catch (err) {
-      console.error("❌ getDatos error:", err);
+      console.error("❌ obtenerDatosTributarios error:", err);
       showToast("Error de conexión al cargar datos", "error");
       return { ok: false };
     } finally {
