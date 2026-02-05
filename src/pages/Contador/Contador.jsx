@@ -307,7 +307,6 @@ function Contador() {
                         ></i>
                         <i
                           className={`bi bi-x-circle accion-icon text-danger ${!deleteRecord ? 'disabled-icon' : ''}`}
-                          title="Eliminar"
                           title={deleteRecord ? "Eliminar" : "No tienes permisos para eliminar"}
                           onClick={(e) => {
                             if (!deleteRecord) return;

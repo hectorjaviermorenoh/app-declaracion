@@ -82,60 +82,54 @@ const ROLES_INICIALES = [
 /******************************
  * 🔐 CONFIGURACIÓN DE PERMISOS Y VALIDACIÓN
  ******************************/
-
 // 🧩 Funciones expuestas al frontend (de lógica del negocio)
 const FUNCIONES_LOGICA_NEGOCIO = [
-  // --- GET ---
-  "obtenerConfig",
-  "obtenerRoles",
+  // --- BLOQUE: USUARIOS ---
   "obtenerUsuarios",
-  "obtenerDatosTributarios",
-  "obtenerLogs",
-  "obtenerProductosPorArchivo",
-  "obtenerFacturasPorAnio",
-
-
-  // --- POST ---
-  "subirArchivoProducto",
-  "remplazarArchivoProducto",
-  "eliminarRegistroProducto",
-  "editarRegistroProducto",
-  "subirArchivoFacturas",
-  "actualizarFactura",
-  "eliminarFactura",
-  "agregarRol",
-  "actualizarRol",
-  "eliminarRol",
   "agregarUsuario",
   "actualizarUsuario",
   "eliminarUsuario",
+
+  // --- BLOQUE: ROLES ---
+  "obtenerRoles",
+  "agregarRol",
+  "actualizarRol",
+  "eliminarRol",
+
+  // --- BLOQUE: PRODUCTOS ---
+  "obtenerProductosPorArchivo",
   "agregarProducto",
+  "editarRegistroProducto",
   "eliminarProducto",
-  "actualizarDatosTributarios",
+  "eliminarRegistroProducto",
+  "subirArchivoProducto",
+  "remplazarArchivoProducto",
+
+  // --- BLOQUE: FACTURACIÓN ---
+  "obtenerFacturasPorAnio",
+  "subirArchivoFacturas",
+  "actualizarFactura",
+  "eliminarFactura",
+
+  // --- BLOQUE: CONFIGURACIÓN Y TRIBUTOS ---
+  "obtenerConfig",
   "actualizarConfig",
-  "generarBackupZIP",
+  "obtenerDatosTributarios",
+  "actualizarDatosTributarios",
+
+  // --- BLOQUE: SISTEMA Y LOGS ---
+  "obtenerLogs",
   "limpiarLogsAntiguos",
+  "generarBackupZIP",
   "inicializarSistemaForzado",
 ];
 
 // ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
 const FUNCIONES_GENERALES = [
   "ping",
-  "verificarTokenYAutorizar",
-  "validarPermiso",
-  "registrarLog",
-  "manejarError",
-  "leerJSON",
-  "guardarJSON",
-  "obtenerOCrearCarpetaRaiz",
-  "normalizarTexto",
-  "normalizarNombreArchivo",
-  "toggleUsuarioActivo",
-  "inicializarSistema",
   "obtenerArchivosPorAnio",
   "listarFuncionesLogicaNegocio",
   "obtenerProductos",
-
 ];
 
 // PROTECCIÓN: Quitar acceso a los JSON al crear usuario o toggleUsuario
@@ -870,6 +864,14 @@ function limpiarCarpetas() {
 function doGet(e) {
   try {
     const accion = e.parameter.accion;
+
+    if (
+      !FUNCIONES_GENERALES.includes(accion) &&
+      !FUNCIONES_LOGICA_NEGOCIO.includes(accion)
+    ) {
+      return respuestaJSON({ status: "error", mensaje: "Acción inválida" });
+    }
+
     const token = e.parameter.token;
     let usuario; // Variable para guardar el usuario validado
 
@@ -929,23 +931,20 @@ function doGet(e) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
         }
         return obtenerArchivosPorAnio(anio);
-
       case "obtenerFacturasPorAnio":
         const anioF = e.parameter.anio;
         if (!anioF) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar un año" });
         }
         return obtenerFacturasPorAnio(anioF);
-
       case "obtenerProductosPorArchivo":
         const archivoId = e.parameter.archivoId;
         if (!archivoId) {
           return respuestaJSON({ status: "error", mensaje: "Debe enviar archivoId" });
         }
         return obtenerProductosPorArchivo(archivoId);
-
       default:
-        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backens" });
+        return respuestaJSON({ status: "error", mensaje: "Acción no soportada" });
     }
 
   } catch (err) {
@@ -983,6 +982,28 @@ function doPost(e) {
         status: "sin_datos",
         mensaje: "❌ No se recibió ni JSON ni archivos en la solicitud",
         parametros: e.parameter || null,
+      });
+    }
+
+    if (!accion || typeof accion !== "string") {
+      return respuestaJSON({
+        status: "error",
+        success: false,
+        mensaje: "Acción requerida",
+      });
+    }
+
+    accion = accion.trim();
+
+    if (
+      accion !== "googleLogin" &&
+      !FUNCIONES_GENERALES.includes(accion) &&
+      !FUNCIONES_LOGICA_NEGOCIO.includes(accion)
+    ) {
+      return respuestaJSON({
+        status: "error",
+        success: false,
+        mensaje: "Acción inválida",
       });
     }
 
@@ -1092,7 +1113,7 @@ function doPost(e) {
       case "eliminarFactura":
         return eliminarFactura(data, usuario);
       default:
-        return respuestaJSON({ status: "error", mensaje: "Acción no reconocida backend post" });
+        return respuestaJSON({ status: "error", mensaje: "Acción no soportada" });
     }
 
   } catch (err) {
