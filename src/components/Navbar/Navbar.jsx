@@ -17,7 +17,7 @@ import "./Navbar.scss";
 function AppNavbar({ onOpenBackend }) {
 
   const { activeBackend, } = useBackends();
-  const { getDatos } = useDatosTributarios(); // 👈 accede al refresco
+  const { getDatos, conteoImportantes } = useDatosTributarios(); // 👈 accede al refresco
 
 
   // const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
@@ -77,12 +77,46 @@ function AppNavbar({ onOpenBackend }) {
                 )}
               </div>
             </div>
-            <div className="contCamp">
+
+
+            {/* ***************************************** */}
+            {/* <div className="contCamp">
               <div className="d-flex align-items-center">
                 <Bell size={22} className="me-3 cursor-pointer" onClick={handleToggle}/>
               </div>
               <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
+            </div> */}
+
+            <div className="contCamp">
+              <div className="d-flex align-items-center position-relative">
+                {/* Contenedor de la campana con el badge */}
+                <div
+                  className="position-relative d-flex align-items-center me-3 notificacion-wrapper"
+                  style={{ cursor: 'pointer' }}
+                  onClick={handleToggle}
+                >
+                  <Bell size={22} />
+
+                  {/* Badge dinámico: Solo se muestra si hay registros marcados como importantes */}
+
+                  {conteoImportantes > 0 && (
+                    <span className="badge-notificacion pulse-animation">
+                      {conteoImportantes}
+                    </span>
+                  )}
+
+                </div>
+
+                {/* Toggle del menú móvil (hamburguesa) */}
+                <Navbar.Toggle
+                  className="hjm"
+                  onClick={() => setShow(true)}
+                  aria-controls="offcanvasNavbar-expand-lg"
+                />
+              </div>
             </div>
+            {/* ************************************************ */}
+            
             <Navbar.Offcanvas
               show={show}
               onHide={handleClose}

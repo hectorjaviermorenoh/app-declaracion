@@ -87,6 +87,13 @@ export function DatosTributariosProvider({ children }) {
     }
   }, [getDatos]);
 
+  /**
+   * Calcula el número de registros marcados como importantes
+   */
+  const conteoImportantes = useMemo(() => {
+    return datos.filter(d => d.importante === true || d.importante === 1).length;
+  }, [datos]);
+
   return (
     <DatosTributariosContext.Provider
       value={{
@@ -97,6 +104,7 @@ export function DatosTributariosProvider({ children }) {
         saveChanges,
         discardChanges,
         isDirty,       // Útil para habilitar/deshabilitar el botón de guardar
+        conteoImportantes,
       }}
     >
       {children}

@@ -410,3 +410,49 @@ $hover-bg: #f1f1f1;
   pointer-events: none; // Evita que el tooltip interfiera con el mouse
   position: fixed;     // Ayuda a Popper.js a calcular mejor en elementos sticky
 }
+
+
+.notificacion-wrapper {
+  position: relative;
+  cursor: pointer;
+  // padding: 0 10px;
+  display: flex;
+  align-items: center;
+
+  .bi-bell {
+    transition: color 0.3s ease;
+    &:hover {
+      color: #ffc107 !important; // Cambia a dorado al pasar el mouse
+    }
+  }
+
+  .badge-notificacion {
+    position: absolute;
+    top: -10px;    // Ajusta según el tamaño de tu icono
+    right: -13px;
+
+    background-color: #dc3545; // Rojo intenso
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    //border: 2px solid #212529; // El color de fondo de tu Navbar (bg-dark)
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  }
+}
+
+// Reutilizamos la animación que definimos antes
+.pulse-animation {
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
