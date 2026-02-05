@@ -1,4 +1,4 @@
-import React, { useState} from "react";
+import React, { useState, useEffect} from "react";
 import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 // import { useToast } from "../../context/ToastContext";
@@ -38,6 +38,13 @@ function AppNavbar({ onOpenBackend }) {
   const location = useLocation();
 
   const handleClose = () => setShow(false);
+
+  // Dentro de la función AppNavbar
+  useEffect(() => {
+    if (user) {
+      getDatos(); // Forzamos una petición silenciosa al loguearse para actualizar la campana
+    }
+  }, [user, getDatos]);
 
     // ---------------- Funciones ----------------
 
@@ -80,13 +87,6 @@ function AppNavbar({ onOpenBackend }) {
 
 
             {/* ***************************************** */}
-            {/* <div className="contCamp">
-              <div className="d-flex align-items-center">
-                <Bell size={22} className="me-3 cursor-pointer" onClick={handleToggle}/>
-              </div>
-              <Navbar.Toggle className="hjm" onClick={() => setShow(true)} aria-controls="offcanvasNavbar-expand-lg" />
-            </div> */}
-
             <div className="contCamp">
               <div className="d-flex align-items-center position-relative">
                 {/* Contenedor de la campana con el badge */}
@@ -116,7 +116,7 @@ function AppNavbar({ onOpenBackend }) {
               </div>
             </div>
             {/* ************************************************ */}
-            
+
             <Navbar.Offcanvas
               show={show}
               onHide={handleClose}
