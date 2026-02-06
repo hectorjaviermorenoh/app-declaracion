@@ -456,3 +456,19 @@ $hover-bg: #f1f1f1;
   70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
+
+
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  object-position: center;
+  background-color: #e9ecef;
+}
+
+.user-avatar-lg {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}

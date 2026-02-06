@@ -1,18 +1,15 @@
 import React, { useState, useEffect} from "react";
 import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-// import { useToast } from "../../context/ToastContext";
-
-
 import { useBackends } from "../../context/BackendsContext.jsx";
 import ReinitModal from "../Modals/ReinitModal/ReinitModal";
 import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
-// import { useProductos } from "../../context/ProductosContext.jsx";
-// import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
 import "./Navbar.scss";
+
+const DEFAULT_AVATAR = "https://via.placeholder.com/64";
 
 function AppNavbar({ onOpenBackend }) {
 
@@ -20,23 +17,13 @@ function AppNavbar({ onOpenBackend }) {
   const { getDatos, conteoImportantes } = useDatosTributarios(); // 👈 accede al refresco
 
 
-  // const { refreshProductos } = useProductos(); // 👈 usar el refresh del contexto
-  // const { reinicializarSistemaForzado } = useConfigAdmin(); // 👈 usar el refresh del contexto
-  // const { showToast } = useToast();
-
   // ---------------- Estados de UI ----------------
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { user, logout } = useAuth();
-
-  // const [showAddModal, setShowAddModal] = useState(false);
-  // const [showReinitModal, setShowReinitModal] = useState(false);
   const [show, setShow] = useState(false);
-  // const [loadingOverlay, setLoadingOverlay] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
-
   const handleClose = () => setShow(false);
 
   // Dentro de la función AppNavbar
@@ -56,6 +43,9 @@ function AppNavbar({ onOpenBackend }) {
       navigate("/datos-tributarios");
     }
   };
+
+  const userPicture = user?.picture || DEFAULT_AVATAR;
+  const hasUser = Boolean(user);
 
   return (
     <>
@@ -77,9 +67,7 @@ function AppNavbar({ onOpenBackend }) {
                 <Navbar.Brand className="app-brand" as={Link} to="/">DeclaraciónApp</Navbar.Brand>
                 {activeBackend?.alias && (
                   <h6 className="backend-alias mb-0" title={activeBackend.alias}>
-
                     {activeBackend.alias}
-                    {/* {user.nombre || user.correo} */}
                   </h6>
                 )}
               </div>
@@ -126,12 +114,14 @@ function AppNavbar({ onOpenBackend }) {
             >
 
               <Offcanvas.Header closeButton className="offcanvas-header-user">
-                {user ? (
+                {hasUser ? (
                   <div className="offcanvas-user-header">
                     <img
-                      src={user.picture || "https://via.placeholder.com/48"}
-                      alt={user.nombre || user.correo}
-                      className="offcanvas-user-avatar"
+                      key={userPicture}
+                      src={userPicture}
+                      alt="avatar"
+                      className="offcanvas-user-avatar user-avatar"
+                      loading="lazy"
                     />
                     <div className="offcanvas-user-info">
                       <div className="offcanvas-user-name">
@@ -177,7 +167,7 @@ function AppNavbar({ onOpenBackend }) {
                   </OverlayTrigger>
 
 
-                  {user && (
+                  {hasUser && (
                     <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Usuario Activo</Tooltip>}>
                       <div className="navbar-session-Dropdown-desktop d-flex align-items-center ms-3">
                         <Dropdown align="end">
@@ -188,38 +178,39 @@ function AppNavbar({ onOpenBackend }) {
                             style={{ display: "flex", alignItems: "center" }}
                           >
                             <img
-                              src={user.picture || "https://via.placeholder.com/34"}
-                              // alt={user.nombre || user.correo || "Usuario"}
-                              alt=""
+                              key={userPicture}
+                              src={userPicture}
+                              alt="avatar"
                               width={34}
                               height={34}
-                              className="rounded-circle border border-light shadow-sm"
-                              style={{
-                                objectFit: "cover",
-                                backgroundColor: "#e9ecef", // Un color gris suave de fondo mientras carga
-                                display: "inline-block"
-                              }}
+                              // className="rounded-circle border border-light shadow-sm"
+                              className="rounded-circle user-avatar"
+                              loading="lazy"
+                              // style={{
+                              //   objectFit: "cover",
+                              //   backgroundColor: "#e9ecef", // Un color gris suave de fondo mientras carga
+                              //   display: "inline-block"
+                              // }}
                               // Si la URL de Google falla, ponemos el placeholder
                               // onError={(e) => {
-                              //   e.target.src = "https://via.placeholder.com/34";
+                              //   e.target.src = DEFAULT_AVATAR;
                               // }}
-                              onError={(e) => {
-                                const session = JSON.parse(localStorage.getItem('auth_session'));
-                                e.target.src = session?.user?.picture || "https://via.placeholder.com/34";
-                              }}
                             />
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu
-                            className="p-3 shadow-sm text-center"
-                            style={{ minWidth: "220px" }}
+                            // className="p-3 shadow-sm text-center"
+                            className="p-3 text-center"
+                            // style={{ minWidth: "220px" }}
                           >
                             <img
-                              src={user.picture || "https://via.placeholder.com/64"}
-                              alt={user.nombre || "Usuario"}
-                              className="rounded-circle mb-2"
-                              width={64}
-                              height={64}
+                              key={userPicture}
+                              src={userPicture}
+                              alt="avatar"
+                              // className="rounded-circle mb-2"
+                              className="rounded-circle mb-2 user-avatar-lg"
+                              // width={64}
+                              // height={64}
                             />
                             <div className="fw-bold">{user.nombre || "Usuario desconocido"}</div>
                             <div className="text-muted small mb-2">{user.correo}</div>
