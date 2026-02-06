@@ -29,6 +29,7 @@ export function DatosTributariosProvider({ children }) {
         return { ok: true };
       }
       showToast(data.mensaje || "Error al obtener datos", "error");
+
       return { ok: false };
     } catch (err) {
       console.error("❌ obtenerDatosTributarios error:", err);

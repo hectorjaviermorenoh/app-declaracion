@@ -90,21 +90,23 @@ function Facturas() {
     fetchFacturasPorAnio(anio).then(setFacturas);
   };
 
-
   return (
     <div className="container mt-4 facturas-container">
       <div className="header-flex">
         <h2>🧾 Facturas {anio}</h2>
 
         <div className="d-flex align-items-center gap-3">
-          <strong>Total: {formatCurrency(totalValor)}</strong>
+          {getFacturasPer && (
+            <strong>Total: {formatCurrency(totalValor)}</strong>
+          )}
 
-          {/* DESKTOP: Botón normal */}
+          {/* DESKTOP: Botón subir factura */}
           {!isMobile && (
             <button
-              disabled={!uploadFacturaPer}
               className="btn btn-primary"
-              onClick={() => setShowModal(true)}>
+              disabled={!uploadFacturaPer}
+              onClick={() => uploadFacturaPer && setShowModal(true)}
+            >
               ➕ Subir factura
             </button>
           )}
@@ -118,17 +120,28 @@ function Facturas() {
         </div>
       ) : (
         <>
-
           {/* FILTROS */}
           <div className="filtros d-flex gap-2 my-3">
-            <select className="form-select w-auto" value={anio} onChange={(e) => setAnio(e.target.value)}>
+            <select
+              className="form-select w-auto"
+              value={anio}
+              onChange={(e) => setAnio(e.target.value)}
+            >
               {Array.from({ length: 10 }).map((_, i) => {
                 const y = currentYear - i;
-                return <option key={y}>{y}</option>;
+                return (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                );
               })}
             </select>
+
             <select
-              className="form-select w-auto" value={filtroEntidad} onChange={(e) => setFiltroEntidad(e.target.value)}>
+              className="form-select w-auto"
+              value={filtroEntidad}
+              onChange={(e) => setFiltroEntidad(e.target.value)}
+            >
               <option value="">Todas las entidades</option>
               {entidades.map((ent) => (
                 <option key={ent} value={ent}>
@@ -136,8 +149,12 @@ function Facturas() {
                 </option>
               ))}
             </select>
+
             <select
-              className="form-select w-auto" value={filtroPago} onChange={(e) => setFiltroPago(e.target.value)}>
+              className="form-select w-auto"
+              value={filtroPago}
+              onChange={(e) => setFiltroPago(e.target.value)}
+            >
               <option value="">Todos los métodos</option>
               {metodos.map((m) => (
                 <option key={m} value={m}>
@@ -147,9 +164,8 @@ function Facturas() {
             </select>
           </div>
 
-          {/* --- LÓGICA DE RENDERIZADO (Skeleton vs Contenido) --- */}
+          {/* LOADING */}
           {loading ? (
-            // VISTA CARGANDO: Muestra Skeletons
             !isMobile ? (
               <div className="table-responsive facturas-por-anio">
                 <table className="table table-bordered">
@@ -177,14 +193,12 @@ function Facturas() {
               </div>
             )
           ) : facturasFiltradas.length === 0 ? (
-            // VISTA VACÍA: No hay datos
             <div className="Facturas-Loading-CargandoFacturas">
               <p>No hay facturas con esos filtros.</p>
             </div>
           ) : (
-            // VISTA CON DATOS: Renderizado normal
             <>
-              {/* VISTA DESKTOP */}
+              {/* DESKTOP */}
               {!isMobile && (
                 <div className="table-responsive facturas-por-anio">
                   <table className="table table-bordered table-hover">
@@ -202,13 +216,16 @@ function Facturas() {
                         <tr key={f.registroId}>
                           <td onClick={() => handleOpenFactura(f)}>{f.entidad}</td>
                           <td onClick={() => handleOpenFactura(f)}>{f.descripcion}</td>
-                          <td onClick={() => handleOpenFactura(f)}>{formatCurrency(f.valor)}</td>
+                          <td onClick={() => handleOpenFactura(f)}>
+                            {formatCurrency(f.valor)}
+                          </td>
                           <td onClick={() => handleOpenFactura(f)}>{f.metodoPago}</td>
                           <td className="acciones">
                             {/* EDITAR */}
                             <i
-                              className={`bi bi-pencil-square accion-icon ${!updateFacturaPer ? 'disabled-icon' : ''}`}
-                              title={updateFacturaPer ? "Editar" : "No tienes permisos para editar"}
+                              className={`bi bi-pencil-square accion-icon ${
+                                !updateFacturaPer ? "disabled" : ""
+                              }`}
                               onClick={() => {
                                 if (!updateFacturaPer) return;
                                 setFacturaSeleccionada(f);
@@ -218,8 +235,9 @@ function Facturas() {
 
                             {/* ELIMINAR */}
                             <i
-                              className={`bi bi-x-circle accion-icon text-danger ${!deleteFacturaPer ? 'disabled-icon' : ''}`}
-                              title={deleteFacturaPer ? "Eliminar" : "No tienes permisos para eliminar"}
+                              className={`bi bi-x-circle accion-icon text-danger ${
+                                !deleteFacturaPer ? "disabled" : ""
+                              }`}
                               onClick={() => {
                                 if (!deleteFacturaPer) return;
                                 setFacturaSeleccionada(f);
@@ -234,21 +252,29 @@ function Facturas() {
                 </div>
               )}
 
-              {/* VISTA MÓVIL */}
+              {/* MOBILE */}
               {isMobile && (
                 <div className="facturas-mobile">
                   {facturasFiltradas.map((f) => (
-                    <div className="factura-card" key={f.registroId} onClick={() => handleOpenFactura(f)}>
+                    <div
+                      className="factura-card"
+                      key={f.registroId}
+                      onClick={() => handleOpenFactura(f)}
+                    >
                       <div className="card-top">
                         <div className="entidad">{f.entidad}</div>
-                        <div className="valor">{formatCurrency(f.valor)}</div>
+                        <div className="valor">
+                          {formatCurrency(f.valor)}
+                        </div>
                       </div>
+
                       <div className="descripcion">{f.descripcion}</div>
+
                       <div className="acciones-mobile">
                         <i
-                          // className="bi bi-pencil-square accion-icon"
-                          className={`bi bi-pencil-square accion-icon ${!updateFacturaPer ? 'disabled-icon' : ''}`}
-                          title={updateFacturaPer ? "Editar" : "No tienes permisos para editar"}
+                          className={`bi bi-pencil-square accion-icon ${
+                            !updateFacturaPer ? "disabled" : ""
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!updateFacturaPer) return;
@@ -256,9 +282,11 @@ function Facturas() {
                             setShowEditModal(true);
                           }}
                         ></i>
+
                         <i
-                          className={`bi bi-x-circle accion-icon text-danger ${!deleteFacturaPer ? 'disabled-icon' : ''}`}
-                          title={deleteFacturaPer ? "Eliminar" : "No tienes permisos para eliminar"}
+                          className={`bi bi-x-circle accion-icon text-danger ${
+                            !deleteFacturaPer ? "disabled" : ""
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!deleteFacturaPer) return;
@@ -276,7 +304,7 @@ function Facturas() {
         </>
       )}
 
-      {/* FAB — SOLO MÓVIL */}
+      {/* FAB MOBILE */}
       {isMobile && uploadFacturaPer && (
         <button className="fab-subir" onClick={() => setShowModal(true)}>
           <i className="bi bi-plus-lg"></i>
@@ -299,7 +327,10 @@ function Facturas() {
           <>
             ¿Seguro que deseas eliminar la factura de{" "}
             <strong>{facturaSeleccionada?.entidad}</strong> por{" "}
-            <strong>{formatCurrency(facturaSeleccionada?.valor || 0)}</strong>?
+            <strong>
+              {formatCurrency(facturaSeleccionada?.valor || 0)}
+            </strong>
+            ?
           </>
         }
         confirmLabel="Eliminar"
@@ -315,6 +346,9 @@ function Facturas() {
       />
     </div>
   );
+
+
+
 
 }
 

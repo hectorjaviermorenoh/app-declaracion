@@ -7,15 +7,19 @@ import LoadingOverlay from "../LoadingOverlay/LoadingOverlay";
 import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
+import { usePermisos } from "../../hooks/usePermisos.js";
 import "./Navbar.scss";
 
 const DEFAULT_AVATAR = "https://via.placeholder.com/64";
 
 function AppNavbar({ onOpenBackend }) {
 
-  const { activeBackend, } = useBackends();
-  const { getDatos, conteoImportantes } = useDatosTributarios(); // 👈 accede al refresco
+  const { puede } = usePermisos();
+  const tienePermisoDatoTributario = puede("obtenerDatosTributarios");
 
+  const { activeBackend, } = useBackends();
+
+  const { getDatos, conteoImportantes } = useDatosTributarios(tienePermisoDatoTributario); // 👈 accede al refresco
 
   // ---------------- Estados de UI ----------------
 

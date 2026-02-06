@@ -15,6 +15,14 @@
     display: inline-block;
     animation: skeleton-loading 1.5s infinite;
   }
+  .skeleton-square {
+    width: 24px;
+    height: 24px;
+    background: #ececec;
+    border-radius: 2%;
+    display: inline-block;
+    animation: skeleton-loading 1.5s infinite;
+  }
 }
 
 .factura-skeleton-row td {

@@ -3,20 +3,27 @@ import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import DatoTributarioSkeleton from "../../components/Skeletons/DatoTributarioSkeleton/DatoTributarioSkeleton";
+import { usePermisos } from "../../hooks/usePermisos.js";
+
 import "./DatosTributarios.scss";
 
 export default function DatosTributarios() {
-  const {
-    datos, setDatos, getDatos, saveChanges,
-    isDirty, discardChanges, loading
-  } = useDatosTributarios();
+
+  const { puede } = usePermisos();
+  const tienePermisoDatoTributario = puede("obtenerDatosTributarios");
+
+  const { datos, setDatos, getDatos, saveChanges, isDirty, discardChanges, loading } = useDatosTributarios();
 
   const [editandoId, setEditandoId] = useState(null);
   const [nuevo, setNuevo] = useState({ label: "", valor: "" });
   const [datoTributarioSeleccionado, setDatoTributarioSeleccionado] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  useEffect(() => { getDatos(); }, [getDatos]);
+  useEffect(() => {
+    if (tienePermisoDatoTributario) {
+      getDatos();
+    }
+  }, [getDatos, tienePermisoDatoTributario]);
 
   // --- ACCIONES LOCALES ---
 

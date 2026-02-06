@@ -51,6 +51,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: center;
 
   .accion-icon {
     font-size: 1.35rem;
@@ -232,18 +233,39 @@
   }
 }
 
-.Facturas-Loading-CargandoFacturas {
-    display: flex;
-    gap: 0.3rem;
-    justify-content: center;
-    align-items: baseline;
-  p {
-    color:#386f6b;
+  .Facturas-Loading-CargandoFacturas {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: center;
+      align-items: baseline;
+    p {
+      color:#386f6b;
+    }
   }
-}
+
+  .accion-icon {
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+
+  .accion-icon:hover {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+
+  .disabled-icon {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    // pointer-events: none; //<-- Quítala si quieres ver el title
+  }
 
 
 
 
 }
+
+
+
 

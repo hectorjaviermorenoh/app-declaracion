@@ -99,11 +99,11 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   // --- BLOQUE: PRODUCTOS ---
   "obtenerProductosPorArchivo",
   "agregarProducto",
-  "editarRegistroProducto",
   "eliminarProducto",
-  "eliminarRegistroProducto",
   "subirArchivoProducto",
   "remplazarArchivoProducto",
+  "editarRegistroProducto",
+  "eliminarRegistroProducto",
 
   // --- BLOQUE: FACTURACIÓN ---
   "obtenerFacturasPorAnio",

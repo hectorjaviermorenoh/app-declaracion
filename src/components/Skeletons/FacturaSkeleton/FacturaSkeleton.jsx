@@ -10,7 +10,7 @@ const FacturaSkeleton = ({ isMobile }) => {
         <td><div className="skeleton-bar" style={{ width: '250px' }}></div></td>
         <td><div className="skeleton-bar" style={{ width: '80px' }}></div></td>
         <td><div className="skeleton-bar" style={{ width: '100px' }}></div></td>
-        <td><div className="skeleton-circle"></div></td>
+        <td className="acciones"><div className="skeleton-bar" style={{ width: '40px' }}></div></td>
       </tr>
     );
   }
@@ -24,7 +24,7 @@ const FacturaSkeleton = ({ isMobile }) => {
       </div>
       <div className="skeleton-bar mt-3" style={{ width: '90%' }}></div>
       <div className="acciones-mobile mt-3">
-        <div className="skeleton-circle"></div>
+        <div className="skeleton-square"></div>
         <div className="skeleton-circle"></div>
       </div>
     </div>

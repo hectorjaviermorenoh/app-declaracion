@@ -15,11 +15,6 @@ function Contador() {
   const editRecord = puede("editarRegistroProducto");
   const deleteRecord = puede("eliminarRegistroProducto");
 
-  console.log("editar", editRecord);
-  console.log("borrar", deleteRecord);
-
-
-
   const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
 
   const { loading, fetchArchivosPorAnio, deleteRegistroProducto } = useProductos();
