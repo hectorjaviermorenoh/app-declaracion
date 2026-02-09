@@ -19,7 +19,7 @@ function AppNavbar({ onOpenBackend }) {
 
   const { activeBackend, } = useBackends();
 
-  const { getDatos, conteoImportantes } = useDatosTributarios(tienePermisoDatoTributario); // 👈 accede al refresco
+  const { getDatos, clearDatos, conteoImportantes } = useDatosTributarios(tienePermisoDatoTributario); // 👈 accede al refresco
 
   // ---------------- Estados de UI ----------------
 
@@ -32,10 +32,12 @@ function AppNavbar({ onOpenBackend }) {
 
   // Dentro de la función AppNavbar
   useEffect(() => {
-    if (user) {
+    if (tienePermisoDatoTributario) {
       getDatos(); // Forzamos una petición silenciosa al loguearse para actualizar la campana
+    } else {
+      clearDatos();
     }
-  }, [user, getDatos]);
+  }, [tienePermisoDatoTributario, getDatos]);
 
     // ---------------- Funciones ----------------
 
@@ -79,34 +81,43 @@ function AppNavbar({ onOpenBackend }) {
 
 
             {/* ***************************************** */}
-            <div className="contCamp">
-              <div className="d-flex align-items-center position-relative">
-                {/* Contenedor de la campana con el badge */}
-                <div
-                  className="position-relative d-flex align-items-center me-3 notificacion-wrapper"
-                  style={{ cursor: 'pointer' }}
-                  onClick={handleToggle}
-                >
-                  <Bell size={22} />
 
-                  {/* Badge dinámico: Solo se muestra si hay registros marcados como importantes */}
+<div className="contCamp">
+  <div className="d-flex align-items-center position-relative">
+    {/* Contenedor de la campana con el badge */}
+    <div
+      // className="position-relative d-flex align-items-center me-3 notificacion-wrapper"
+      className={`position-relative d-flex align-items-center me-3 notificacion-wrapper ${!tienePermisoDatoTributario ? "opacity-50" : ""}`}
+      // style={{ cursor: 'pointer' }}
+      style={{
+        cursor: tienePermisoDatoTributario ? 'pointer' : 'not-allowed',
+        filter: tienePermisoDatoTributario ? 'none' : 'grayscale(1)'
+      }}
+      // onClick={handleToggle}
+      onClick={tienePermisoDatoTributario ? handleToggle : undefined}
+      title={!tienePermisoDatoTributario ? "No tienes permisos para ver datos tributarios" : ""}
+    >
+      <Bell size={22} />
 
-                  {conteoImportantes > 0 && (
-                    <span className="badge-notificacion pulse-animation">
-                      {conteoImportantes}
-                    </span>
-                  )}
+      {/* Badge dinámico: Solo se muestra si hay registros marcados como importantes */}
 
-                </div>
+      {tienePermisoDatoTributario && conteoImportantes > 0 && (
+        <span className="badge-notificacion pulse-animation">
+          {conteoImportantes}
+        </span>
+      )}
 
-                {/* Toggle del menú móvil (hamburguesa) */}
-                <Navbar.Toggle
-                  className="hjm"
-                  onClick={() => setShow(true)}
-                  aria-controls="offcanvasNavbar-expand-lg"
-                />
-              </div>
-            </div>
+    </div>
+
+    {/* Toggle del menú móvil (hamburguesa) */}
+    <Navbar.Toggle
+      // className="hjm"
+      onClick={() => setShow(true)}
+      aria-controls="offcanvasNavbar-expand-lg"
+    />
+  </div>
+</div>
+
             {/* ************************************************ */}
 
             <Navbar.Offcanvas

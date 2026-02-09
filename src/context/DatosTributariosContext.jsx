@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import { apiGet, apiPost, getAuthToken } from "../utils/apiClient.js";
+// import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+// import { apiGet, apiPost, getAuthToken } from "../utils/apiClient.js";
+import { apiGet, apiPost } from "../utils/apiClient.js";
 import { useToast } from "../context/ToastContext";
 
 const DatosTributariosContext = createContext(null);
@@ -81,12 +83,12 @@ export function DatosTributariosProvider({ children }) {
   }, [datos, originales]);
 
   // Efecto para carga inicial automática si hay token
-  useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
-      getDatos();
-    }
-  }, [getDatos]);
+  // useEffect(() => {
+  //   const token = getAuthToken();
+  //   if (token) {
+  //     getDatos();
+  //   }
+  // }, [getDatos]);
 
   /**
    * Calcula el número de registros marcados como importantes
@@ -94,6 +96,11 @@ export function DatosTributariosProvider({ children }) {
   const conteoImportantes = useMemo(() => {
     return datos.filter(d => d.importante === true || d.importante === 1).length;
   }, [datos]);
+
+  const clearDatos = useCallback(() => {
+    setDatos([]);
+    setOriginales([]);
+  }, []);
 
   return (
     <DatosTributariosContext.Provider
@@ -106,6 +113,7 @@ export function DatosTributariosProvider({ children }) {
         discardChanges,
         isDirty,       // Útil para habilitar/deshabilitar el botón de guardar
         conteoImportantes,
+        clearDatos,
       }}
     >
       {children}
