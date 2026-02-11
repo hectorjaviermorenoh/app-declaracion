@@ -6,13 +6,8 @@ import "./UploadModal.scss";
 import { useFormValidator } from "../../../hooks/useFormValidator";
 import FormErrorList from "../../FormErrorList/FormErrorList";
 
-
-
 export default function UploadModal({ show, onClose, onConfirm, title, anioDefault }) {
-
   const { errors, validateField, validateForm, clearErrors, clearError } = useFormValidator();
-
-  // const currentYear = new Date().getFullYear() - 1;
   const currentYear = String(new Date().getFullYear() - 1);
 
   const [loading, setLoading] = useState(false);

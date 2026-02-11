@@ -31,6 +31,8 @@ export default function Productos() {
     deleteProducto,
   } = useProductos();
 
+
+
   const { showToast } = useToast();
 
   const [setBtnPos] = useState({ top: 80, left: null, right: 20 });
@@ -138,12 +140,14 @@ export default function Productos() {
      Confirm UploadModal
   ============================== */
   const handleUploadConfirm = async (anio, aplicaVarios, file, replaceOnlyThis) => {
+    // setShowUploadModal(false);
     setArchivo(file);
     setAnioSeleccionado(anio);
 
     if (aplicaVarios) {
       setProductoOrigen(selectedProducto);
       setShowSelectModal(true);
+      setShowUploadModal(false);
       return;
     }
 
@@ -172,7 +176,8 @@ export default function Productos() {
      Confirm SelectProductosModal
   ============================== */
   const handleSelectProductos = async (selectedIds) => {
-    setShowSelectModal(false);
+
+
 
     if (!archivo || !anioSeleccionado) return;
 
@@ -182,6 +187,9 @@ export default function Productos() {
       anio: anioSeleccionado,
       file: archivo,
     });
+
+    setShowSelectModal(false);
+
   };
 
   return (
@@ -190,91 +198,81 @@ export default function Productos() {
         <div className="productos-container">
           <h2 className="mb-4">Productos</h2>
         </div>
+        <Row>
+          {loading ? (
+            // 1. Muestra Skeletons mientras carga
+            Array.from({ length: 6 }).map((_, i) => (
+              <ProductSkeleton key={`skeleton-${i}`} />
+            ))
+          ) : (
+            // 2. Muestra los productos reales SOLO cuando loading es false
+            registroProductos.map((prod) => (
+              <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
+                <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
+                  <Card.Body>
+                    <button
+                      type="button"
+                      className="btn-close position-absolute top-0 end-0 m-2"
+                      disabled={!puedeEliminarProducto} // Si es un <button> normal de HTML
+                      style={!puedeEliminarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+                      onClick={() => {
+                        if(!puedeEliminarProducto) return;
+                        setSelectedProducto(prod);
+                        setShowDeleteModal(true);
+                      }}
+                    />
 
+                    <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
+                    <Card.Text>{prod.descripcion}</Card.Text>
 
+                    {prod.tieneArchivo ? (
+                      <>
+                        <p className="mb-2">
+                          <small>
+                            Archivo ({prod.archivoInfo?.anio}):{" "}
+                            <a
+                              href={prod.archivoInfo?.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
+                            </a>
+                          </small>
+                        </p>
 
-<Row>
-  {loading ? (
-    // 1. Muestra Skeletons mientras carga
-    Array.from({ length: 6 }).map((_, i) => (
-      <ProductSkeleton key={`skeleton-${i}`} />
-    ))
-  ) : (
-    // 2. Muestra los productos reales SOLO cuando loading es false
-    registroProductos.map((prod) => (
-      <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
-        <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
-          <Card.Body>
-            <button
-              type="button"
-              className="btn-close position-absolute top-0 end-0 m-2"
-              disabled={!puedeEliminarProducto} // Si es un <button> normal de HTML
-              style={!puedeEliminarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
-              onClick={() => {
-                if(!puedeEliminarProducto) return;
-                setSelectedProducto(prod);
-                setShowDeleteModal(true);
-              }}
-            />
-
-            <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
-            <Card.Text>{prod.descripcion}</Card.Text>
-
-            {prod.tieneArchivo ? (
-              <>
-                <p className="mb-2">
-                  <small>
-                    Archivo ({prod.archivoInfo?.anio}):{" "}
-                    <a
-                      href={prod.archivoInfo?.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {prod.archivoInfo?.nombreArchivo || "Ver archivo"}
-                    </a>
-                  </small>
-                </p>
-
-                <Button
-                  variant="warning"
-                  size="sm"
-                  disabled={!puedeRemplazarArchivo}
-                  title={!puedeRemplazarArchivo ? "No tienes permisos para remplazar" : ""}
-                  onClick={() => {
-                    setShowTitle("Remplazar archivo");
-                    handleUpload(prod);
-                  }}
-                >
-                  Modificar archivo
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                disabled={!puedesubirArchivo}
-                title={!puedesubirArchivo ? "No tienes permisos para subir archivos" : ""}
-                onClick={() => {
-                  setShowTitle("Subir Archivo");
-                  handleUpload(prod);
-                }}
-              >
-                Subir Archivo
-              </Button>
-            )}
-          </Card.Body>
-        </Card>
-      </Col>
-    ))
-  )}
-</Row>
-
-
-
-
-
-
-
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          disabled={!puedeRemplazarArchivo}
+                          title={!puedeRemplazarArchivo ? "No tienes permisos para remplazar" : ""}
+                          onClick={() => {
+                            setShowTitle("Remplazar archivo");
+                            handleUpload(prod);
+                          }}
+                        >
+                          Modificar archivo
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        disabled={!puedesubirArchivo}
+                        title={!puedesubirArchivo ? "No tienes permisos para subir archivos" : ""}
+                        onClick={() => {
+                          setShowTitle("Subir Archivo");
+                          handleUpload(prod);
+                        }}
+                      >
+                        Subir Archivo
+                      </Button>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))
+          )}
+        </Row>
         {isMobile && (
           <button
           className="fab-subir"
@@ -296,21 +294,19 @@ export default function Productos() {
           anioDefault={showTitle === "Remplazar archivo" ? anioAnterior : ""}
 
         />
-
         <SelectProductosModal
           show={showSelectModal}
           onClose={() => setShowSelectModal(false)}
           onConfirm={handleSelectProductos}
           productoOrigen={productoOrigen}
           productos={registroProductos}
+          loading={loading}
         />
-
         <AddProductoModal
           show={showAddModal}
           onHide={() => setShowAddModal(false)}
           onProductoAgregado={() => setShowAddModal(false)}
         />
-
         <ConfirmActionModal
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}

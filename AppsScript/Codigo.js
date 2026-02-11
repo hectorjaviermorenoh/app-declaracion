@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "2101261146AM";
+ const VERSION = "11022611AM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -127,6 +127,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
 // ⚙️ Funciones generales internas — permitidas a todos los usuarios autenticados
 const FUNCIONES_GENERALES = [
   "ping",
+  "toggleUsuarioActivo",
   "obtenerArchivosPorAnio",
   "listarFuncionesLogicaNegocio",
   "obtenerProductos",
@@ -2647,40 +2648,124 @@ function obtenerDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
+// function actualizarDatosTributarios(data, usuario) {
+//   const lock = LockService.getScriptLock();
+//   lock.waitLock(30000);
+//   try {
+//     // --- LÓGICA DE NORMALIZACIÓN ---
+//     let arrayParaGuardar = data;
+
+//     // Si data no es array pero tiene una propiedad 'data' que sí lo es
+//     if (!Array.isArray(data) && data && Array.isArray(data.data)) {
+//       arrayParaGuardar = data.data;
+//     } 
+//     // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
+//     else if (!Array.isArray(data) && typeof data === 'object') {
+//        arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
+//     }
+
+//     if (!Array.isArray(arrayParaGuardar)) {
+//       throw new Error("Los datos recibidos no tienen un formato de array válido");
+//     }
+
+//     // Guardar en el archivo JSON
+//     guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
+
+//     registrarLog("actualizarDatosTributarios", usuario?.correo || "sistema", {
+//       cantidad: arrayParaGuardar.length
+//     });
+
+//     return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente", data: arrayParaGuardar });
+//   } catch (error) {
+//     return respuestaJSON({ status: "error", mensaje: error.message });
+//   } finally {
+//     lock.releaseLock();
+//   }
+// }
+
 function actualizarDatosTributarios(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
-    // --- LÓGICA DE NORMALIZACIÓN ---
-    let arrayParaGuardar = data;
-
-    // Si data no es array pero tiene una propiedad 'data' que sí lo es
+    // 1. Normalización de datos recibidos
+    let nuevosDatos = data;
     if (!Array.isArray(data) && data && Array.isArray(data.data)) {
-      arrayParaGuardar = data.data;
-    } 
-    // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
-    else if (!Array.isArray(data) && typeof data === 'object') {
-       arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
+      nuevosDatos = data.data;
+    } else if (!Array.isArray(data) && typeof data === 'object') {
+       nuevosDatos = Object.values(data).filter(item => typeof item === 'object');
     }
 
-    if (!Array.isArray(arrayParaGuardar)) {
-      throw new Error("Los datos recibidos no tienen un formato de array válido");
+    if (!Array.isArray(nuevosDatos)) {
+      throw new Error("Formato de datos inválido");
     }
 
-    // Guardar en el archivo JSON
-    guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
+    // 2. Obtener los datos que están guardados actualmente en el servidor
+    const datosActuales = leerJSON(JSON_DATOS_TRIBUTARIOS) || [];
+    
+    // 3. Detectar CAMBIOS (Diferencias entre el estado viejo y el nuevo)
+    const cambios = {
+      agregados: [],
+      eliminados: [],
+      modificados: []
+    };
 
-    registrarLog("actualizarDatosTributarios", usuario?.correo || "sistema", {
-      cantidad: arrayParaGuardar.length
+    // --- Detectar Agregados y Modificados ---
+    nuevosDatos.forEach(nuevo => {
+      const anterior = datosActuales.find(old => old.id === nuevo.id);
+      
+      if (!anterior) {
+        // No existía el ID: Es nuevo
+        cambios.agregados.push({ id: nuevo.id, label: nuevo.label, valor: nuevo.valor });
+      } else {
+        // Existía: Comparamos si cambió el valor o el label
+        if (anterior.valor !== nuevo.valor || anterior.label !== nuevo.label) {
+          cambios.modificados.push({
+            campo: nuevo.label || nuevo.id,
+            de: anterior.valor,
+            a: nuevo.valor
+          });
+        }
+      }
     });
 
-    return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente" });
+    // --- Detectar Eliminados ---
+    datosActuales.forEach(anterior => {
+      const existeEnNuevos = nuevosDatos.find(n => n.id === anterior.id);
+      if (!existeEnNuevos) {
+        // Estaba antes pero ya no: Fue eliminado
+        cambios.eliminados.push({ id: anterior.id, label: anterior.label });
+      }
+    });
+
+    // 4. Guardar los nuevos datos
+    guardarJSON(JSON_DATOS_TRIBUTARIOS, nuevosDatos);
+
+    // 5. Registrar Log Detallado
+    // Solo registramos si realmente hubo algún tipo de movimiento
+    const huboCambios = cambios.agregados.length > 0 || 
+                         cambios.eliminados.length > 0 || 
+                         cambios.modificados.length > 0;
+
+    registrarLog("actualizarDatosTributarios", usuario?.correo || "sistema", {
+      resumen: huboCambios ? "Se detectaron cambios en la estructura o valores" : "Sincronización sin cambios",
+      detalles: huboCambios ? cambios : "Ninguno",
+      totalRegistros: nuevosDatos.length
+    });
+
+    return respuestaJSON({ 
+      status: "ok", 
+      mensaje: "Datos actualizados", 
+      cambiosDetectados: huboCambios 
+    });
+
   } catch (error) {
     return respuestaJSON({ status: "error", mensaje: error.message });
   } finally {
     lock.releaseLock();
   }
 }
+
+
 // Manejo de logs
 function obtenerLogs() {
   const lock = LockService.getScriptLock();

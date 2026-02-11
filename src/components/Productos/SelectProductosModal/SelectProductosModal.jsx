@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "./SelectProductosModal.scss";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Modal, Button, Form, Spinner } from "react-bootstrap";
 
-export default function SelectProductosModal({ show, onClose, onConfirm, productos = [], productoOrigen  }) {
-  // const [selectedIds, setSelectedIds] = useState([]);
+export default function SelectProductosModal({ show, onClose, onConfirm, productos = [], productoOrigen, loading  }) {
   const [selectedProducts, setSelectedProducts] = useState([]);
-
-  // Cada vez que se abre el modal, inicializamos la selección
   useEffect(() => {
     if (show) {
       if (productoOrigen) {
@@ -28,13 +25,6 @@ export default function SelectProductosModal({ show, onClose, onConfirm, product
       setSelectedProducts((prev) => prev.filter((p) => p !== id));
     }
   };
-
-
-  // const handleToggle = (id) => {
-  //   setSelectedIds((prev) =>
-  //     prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-  //   );
-  // };
 
   const handleConfirm = () => {
     if (selectedProducts.length === 0) {
@@ -78,7 +68,15 @@ export default function SelectProductosModal({ show, onClose, onConfirm, product
           Cancelar
         </Button>
         <Button variant="primary" onClick={handleConfirm}>
-          Subir
+          {loading ? (
+            <>
+              <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+              {" "}Procesando...
+            </>
+          ) : (
+            "Cargar archivo"
+          )
+        }
         </Button>
       </Modal.Footer>
     </Modal>
