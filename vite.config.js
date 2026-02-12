@@ -13,6 +13,7 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       filename: 'sw.js',
       manifest: {
+        id: '/app-declaracion/',
         name: "App Declaración",
         short_name: "Declaración",
         description: "Administración archivos declaracion y facturas",
