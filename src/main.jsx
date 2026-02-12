@@ -14,6 +14,10 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/base/base.scss";
 import "./assets/Font_AppDeclaracion/style.css";
 
+// Registra el service worker automáticamente
+import { registerSW } from 'virtual:pwa-register'
+registerSW({ immediate: true });
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <HashRouter>
