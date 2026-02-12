@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1202261044am"; 
+const CACHE_VERSION = "v1202261104am";
 const CACHE_NAME = `app-declaracion-${CACHE_VERSION}`;
 
 /* Archivos básicos que queremos disponibles */
@@ -33,10 +33,31 @@ self.addEventListener("activate", (event) => {
 });
 
 /* Intercepción de peticiones */
+// self.addEventListener("fetch", (event) => {
+//   event.respondWith(
+//     caches.match(event.request).then((response) => {
+//       return response || fetch(event.request);
+//     })
+//   );
+// });
+
+// public/service-worker.js corregido
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      // Si está en caché, lo devuelve, pero TAMBIÉN dispara una petición a la red
+      // para actualizar la caché para la próxima vez.
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const cacheCopy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Fallback si no hay red ni caché (ej. mostrar una página offline)
+      });
+
+      return response || fetchPromise;
     })
   );
 });
