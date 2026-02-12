@@ -13,15 +13,14 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       filename: 'sw.js',
       manifest: {
-        name: 'App Declaración',
-        short_name: 'Declaración',
-        description: 'Administración archivos declaracion y facturas',
-        // Usamos rutas relativas (./) porque Vite ya conoce el "base: /app-declaracion/"
-        start_url: './#/',
-        scope: './',
-        display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#0d6efd',
+        name: "App Declaración",
+        short_name: "Declaración",
+        description: "Administración archivos declaracion y facturas",
+        start_url: "/app-declaracion/#/",
+        scope: "/app-declaracion/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#0d6efd",
         icons: [
           {
             src: 'icons/icon-192.png',
