@@ -1,3 +1,5 @@
+
+// No borrar la linea siguiente global __APP_VERSION
 /* global __APP_VERSION__ */
 import React, { useEffect, useState } from "react";
 import { Button, Form, InputGroup, Table, Spinner, Row, Col, NavDropdown, Dropdown, Modal } from "react-bootstrap";
