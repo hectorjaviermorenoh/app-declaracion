@@ -37,24 +37,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 
-/* 👇 REGISTRO DEL SERVICE WORKER (PWA) */
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/app-declaracion/service-worker.js")
-      .then(() => console.log("✅ Service Worker registrado"))
-      .catch((err) => console.error("❌ Error SW:", err));
-  });
-
-  let refreshing = false;
-
-  /* 🔄 Cuando hay un SW nuevo, recargar la app automáticamente */
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing) return;
-    refreshing = true;
-    console.log("🔄 Nueva versión detectada, recargando app...");
-    window.location.reload();
-  });
-}
-
-
