@@ -9,29 +9,34 @@ export default defineConfig({
     // 2. Configura el plugin
     VitePWA({
       registerType: 'autoUpdate', // Actualiza la app automáticamente cuando hay cambios
+      injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      filename: 'sw.js',
       manifest: {
         name: 'App Declaración',
         short_name: 'Declaración',
         description: 'Administración archivos declaracion y facturas',
-        theme_color: '#0d6efd',
-        background_color: '#ffffff',
+        // Usamos rutas relativas (./) porque Vite ya conoce el "base: /app-declaracion/"
+        start_url: './#/',
+        scope: './',
         display: 'standalone',
-        orientation: 'portrait',
-        scope: '/app-declaracion/',
-        start_url: '/app-declaracion/',
+        background_color: '#ffffff',
+        theme_color: '#0d6efd',
         icons: [
           {
             src: 'icons/icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: 'icons/icon-512.png',
             sizes: '512x512',
-            type: 'image/png'
-          }, {
-            src: 'apple-touch-icon.png', 
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'apple-touch-icon.png',
             sizes: '180x180',
             type: 'image/png'
           }
@@ -41,8 +46,9 @@ export default defineConfig({
         // Esto es lo que soluciona tu problema de renderizado:
         // Cachea todos los archivos generados por el build (JS, CSS, HTML)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
+        importScripts: [],
         cleanupOutdatedCaches: true
-      }
+      },
     })
   ],
     server: {
