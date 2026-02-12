@@ -160,7 +160,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className="text-decoration-none text-secondary mx-2"
           >
-            Términos hoy 1436pm
+            Términos hoy 1442pm
           </a>
         </div>
       </div>
