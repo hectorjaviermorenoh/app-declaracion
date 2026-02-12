@@ -16,3 +16,20 @@ import NoPermiso from "../../components/NoPermiso/NoPermiso"; //Retorna Fragment
 
 
 onClick={() => { setShowReinitModal(true); setShow(false); }}
+
+
+*************************************************************************
+CONFIGURAR WPA E INSTALAR
+
+1. vite.config.js
+2. Colocar los iconos en public/icons
+  - icon-192.png Computador
+  - icon-512.png Celular
+  - apple-touch-icon.png IOS en public/
+
+3. Adicionar en main.js
+  // Registra el service worker automáticamente
+  import { registerSW } from 'virtual:pwa-register'
+  registerSW({ immediate: true });
+4. instalar plugin
+   npm install vite-plugin-pwa -D

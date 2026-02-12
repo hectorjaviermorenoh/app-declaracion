@@ -1,3 +1,4 @@
+/* global __APP_VERSION__ */
 import React, { useEffect, useState } from "react";
 import { Button, Form, InputGroup, Table, Spinner, Row, Col, NavDropdown, Dropdown, Modal } from "react-bootstrap";
 import { useConfigAdmin } from "../../context/admin/ConfigAdminContext";
@@ -20,7 +21,8 @@ export const ConfigAdminPanel = () => {
   const [tipoAEliminar, setTipoAEliminar] = useState("");
   const [showReinitModal, setShowReinitModal] = useState(false);
 
-  const [versionFrontend, setVersionFrontend] = useState("Cargando...");
+  // const [versionFrontend, setVersionFrontend] = useState("Cargando...");
+  const [versionFrontend, setVersionFrontend] = useState(__APP_VERSION__);
 
   const { puede } = usePermisos();
   const puedeVerConfig = puede("getConfig");
@@ -32,29 +34,29 @@ export const ConfigAdminPanel = () => {
 /*******************************
    * 🛠️ Obtener versión desde SW
    *******************************/
-  useEffect(() => {
-    const fetchSWVersion = async () => {
-      try {
-        // Ajustamos la ruta según lo que veo en tu captura (localhost:5174/app-declaracion/)
-        const response = await fetch("/app-declaracion/service-worker.js");
-        const text = await response.text();
+  // useEffect(() => {
+  //   const fetchSWVersion = async () => {
+  //     try {
+  //       // Ajustamos la ruta según lo que veo en tu captura (localhost:5174/app-declaracion/)
+  //       const response = await fetch("/app-declaracion/service-worker.js");
+  //       const text = await response.text();
 
-        // Usamos Regex para buscar: const CACHE_VERSION = "valor";
-        const match = text.match(/const\s+CACHE_VERSION\s*=\s*"([^"]+)"/);
+  //       // Usamos Regex para buscar: const CACHE_VERSION = "valor";
+  //       const match = text.match(/const\s+CACHE_VERSION\s*=\s*"([^"]+)"/);
 
-        if (match && match[1]) {
-          setVersionFrontend(match[1]);
-        } else {
-          setVersionFrontend("No encontrada");
-        }
-      } catch (error) {
-        console.error("Error leyendo el Service Worker:", error);
-        setVersionFrontend("Error al cargar");
-      }
-    };
+  //       if (match && match[1]) {
+  //         setVersionFrontend(match[1]);
+  //       } else {
+  //         setVersionFrontend("No encontrada");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error leyendo el Service Worker:", error);
+  //       setVersionFrontend("Error al cargar");
+  //     }
+  //   };
 
-    fetchSWVersion();
-  }, []);
+  //   fetchSWVersion();
+  // }, []);
 
   /*******************************
    * 🔄 Cargar configuración

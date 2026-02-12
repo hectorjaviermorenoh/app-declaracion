@@ -4,6 +4,10 @@ import { VitePWA } from "vite-plugin-pwa"; // 1. Importa el plugin
 
 export default defineConfig({
   base: "/app-declaracion/",
+  define: {
+      // Genera una versión tipo: "v12.02.26.1825"
+    __APP_VERSION__: JSON.stringify(`v${new Date().toLocaleDateString('es-CO').replace(/\//g, '')}${new Date().getHours()}${new Date().getMinutes()}`),
+  },
   plugins: [
     react(),
     // 2. Configura el plugin
