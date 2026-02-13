@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from "react";
 import { Navbar, Nav, Container, NavDropdown, Dropdown, Offcanvas, OverlayTrigger, Tooltip } from "react-bootstrap";
+import defaultAvatarImg from "../../assets/img/defaultAvatarImg.png";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useBackends } from "../../context/BackendsContext.jsx";
 import ReinitModal from "../Modals/ReinitModal/ReinitModal";
@@ -10,7 +11,6 @@ import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import "./Navbar.scss";
 
-const DEFAULT_AVATAR = "https://via.placeholder.com/64";
 
 function AppNavbar({ onOpenBackend }) {
 
@@ -50,7 +50,7 @@ function AppNavbar({ onOpenBackend }) {
     }
   };
 
-  const userPicture = user?.picture || DEFAULT_AVATAR;
+  const userPicture = user?.picture || defaultAvatarImg;
   const hasUser = Boolean(user);
 
   return (
@@ -137,6 +137,11 @@ function AppNavbar({ onOpenBackend }) {
                       alt="avatar"
                       className="offcanvas-user-avatar user-avatar"
                       loading="lazy"
+                      onError={(e) => {
+                              if (e.target.src !== defaultAvatarImg) {
+                                e.target.src = defaultAvatarImg;
+                              }
+                      }}
                     />
                     <div className="offcanvas-user-info">
                       <div className="offcanvas-user-name">
@@ -198,18 +203,13 @@ function AppNavbar({ onOpenBackend }) {
                               alt="avatar"
                               width={34}
                               height={34}
-                              // className="rounded-circle border border-light shadow-sm"
                               className="rounded-circle user-avatar"
                               loading="lazy"
-                              // style={{
-                              //   objectFit: "cover",
-                              //   backgroundColor: "#e9ecef", // Un color gris suave de fondo mientras carga
-                              //   display: "inline-block"
-                              // }}
-                              // Si la URL de Google falla, ponemos el placeholder
-                              // onError={(e) => {
-                              //   e.target.src = DEFAULT_AVATAR;
-                              // }}
+                              onError={(e) => {
+                                      if (e.target.src !== defaultAvatarImg) {
+                                        e.target.src = defaultAvatarImg;
+                                      }
+                              }}
                             />
                           </Dropdown.Toggle>
 
@@ -222,10 +222,13 @@ function AppNavbar({ onOpenBackend }) {
                               key={userPicture}
                               src={userPicture}
                               alt="avatar"
-                              // className="rounded-circle mb-2"
                               className="rounded-circle mb-2 user-avatar-lg"
-                              // width={64}
-                              // height={64}
+                              loading="lazy"
+                              onError={(e) => {
+                                      if (e.target.src !== defaultAvatarImg) {
+                                        e.target.src = defaultAvatarImg;
+                                      }
+                              }}
                             />
                             <div className="fw-bold">{user.nombre || "Usuario desconocido"}</div>
                             <div className="text-muted small mb-2">{user.correo}</div>
