@@ -15,16 +15,14 @@ import "./Styles/ConfigAdminPanel.scss";
 export const ConfigAdminPanel = () => {
   const { config, getConfig, versionBackend, updateConfig, generarBackup, reinicializarSistemaForzado, loading } = useConfigAdmin();
 
-  const [tamanoMax, setTamanoMax] = useState(10);
-  const [tokenExp, setTokenExp] = useState(60); // 👈 Nuevo estado (valor por defecto 60)
+  const [tamanoMax, setTamanoMax] = useState("");
+  const [tokenExp, setTokenExp] = useState("");
   const [tiposPermitidos, setTiposPermitidos] = useState([]);
   const [nuevoTipo, setNuevoTipo] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tipoAEliminar, setTipoAEliminar] = useState("");
   const [showReinitModal, setShowReinitModal] = useState(false);
-
-  // const [versionFrontend, setVersionFrontend] = useState("Cargando...");
-  const [versionFrontend, setVersionFrontend] = useState(__APP_VERSION__);
+  const [versionFrontend] = useState(__APP_VERSION__);
 
   const { puede } = usePermisos();
   const puedeVerConfig = puede("getConfig");
@@ -63,6 +61,7 @@ export const ConfigAdminPanel = () => {
   /*******************************
    * 🔄 Cargar configuración
    *******************************/
+  // 1. Cargar configuración inicial
   useEffect(() => {
     if(puedeVerConfig){
       getConfig();
@@ -72,13 +71,15 @@ export const ConfigAdminPanel = () => {
   /*******************************
    * 📦 Sincronizar datos al cargar config
    *******************************/
+  // 2. Sincronizar SOLO cuando config cambia realmente (ej. al cargar la página)
+  // Usamos una condición para que no resetee el estado si el usuario ya está escribiendo
   useEffect(() => {
-    if (config) {
+    if (config && !loadingGuardar) {
       setTamanoMax(config.TAMANO_MAX_MB || 10);
       setTokenExp(config.TOKEN_EXP_MINUTOS || 60);
       setTiposPermitidos(config.TIPOS_PERMITIDOS || []);
     }
-  }, [config]);
+  }, [config, loadingGuardar]);
 
   /*******************************
    * ➕ Agregar nueva extensión
@@ -104,6 +105,17 @@ export const ConfigAdminPanel = () => {
     setTiposPermitidos(tiposPermitidos.filter((t) => t !== tipoAEliminar));
     setShowConfirmModal(false);
     setTipoAEliminar("");
+  };
+
+  // --- MANEJADORES DE CAMBIO CON RESTRICCIÓN ---
+  const handleTamanoChange = (e) => {
+    const value = e.target.value;
+    // Si el valor es mayor a 45, lo forzamos a 45
+    if (value > 45) {
+      setTamanoMax(45);
+    } else {
+      setTamanoMax(value);
+    }
   };
 
   const handleGuardarConfig = async () => {
@@ -180,13 +192,14 @@ export const ConfigAdminPanel = () => {
 
               <Col xs={12} md={5}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">📦 Tamaño máximo (MB)</Form.Label>
+                  <Form.Label className="fw-semibold">📦 Tamaño máximo permitido 45 (MB)</Form.Label>
                   <Form.Control
                     type="number"
                     min={1}
-                    max={500}
+                    max={45}
                     value={tamanoMax}
-                    onChange={(e) => setTamanoMax(e.target.value)}
+                    // onChange={(e) => setTamanoMax(e.target.value)}
+                    onChange={handleTamanoChange}
                   />
                 </Form.Group>
 
@@ -199,10 +212,9 @@ export const ConfigAdminPanel = () => {
                     onChange={(e) => setTokenExp(e.target.value)}
                   />
                   <Form.Text muted>
-                    Duración de la sesión.
+                    Duración de la sesión activa.
                   </Form.Text>
                 </Form.Group>
-
               </Col>
 
               <Col xs={12} md={2} className="d-grid">
@@ -324,209 +336,6 @@ export const ConfigAdminPanel = () => {
       />
     </div>
   );
-
-
-
-  // return (
-  //     <div className="config-admin-page container py-3">
-  //       <h3 className="fw-bold mb-4 text-primary">
-  //         ⚙️ Administración de Configuración
-  //       </h3>
-
-  //       {/* Si no tiene permisos */}
-  //       {!puedeVerConfig && <NoPermiso />}
-
-  //       {/* 🔹 Renderizado condicional con Skeleton */}
-  //       {loading && !config ? (
-  //         <ConfigSkeleton />
-  //       ) : (
-  //         <>
-  //           {/* ===== Tarjeta 1: Configuración general ===== */}
-  //           <div className="card shadow-sm p-3 mb-4">
-  //             <h5 className="fw-bold mb-3">🔧 Configuración General</h5>
-
-  //             <Row className="gy-3">
-  //               <Col xs={12} md={5}>
-  //                 <Form.Group>
-  //                   <Form.Label className="fw-semibold">📁 Carpeta Principal</Form.Label>
-  //                   <Form.Control
-  //                     type="text"
-  //                     value={config?.CARPETA_PRINCIPAL || ""}
-  //                     readOnly
-  //                     plaintext
-  //                   />
-  //                   <Form.Text muted>
-  //                     Carpeta base en Google Drive.
-  //                   </Form.Text>
-  //                 </Form.Group>
-  //                 <br />
-  //                 <Button
-  //                   variant="danger"
-  //                   onClick={() => setShowReinitModal(true)}
-  //                   disabled={loadingReinit}
-  //                 >
-  //                   {loadingReinit ? (
-  //                     <>
-  //                       <Spinner as="span" animation="border" size="sm" className="me-2" />
-  //                       Procesando...
-  //                     </>
-  //                   ) : (
-  //                     "⚠️ Reinicializar Proyecto"
-  //                   )}
-  //                 </Button>
-  //               </Col>
-
-  //               <Col xs={12} md={5}>
-  //                 <Form.Group>
-  //                   <Form.Label className="fw-semibold">📦 Tamaño máximo (MB)</Form.Label>
-  //                   <Form.Control
-  //                     type="number"
-  //                     min={1}
-  //                     max={500}
-  //                     value={tamanoMax}
-  //                     onChange={(e) => setTamanoMax(e.target.value)}
-  //                   />
-  //                 </Form.Group>
-
-  //                 <Form.Group className="mt-2">
-  //                   <Form.Label className="fw-semibold">🔑 Expiración Token (Min)</Form.Label>
-  //                   <Form.Control
-  //                     type="number"
-  //                     min={1}
-  //                     value={tokenExp}
-  //                     onChange={(e) => setTokenExp(e.target.value)}
-  //                   />
-  //                   <Form.Text muted>
-  //                     Duración de la sesión.
-  //                   </Form.Text>
-  //                 </Form.Group>
-  //               </Col>
-
-  //               <Col xs={12} md={2} className="d-grid">
-  //                 <Button
-  //                   variant="primary"
-  //                   onClick={handleBackup}
-  //                   disabled={loadingBackup}
-  //                   className="align-self-start"
-  //                 >
-  //                   {loadingBackup ? (
-  //                     <>
-  //                       <Spinner as="span" animation="border" size="sm" className="me-2" />
-  //                       Generando...
-  //                     </>
-  //                   ) : (
-  //                     "🗄️ Generar Backup"
-  //                   )}
-  //                 </Button>
-  //               </Col>
-  //             </Row>
-  //           </div>
-
-  //           {/* ===== Tarjeta 2: Tipos permitidos ===== */}
-  //           <div className="card shadow-sm p-3 mb-4">
-  //             <div className="d-flex justify-content-between align-items-center flex-wrap mb-3">
-  //               <h5 className="fw-bold mb-2 mb-md-0">🧩 Tipos de archivo permitidos</h5>
-
-  //               <InputGroup style={{ maxWidth: 260 }}>
-  //                 <Form.Control
-  //                   type="text"
-  //                   placeholder="Ej: pdf"
-  //                   value={nuevoTipo}
-  //                   onChange={(e) => setNuevoTipo(e.target.value)}
-  //                 />
-  //                 <Button onClick={handleAgregarTipo}>➕</Button>
-  //               </InputGroup>
-  //             </div>
-
-  //             <Table bordered hover responsive className="small shadow-inner-sm">
-  //               <thead className="table-light">
-  //                 <tr>
-  //                   <th>Extensión</th>
-  //                   <th className="text-center">Acciones</th>
-  //                 </tr>
-  //               </thead>
-  //               <tbody>
-  //                 {tiposPermitidos.map((tipo, idx) => (
-  //                   <tr key={idx}>
-  //                     <td className="fw-semibold">{tipo}</td>
-  //                     <td className="text-center">
-  //                       <Button
-  //                         size="sm"
-  //                         variant="outline-danger"
-  //                         onClick={() => confirmarEliminarTipo(tipo)}
-  //                       >
-  //                         🗑️ Eliminar
-  //                       </Button>
-  //                     </td>
-  //                   </tr>
-  //                 ))}
-
-  //                 {tiposPermitidos.length === 0 && (
-  //                   <tr>
-  //                     <td colSpan={2} className="text-center text-muted py-3">
-  //                       No hay extensiones configuradas.
-  //                     </td>
-  //                   </tr>
-  //                 )}
-  //               </tbody>
-  //             </Table>
-
-  //             <div className="text-end mt-3">
-  //               <Button
-  //                 variant="success"
-  //                 onClick={handleGuardarConfig}
-  //                 disabled={loadingGuardar}
-  //               >
-  //                 {loadingGuardar ? (
-  //                   <>
-  //                     <Spinner as="span" animation="border" size="sm" className="me-2" />
-  //                     Guardando...
-  //                   </>
-  //                 ) : (
-  //                   "💾 Guardar Cambios"
-  //                 )}
-  //               </Button>
-  //             </div>
-  //           </div>
-  //         </>
-  //       )}
-
-  //       {/* === Modal Eliminar === */}
-  //       <ConfirmActionModal
-  //         show={showConfirmModal}
-  //         onHide={() => setShowConfirmModal(false)}
-  //         title="Eliminar tipo de archivo"
-  //         message={
-  //           <>¿Seguro que deseas eliminar <strong>{tipoAEliminar}</strong>?</>
-  //         }
-  //         confirmLabel="Eliminar"
-  //         confirmVariant="danger"
-  //         onConfirm={handleEliminarTipo}
-  //       />
-
-  //       {/* === Modal Reinicializar === */}
-  //       <ReinitModal
-  //         show={showReinitModal}
-  //         onHide={() => setShowReinitModal(false)}
-  //         onConfirm={async (confirmText, borrarCarpetas) => {
-  //           if (confirmText !== "INICIALIZAR") return;
-  //           setLoadingReinit(true);
-  //           try {
-  //             const resp = await reinicializarSistemaForzado(confirmText, borrarCarpetas);
-  //             console.log("reinicialización del sistema", resp?.mensaje, resp?.ok)
-  //           } finally {
-  //             setLoadingReinit(false);
-  //             setShowReinitModal(false);
-  //           }
-  //         }}
-  //         loading={loadingReinit}
-  //       />
-  //     </div>
-  // );
-
-
-
-
 
 };
 

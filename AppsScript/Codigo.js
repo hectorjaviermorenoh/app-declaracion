@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "11022611AM";
+ const VERSION = "1702261139AM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -392,9 +392,9 @@ function validarPermiso(usuario, accion) {
 
     if (!tienePermiso) {
       registrarLog("PERMISO_DENEGADO", usuario.correo, {
-        accionIntentada: accion,
         rol: usuario.rol,
-        permisosDisponibles: usuario.permisos
+        accionIntentada: accion,
+        // permisosDisponibles: usuario.permisos
       });
     }
 
@@ -514,8 +514,14 @@ function handleGoogleLogin(data) {
   const tokenPropio = generarTokenPropio(infoUsuarioGoogle);
 
   // ✅ LOG POSITIVO: Registrar solamente el correo
-  registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo);
-  
+  // registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo);
+
+  registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo, {
+    rol: infoUsuarioGoogle.rol,
+    nombre: infoUsuarioGoogle.nombre,
+  });
+
+ 
   // 3. Devolver el token propio y la info del usuario al cliente
   return respuestaJSON({
     status: "ok",
