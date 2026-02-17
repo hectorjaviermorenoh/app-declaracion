@@ -2,16 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Spinner } from "react-bootstrap";
 
 // Contextos
-import { useFacturas } from "../../../context/FacturasContext";
-import { useProductos } from "../../../context/ProductosContext";
+
+import { useFacturas } from "../../../../context/FacturasContext";
+import { useProductos } from "../../../../context/ProductosContext";
 
 // Componentes reutilizables
-import LoadingOverlay from "../../LoadingOverlay/LoadingOverlay";
-import FormErrorList from "../../FormErrorList/FormErrorList";
+import LoadingOverlay from "../../../LoadingOverlay/LoadingOverlay";
+import FormErrorList from "../../../FormErrorList/FormErrorList";
 
 // Hooks y utilidades
-import { useFormValidator } from "../../../hooks/useFormValidator";
-import { normalizeField } from "../../../utils/formValidator";
+import { useFormValidator } from "../../../../hooks/useFormValidator";
+import { normalizeField } from "../../../../utils/formValidator";
 
 // Estilos
 import "./AddFacturaModal.scss";
@@ -179,7 +180,7 @@ function AddFacturaModal({ onClose, onSaved }) {
       onSaved?.();
       onClose();
     } else {
-      alert("Error: " + resp.mensaje);
+      console.log("respuesta facturas", resp)
     }
   };
 

@@ -1883,9 +1883,21 @@ function subirArchivoProducto(e, isMultipart, usuario) {
 
     // --- Validar extensión y tamaño ---
     const validacion = validarArchivo(archivoBlob, config);
+
+    // if (!validacion.ok) {
+    //   return respuestaJSON({ success: false, message: validacion.mensaje });
+    // }
+
     if (!validacion.ok) {
-      return respuestaJSON({ success: false, message: validacion.mensaje });
+      return respuestaJSON({ 
+        success: false, 
+        status: "error_validacion", // Añadimos un status para identificarlo fácilmente
+        message: validacion.mensaje, // Esto traerá "❌ Tamaño máximo permitido..." o "❌ Tipo de archivo..."
+        debug: debugPayload 
+      });
     }
+
+
     const extension = validacion.extension;
 
     // --- Guardar en Drive ---
@@ -2009,9 +2021,22 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
 
     // --- Validar extensión y tamaño ---
     const validacion = validarArchivo(archivoBlob, config);
+    // if (!validacion.ok) {
+    //   return respuestaJSON({ success: false, message: validacion.mensaje });
+    // }
+
+    // MODIFICACIÓN AQUÍ:
     if (!validacion.ok) {
-      return respuestaJSON({ success: false, message: validacion.mensaje });
+      return respuestaJSON({ 
+        success: false, 
+        status: "error_validacion", // Añadimos un status para identificarlo fácilmente
+        message: validacion.mensaje, // Esto traerá "❌ Tamaño máximo permitido..." o "❌ Tipo de archivo..."
+        debug: debugPayload 
+      });
     }
+
+
+
     const extension = validacion.extension;
 
     // --- Guardar en Drive ---

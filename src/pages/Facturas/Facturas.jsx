@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Spinner } from "react-bootstrap";
 import { useFacturas } from "../../context/FacturasContext";
-import AddFacturaModal from "../../components/Modals/AddFacturaModal/AddFacturaModal";
+
+import AddFacturaModal from "../../components/Modals/Facturas/AddFacturaModal/AddFacturaModal";
+import EditFacturaModal from "../../components/Modals/Facturas/EditFacturaModal/EditFacturaModal";
+
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
-import EditFacturaModal from "../../components/Modals/EditFacturaModal/EditFacturaModal";
 import FacturaSkeleton from "../../components/Skeletons/FacturaSkeleton/FacturaSkeleton";
 import { usePermisos } from "../../hooks/usePermisos.js";
 

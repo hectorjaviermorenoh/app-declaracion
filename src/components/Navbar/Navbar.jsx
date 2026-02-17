@@ -25,6 +25,7 @@ function AppNavbar({ onOpenBackend }) {
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { user, logout } = useAuth();
+  const [isWaitOver, setIsWaitOver] = useState(false);
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,7 +51,16 @@ function AppNavbar({ onOpenBackend }) {
     }
   };
 
-  const userPicture = user?.picture || defaultAvatarImg;
+  // const userPicture = user?.picture || defaultAvatarImg;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsWaitOver(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const userPicture = isWaitOver ? (user?.picture || defaultAvatarImg) : defaultAvatarImg;
+
   const hasUser = Boolean(user);
 
   return (
@@ -82,41 +92,41 @@ function AppNavbar({ onOpenBackend }) {
 
             {/* ***************************************** */}
 
-<div className="contCamp">
-  <div className="d-flex align-items-center position-relative">
-    {/* Contenedor de la campana con el badge */}
-    <div
-      // className="position-relative d-flex align-items-center me-3 notificacion-wrapper"
-      className={`position-relative d-flex align-items-center me-3 notificacion-wrapper ${!tienePermisoDatoTributario ? "opacity-50" : ""}`}
-      // style={{ cursor: 'pointer' }}
-      style={{
-        cursor: tienePermisoDatoTributario ? 'pointer' : 'not-allowed',
-        filter: tienePermisoDatoTributario ? 'none' : 'grayscale(1)'
-      }}
-      // onClick={handleToggle}
-      onClick={tienePermisoDatoTributario ? handleToggle : undefined}
-      title={!tienePermisoDatoTributario ? "No tienes permisos para ver datos tributarios" : ""}
-    >
-      <Bell size={22} />
+            <div className="contCamp">
+              <div className="d-flex align-items-center position-relative">
+                {/* Contenedor de la campana con el badge */}
+                <div
+                  // className="position-relative d-flex align-items-center me-3 notificacion-wrapper"
+                  className={`position-relative d-flex align-items-center me-3 notificacion-wrapper ${!tienePermisoDatoTributario ? "opacity-50" : ""}`}
+                  // style={{ cursor: 'pointer' }}
+                  style={{
+                    cursor: tienePermisoDatoTributario ? 'pointer' : 'not-allowed',
+                    filter: tienePermisoDatoTributario ? 'none' : 'grayscale(1)'
+                  }}
+                  // onClick={handleToggle}
+                  onClick={tienePermisoDatoTributario ? handleToggle : undefined}
+                  title={!tienePermisoDatoTributario ? "No tienes permisos para ver datos tributarios" : ""}
+                >
+                  <Bell size={22} />
 
-      {/* Badge dinámico: Solo se muestra si hay registros marcados como importantes */}
+                  {/* Badge dinámico: Solo se muestra si hay registros marcados como importantes */}
 
-      {tienePermisoDatoTributario && conteoImportantes > 0 && (
-        <span className="badge-notificacion pulse-animation">
-          {conteoImportantes}
-        </span>
-      )}
+                  {tienePermisoDatoTributario && conteoImportantes > 0 && (
+                    <span className="badge-notificacion pulse-animation">
+                      {conteoImportantes}
+                    </span>
+                  )}
 
-    </div>
+                </div>
 
-    {/* Toggle del menú móvil (hamburguesa) */}
-    <Navbar.Toggle
-      // className="hjm"
-      onClick={() => setShow(true)}
-      aria-controls="offcanvasNavbar-expand-lg"
-    />
-  </div>
-</div>
+                {/* Toggle del menú móvil (hamburguesa) */}
+                <Navbar.Toggle
+                  // className="hjm"
+                  onClick={() => setShow(true)}
+                  aria-controls="offcanvasNavbar-expand-lg"
+                />
+              </div>
+            </div>
 
             {/* ************************************************ */}
 
@@ -330,28 +340,6 @@ function AppNavbar({ onOpenBackend }) {
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
-
-        {/* <ReinitModal
-          show={showReinitModal}
-          onHide={() => setShowReinitModal(false)}
-          onConfirm={async (confirmText, borrarCarpetas) => {
-            if (confirmText !== "INICIALIZAR") return;
-            setShowReinitModal(false);
-            setLoadingOverlay(true);
-            try {
-              const resp = await reinicializarSistemaForzado(confirmText, borrarCarpetas);
-              showToast(resp.mensaje, resp.ok ? "success" : "danger", 3000, "Navbar");
-              refreshProductos();
-            } finally {
-              setLoadingOverlay(false);
-            }
-          }}
-
-
-        /> */}
-
-
-        {/* <LoadingOverlay show={loadingOverlay} /> */}
 
       </div>
     </>

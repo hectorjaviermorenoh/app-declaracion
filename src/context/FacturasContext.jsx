@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { apiGet, apiPost } from "../utils/apiClient.js";
+import { useToast } from "./ToastContext";
 
 
 const FacturasContext = createContext();
 
 export function FacturasProvider({ children }) {
+  const { showToast } = useToast(); // Importamos showToast
 
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +59,11 @@ export function FacturasProvider({ children }) {
 
         const data = await apiPost("subirArchivoFacturas", payload);
 
+        if (data.status === "error_validacion") {
+          console.log("data", data);
+          showToast(`${data.message}`, "info", 15000, "FacturasContext");
+        }
+
         if (data.status === "ok") {
           return {
             ok: true,
@@ -72,13 +79,16 @@ export function FacturasProvider({ children }) {
           data,
         };
       } catch (e) {
-        console.error("❌ subirFactura:", e.message);
-        return { ok: false, mensaje: "Error al subir la factura" };
+        const msgError = e.message.includes("500")
+            ? "Error 500: El archivo es demasiado pesado para el servidor de Google."
+            : "Error al conectar con el servidor.";
+        showToast(`❌ ${msgError}`, "error", 15000, "FacturasContext");
+        return { ok: false, mensaje: msgError };
       } finally {
         setLoading(false);
       }
     },
-    []
+    [showToast]
   );
 
 

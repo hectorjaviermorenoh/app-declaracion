@@ -284,7 +284,6 @@ export function AuthProvider({ children }) {
   }, [authenticated, logout, showToast]);
 
 
-
   const value = {
     authToken,
     user,

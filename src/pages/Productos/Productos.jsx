@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import UploadModal from "../../components/Productos/UploadModal/UploadModal";
-import SelectProductosModal from "../../components/productos/SelectProductosModal/SelectProductosModal";
+
+import AddProductoModal from "../../components/Modals/Productos/AddProductoModal/AddProductoModal";
+import UploadModal from "../../components/Modals/Productos/UploadModal/UploadModal";
+import SelectProductosModal from "../../components/Modals/Productos/SelectProductosModal/SelectProductosModal";
+
 // import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
-import AddProductoModal from "../../components/Modals/AddProductoModal/AddProductoModal";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { useToast } from "../../context/ToastContext";
@@ -109,12 +111,7 @@ export default function Productos() {
       });
 
       if (!confirmar) {
-        showToast(
-          "❌ Operación cancelada por el usuario",
-          "warning",
-          3000,
-          "Productos"
-        );
+        showToast("❌ Operación cancelada por el usuario", "warning", 3000, "Productos 114");
         return;
       }
 
@@ -129,11 +126,11 @@ export default function Productos() {
             )
           : await subirArchivo(productoIds, anio, file, true);
 
-      showToast(r2.mensaje, r2.ok ? "success" : "danger", 3000, "Productos");
+      showToast(r2.mensaje, r2.ok ? "success" : "danger", 3000, "Productos 129");
       return;
     }
 
-    showToast(r.mensaje, r.ok ? "success" : "danger", 3000, "Productos");
+    // showToast(r.mensaje, r.ok ? "success" : "danger", 3000, "Productos 133");
   };
 
   /* =============================

@@ -55,7 +55,7 @@ return (
           {loading ? (
             // 🔹 Skeleton para la tabla mientras carga
             Array.from({ length: 8 }).map((_, i) => (
-              <LogSkeleton key={`table-skel-${i}`} isTable={true} />
+              <LogSkeleton key={`table-skel-${i}`} />
             ))
           ) : logs.length > 0 ? (
             logs.map((log, i) => (
@@ -85,7 +85,7 @@ return (
         {loading ? (
           // 🔹 Skeleton para las tarjetas mientras carga
           Array.from({ length: 4 }).map((_, i) => (
-            <LogSkeleton key={`card-skel-${i}`} isTable={false} />
+            <LogSkeleton key={`card-skel-${i}`} />
           ))
         ) : logs.length > 0 ? (
           logs.map((log, i) => (

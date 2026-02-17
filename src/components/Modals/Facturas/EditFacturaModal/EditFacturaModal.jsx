@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
-import { useFacturas } from "../../../context/FacturasContext";
+import { useFacturas } from "../../../../context/FacturasContext";
 import "./EditFacturaModal.scss";
 
 function EditFacturaModal({ show, onHide, factura, onUpdated }) {

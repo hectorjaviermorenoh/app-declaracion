@@ -57,7 +57,7 @@ async function handleResponse(resp) {
   }
 
   // ✔️ Caso normal: validar estado
-  if (data.status && !["ok", "exists"].includes(data.status)) {
+  if (data.status && !["ok", "exists", "error_validacion"].includes(data.status)) {
     throw new Error(data.mensaje || "Error en respuesta del servidor");
   }
 

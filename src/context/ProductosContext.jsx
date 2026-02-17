@@ -127,15 +127,10 @@ export function ProductosProvider({ children }) {
         const data = await apiPost("eliminarProducto", { id: productoId });
 
         if (data.status === "ok") {
-          showToast("✅ Producto eliminado correctamente", "success", 3000, "Productos");
+          showToast("✅ Producto eliminado correctamente", "success", 3000, "ProductosContext");
           await refreshProductos();
         } else {
-          showToast(
-            `❌ Error al eliminar: ${data.mensaje || "sin detalle"}`,
-            "error",
-            3000,
-            "Productos"
-          );
+          showToast(`❌ Error al eliminar: ${data.mensaje || "sin detalle"}`, "error", 3000, "ProductosContext");
         }
 
         return {
@@ -144,7 +139,7 @@ export function ProductosProvider({ children }) {
           data,
         };
       } catch (e) {
-        showToast("❌ Error eliminando producto", "error", 3000, "Productos");
+        showToast("❌ Error eliminando producto", "error", 3000, "ProductosContext");
         console.error("❌ eliminarProducto:", e.message);
         return { ok: false, mensaje: "❌ Error al eliminar producto" };
       } finally {
@@ -175,6 +170,11 @@ export function ProductosProvider({ children }) {
 
         const data = await apiPost("subirArchivoProducto", payload);
 
+        if (data.status === "error_validacion") {
+          console.log("data", data);
+          showToast(`${data.message}`, "info", 15000, "ProductosContext");
+        }
+
         if (data.status === "ok") {
           await refreshProductos();
           return { ok: true, mensaje: "Archivo subido correctamente", data };
@@ -197,8 +197,11 @@ export function ProductosProvider({ children }) {
           data,
         };
       } catch (e) {
-        console.error("❌ subirArchivo:", e.message);
-        return { ok: false, mensaje: "Error al subir archivo" };
+        const msgError = e.message.includes("500")
+            ? "Error 500: El archivo es demasiado pesado para el servidor de Google."
+            : "Error al conectar con el servidor.";
+        showToast(`❌ ${msgError}`, "error", 15000, "ProductosContext");
+        return { ok: false, mensaje: msgError };
       } finally {
         setLoadingProductos(false);
       }
@@ -292,18 +295,18 @@ export function ProductosProvider({ children }) {
         const data = await apiPost("editarRegistroProducto", payload);
 
         if (data?.status === "ok") {
-          showToast(`✅ ${data.mensaje}`,"success",3000,"Archivos");
+          showToast(`✅ ${data.mensaje}`,"success",3000,"ProductosContext");
           return {
             ok: true,
             registro: data.registro
           };
         }
-        showToast(`❌ ${data?.mensaje || "No se pudo editar el registro"}`,"error",3000,"Archivos");
+        showToast(`❌ ${data?.mensaje || "No se pudo editar el registro"}`,"error",3000,"ProductosContext");
         return { ok: false };
 
       } catch (e) {
         console.error(e);
-        showToast("❌ Error editando el registro","error",3000,"Archivos");
+        showToast("❌ Error editando el registro","error",3000,"ProductosContext");
         return { ok: false };
 
       } finally {

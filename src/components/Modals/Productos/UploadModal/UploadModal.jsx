@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import "./UploadModal.scss";
 
-import { useFormValidator } from "../../../hooks/useFormValidator";
-import FormErrorList from "../../FormErrorList/FormErrorList";
+import { useFormValidator } from "../../../../hooks/useFormValidator";
+import FormErrorList from "../../../FormErrorList/FormErrorList";
 
 export default function UploadModal({ show, onClose, onConfirm, title, anioDefault }) {
   const { errors, validateField, validateForm, clearErrors, clearError } = useFormValidator();

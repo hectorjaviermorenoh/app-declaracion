@@ -1,6 +1,7 @@
 import { Modal, Button, Form } from "react-bootstrap";
 import { useBackends } from "../../../context/BackendsContext";
 import { useToast } from "../../..//context/ToastContext";
+import ConfirmActionModal from "../../Modals/ConfirmActionModal/ConfirmActionModal";
 import { useState } from "react";
 
 const BackendConfigModal = ({ show, onHide }) => {
@@ -12,11 +13,13 @@ const BackendConfigModal = ({ show, onHide }) => {
     setActiveBackend,
   } = useBackends();
 
+  // const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [aliasToDelete, setAliasToDelete] = useState(null);
+
   const { showToast } = useToast();
 
   const [newAlias, setNewAlias] = useState("");
   const [newUrl, setNewUrl] = useState("");
-  const [aliasToDelete, setAliasToDelete] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAdd = () => {
@@ -118,33 +121,16 @@ const BackendConfigModal = ({ show, onHide }) => {
         </Modal.Body>
       </Modal>
 
-      {/* Modal confirmación eliminación */}
-      <Modal
-        show={!!aliasToDelete}
-        onHide={() => setAliasToDelete(null)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Eliminar Backend</Modal.Title>
-        </Modal.Header>
+      <ConfirmActionModal
+        show={aliasToDelete}
+        onHide={() => setAliasToDelete(false)}
+        title="Eliminar Usuario"
+        message={<>¿Seguro que deseas eliminar el backend <strong>{aliasToDelete}</strong>?</>}
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        onConfirm={() => handleDeleteBackend(aliasToDelete)}
+      />
 
-        <Modal.Body>
-          ¿Seguro que deseas eliminar la configuración{" "}
-          <strong>{aliasToDelete}</strong>?
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setAliasToDelete(null)}>
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => handleDeleteBackend(aliasToDelete)}
-          >
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </>
   );
 };
