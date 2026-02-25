@@ -54,6 +54,7 @@ const ROLES_INICIALES = [
       "remplazarArchivoProducto",
       "subirArchivoFacturas",
       "agregarProducto",
+      "actualizarProducto",
       "eliminarProducto",
       "actualizarDatosTributarios",
       "obtenerFacturasPorAnio",
@@ -70,6 +71,7 @@ const ROLES_INICIALES = [
       "remplazarArchivoProducto",
       "subirArchivoFacturas",
       "agregarProducto",
+      "actualizarProducto",
       "eliminarProducto",
       "actualizarDatosTributarios",
       "obtenerFacturasPorAnio",
@@ -99,6 +101,7 @@ const FUNCIONES_LOGICA_NEGOCIO = [
   // --- BLOQUE: PRODUCTOS ---
   "obtenerProductosPorArchivo",
   "agregarProducto",
+  "actualizarProducto",
   "eliminarProducto",
   "subirArchivoProducto",
   "remplazarArchivoProducto",
@@ -1103,6 +1106,8 @@ function doPost(e) {
         return eliminarUsuario(data, usuario);
       case "agregarProducto":
         return agregarProducto(data, usuario);
+      case "actualizarProducto":
+        return actualizarProducto(data, usuario);
       case "eliminarProducto":
         return eliminarProducto(data.id, usuario);
       case "remplazarArchivoProducto":
@@ -1825,6 +1830,76 @@ function agregarProducto(data, usuario) {
       status: "ok", 
       resultados
       });
+  } finally {
+    lock.releaseLock();
+  }
+}
+function actualizarProducto(data, usuario) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    let productos = leerJSON(JSON_PRODUCTOS) || [];
+    const correoEjecutor = usuario?.correo || "sistema";
+
+    const { id, nombre, descripcion, entidad, tipo } = data;
+
+    if (!id) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ El ID del producto es obligatorio."
+      });
+    }
+
+    const index = productos.findIndex(p => p.id === id);
+
+    if (index === -1) {
+      return respuestaJSON({
+        status: "error",
+        mensaje: "⚠️ Producto no encontrado."
+      });
+    }
+
+    // 🚫 Validar que no exista otro producto con el mismo nombre
+    if (nombre) {
+      const existeDuplicado = productos.some(p =>
+        p.id !== id &&
+        normalizarTexto(p.nombre) === normalizarTexto(nombre)
+      );
+
+      if (existeDuplicado) {
+        return respuestaJSON({
+          status: "error",
+          mensaje: "⚠️ Ya existe otro producto con ese nombre."
+        });
+      }
+    }
+
+    // 🛠 Actualización parcial (solo si vienen campos)
+    productos[index].nombre = nombre ?? productos[index].nombre;
+    productos[index].descripcion = descripcion ?? productos[index].descripcion;
+    productos[index].entidad = entidad ?? productos[index].entidad;
+    productos[index].tipo = tipo ?? productos[index].tipo;
+
+    guardarJSON(JSON_PRODUCTOS, productos);
+
+    registrarLog("actualizarProducto", correoEjecutor, {
+      productoActualizado: productos[index]
+    });
+
+    return respuestaJSON({
+      status: "ok",
+      mensaje: "✅ Producto actualizado correctamente.",
+      producto: productos[index]
+    });
+
+  } catch (err) {
+    manejarError(err, "actualizarProducto", usuario?.correo);
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al actualizar el producto.",
+      detalle: err.message
+    });
   } finally {
     lock.releaseLock();
   }

@@ -13,6 +13,7 @@ export function ProductosProvider({ children }) {
   const [registroProductos, setRegistroProductos] = useState([]);
   const [loadingProductos, setLoadingProductos] = useState(false);
 
+
   const fetchArchivosPorAnio = useCallback(async (anio) => {
     setLoadingProductos(true);
     try {
@@ -43,6 +44,8 @@ export function ProductosProvider({ children }) {
       setLoadingProductos(false);
     }
   }, []);
+
+
 
   const refreshProductos = useCallback(async () => {
     setLoadingProductos(true);
@@ -80,6 +83,29 @@ export function ProductosProvider({ children }) {
       setLoadingProductos(false);
     }
   }, [fetchArchivosPorAnio]);
+
+  const updateProducto = useCallback(async (productoEditado) => {
+    setLoadingProductos(true);
+    try {
+      const data = await apiPost("actualizarProducto", productoEditado);
+
+      if (data.status === "ok") {
+        await refreshProductos();
+        return {
+          ok: true,
+          mensaje: data.mensaje || "Producto actualizado correctamente",
+          datos: data.producto,
+        };
+      }
+
+      return { ok: false, mensaje: data?.mensaje || "No se pudo actualizar el producto", };
+    } catch (e) {
+      console.error("❌ actualizarProducto:", e.message);
+      return { ok: false, mensaje: "Error al actualizar el producto" };
+    } finally {
+      setLoadingProductos(false);
+    }
+  }, [refreshProductos]);
 
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -327,10 +353,11 @@ export function ProductosProvider({ children }) {
         remplaceArchivo,
         fetchArchivosPorAnio,
         addProducto,
+        updateProducto,
         deleteProducto,
         deleteRegistroProducto,
         editRegistroProducto,
-        loading: loadingProductos, // ← YA FUNCIONA
+        loading: loadingProductos,
       }}
     >
       {children}

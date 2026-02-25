@@ -109,7 +109,7 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
 
           {/* Checkbox para reemplazar un archivo ya existente */}
           {title === "Remplazar archivo" && (
-            <Form.Group className="mt-3">
+            <Form.Group className="mt-3 UploadModal-replaceOnly">
               <Form.Check
                 type="checkbox"
                 label="Reemplazar solo en este producto"

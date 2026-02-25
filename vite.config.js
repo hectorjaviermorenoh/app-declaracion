@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa"; // 1. Importa el plugin
 
 export default defineConfig({
-  base: "/app-declaracion/",
+  base: "/appdeclaracion/",
   define: {
       // Genera una versión tipo: "v12.02.26.1825"
     __APP_VERSION__: JSON.stringify(`v${new Date().toLocaleDateString('es-CO').replace(/\//g, '')}${new Date().getHours()}${new Date().getMinutes()}`),
@@ -17,12 +17,12 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       filename: 'sw.js',
       manifest: {
-        id: '/app-declaracion/',
-        name: "App Declaración",
+        id: '/appdeclaracion/',
+        name: "appdeclaracion",
         short_name: "Declaración",
         description: "Administración archivos declaracion y facturas",
-        start_url: "/app-declaracion/#/",
-        scope: "/app-declaracion/",
+        start_url: "/appdeclaracion/#/",
+        scope: "/appdeclaracion/",
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#0d6efd",
