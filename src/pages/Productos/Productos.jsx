@@ -80,58 +80,73 @@ export default function Productos() {
   /* =============================
      FUNCIÓN CENTRAL 🔥
   ============================== */
-  const manejarArchivo = async ({
-    tipo,              // "subir" | "reemplazar"
+  async function manejarArchivo({
+    tipo,
     productoIds,
     anio,
     file,
-    replaceOnlyThis,
-    nombreProducto,
-  }) => {
-    const accion =
-      tipo === "reemplazar"
-        ? () =>
-            remplaceArchivo(
-              productoIds[0],
-              anio,
-              file,
-              replaceOnlyThis,
-              nombreProducto
-            )
-        : () => subirArchivo(productoIds, anio, file);
+    replaceOnlyThis = false,
+    nombreProducto = "",
+    usarExistente = false,
+    forzarTodosLosAnios = false
+  }) {
 
-    const r = await accion();
+    let respuesta;
 
-    if (r.existe) {
+    // 1️⃣ Primera llamada al backend
+    if (tipo === "reemplazar") {
+      respuesta = await remplaceArchivo(
+        productoIds[0],
+        anio,
+        file,
+        replaceOnlyThis,
+        nombreProducto,
+        usarExistente,
+        forzarTodosLosAnios
+      );
+    } else {
+      respuesta = await subirArchivo(productoIds, anio, file, usarExistente);
+    }
+
+    // 2️⃣ Si el backend detecta archivo existente
+    if (respuesta.existe) {
+
       const confirmar = await confirmarAccion({
         titulo: "Archivo existente",
-        mensaje: r.mensaje,
+        mensaje: respuesta.mensaje,
         textoConfirmar: "✅ Usar archivo existente",
-        textoCancelar: "❌ Cancelar",
+        textoCancelar: "❌ Cancelar"
       });
 
       if (!confirmar) {
-        showToast("❌ Operación cancelada por el usuario", "warning", 3000, "Productos 114");
+        showToast("❌ Operación cancelada por el usuario", "warning", 3000, "Productos");
         return;
       }
 
-      const r2 =
-        tipo === "reemplazar"
-          ? await remplaceArchivo(
-              productoIds[0],
-              anio,
-              file,
-              true,
-              nombreProducto
-            )
-          : await subirArchivo(productoIds, anio, file, true);
-
-      showToast(r2.mensaje, r2.ok ? "success" : "danger", 3000, "Productos 129");
-      return;
+      // 3️⃣ Repetir llamada usando archivo existente
+      if (tipo === "reemplazar") {
+        respuesta = await remplaceArchivo(
+          productoIds[0],
+          anio,
+          file,
+          replaceOnlyThis,
+          nombreProducto,
+          true, // 👈 forzado
+          forzarTodosLosAnios
+        );
+      } else {
+        respuesta = await subirArchivo(productoIds, anio, file, true);
+      }
     }
 
-    // showToast(r.mensaje, r.ok ? "success" : "danger", 3000, "Productos 133");
-  };
+    // 4️⃣ Mostrar resultado final
+    showToast(
+      respuesta.mensaje,
+      respuesta.ok ? "success" : "danger",
+      3000,
+      "Productos"
+    );
+  }
 
   /* =============================
      Confirm UploadModal

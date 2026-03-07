@@ -45,8 +45,6 @@ export function ProductosProvider({ children }) {
     }
   }, []);
 
-
-
   const refreshProductos = useCallback(async () => {
     setLoadingProductos(true);
     try {
@@ -236,18 +234,25 @@ export function ProductosProvider({ children }) {
   );
 
   const remplaceArchivo = useCallback(
-    async (productoId, anio, file, replaceOnlyThis = false, nombreProducto = "") => {
-      if (!file) return { ok: false, mensaje: "Seleccione un archivo para reemplazar" };
+    async (productoId, anio, file, replaceOnlyThis = false, nombreProducto = "", usarExistente = false, forzarTodosLosAnios = false ) => {
+
+      if (!file) {
+        return { ok: false, mensaje: "Seleccione un archivo para reemplazar" };
+      }
 
       setLoadingProductos(true);
+
       try {
+
         const base64 = await toBase64(file);
 
         const payload = {
           productoId,
           anio: String(anio),
-           replaceOnlyThis,
+          replaceOnlyThis,
           nombreProducto,
+          usarExistente,
+          forzarTodosLosAnios,
           archivo: {
             nombre: file.name,
             base64,
@@ -257,21 +262,84 @@ export function ProductosProvider({ children }) {
 
         const data = await apiPost("remplazarArchivoProducto", payload);
 
-        if (data.status === "ok" || data.success === true) {
-          await refreshProductos();
-          return { ok: true, mensaje: "Archivo reemplazado correctamente", data };
+        /**
+         * Caso 1
+         * El archivo está siendo usado en otros años
+         */
+        if (data.status === "archivo_usado_en_otros_anios") {
+
+          return {
+            ok: false,
+            requiereConfirmacion: true,
+            anios: data.aniosDetectados || [],
+            mensaje:
+              data.message ||
+              "El archivo también está siendo usado en otros años.",
+            data,
+          };
+
         }
 
-        return { ok: false, mensaje: data.mensaje || "Error al reemplazar", data };
+        /**
+         * Caso 2
+         * Reemplazo exitoso
+         */
+        if (data.status === "ok") {
+
+          await refreshProductos();
+
+          return {
+            ok: true,
+            mensaje: data.mensaje || "Archivo reemplazado correctamente",
+            data,
+          };
+
+        }
+
+        if (data.status === "exists") {
+          return {
+            ok: false,
+            existe: true,
+            mensaje:
+              data.message ||
+              "⚠️ Ya existe un archivo con este nombre. ¿Desea usar el existente?",
+            data,
+          };
+        }
+
+        /**
+         * Caso 3
+         * Error controlado backend
+         */
+        return {
+          ok: false,
+          mensaje: data.message || "No se pudo reemplazar el archivo",
+          data,
+        };
+
       } catch (e) {
-        console.error("❌ remplazarArchivoProducto:", e.message);
-        return { ok: false, mensaje: "Error al reemplazar archivo" };
+
+        const msgError = e.message?.includes("500")
+          ? "Error 500: El archivo es demasiado pesado para el servidor."
+          : "Error al conectar con el servidor.";
+
+        showToast(`❌ ${msgError}`, "error", 15000, "ProductosContext");
+
+        return {
+          ok: false,
+          mensaje: msgError,
+        };
+
       } finally {
+
         setLoadingProductos(false);
+
       }
+
     },
-    [refreshProductos]
+    [refreshProductos, showToast]
   );
+
 
   useEffect(() => {
     const token = getAuthToken();

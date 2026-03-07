@@ -64,28 +64,28 @@ function Contador() {
     const ext = filename.split(".").pop().toLowerCase();
     switch (ext) {
       case "pdf":
-        return <span class="icon-pdf"></span>;
+        return <span className="icon-pdf"></span>;
       case "doc":
-        return <span class="icon-microsoftword"></span>;
+        return <span className="icon-microsoftword"></span>;
       case "docx":
-        return <span class="icon-microsoftword"></span>;
+        return <span className="icon-microsoftword"></span>;
       case "xls":
-        return <span class="icon-excel"></span>;
+        return <span className="icon-excel"></span>;
       case "xlsx":
-        return <span class="icon-excel"></span>;
+        return <span className="icon-excel"></span>;
       case "ppt":
       case "pptx":
         return "📽️";
       case "jpg":
-        return <span class="icon-jpg"></span>;
+        return <span className="icon-jpg"></span>;
       case "jpeg":
-        return <span class="icon-JPEG"></span>;
+        return <span className="icon-JPEG"></span>;
       case "png":
-        return <span class="icon-png"></span>;
+        return <span className="icon-png"></span>;
       case "gif":
         return "🖼️";
       case "txt":
-        return <span class="icon-texto"></span>;
+        return <span className="icon-texto"></span>;
       case "zip":
       case "rar":
         return "🗜️";

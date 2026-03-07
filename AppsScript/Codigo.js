@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "1702261139AM";
+ const VERSION = "0603261028PM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -744,6 +744,40 @@ function verificarArchivoDuplicado(carpetaDestino, nombreArchivo) {
   const archivos = carpetaDestino.getFilesByName(nombreArchivo);
   return archivos.hasNext() ? archivos.next() : null;
 }
+function verificarYEliminarArchivoDrive(fileId, nombreArchivo, anio, bddatos, correoEjecutor) {
+  if (!fileId) return { borrado: false, motivo: "Sin ID de archivo" };
+
+  const sigueEnUsoPorId = bddatos.some(r => r.fileId === fileId);
+  const sigueEnUsoPorNombreYAnio = bddatos.some(r => r.nombreArchivo === nombreArchivo && r.anio === anio);
+
+  if (!sigueEnUsoPorId && !sigueEnUsoPorNombreYAnio) {
+    try {
+      const archivoPrincipal = DriveApp.getFileById(fileId);
+      archivoPrincipal.setTrashed(true);
+
+      const carpetaAnio = obtenerCarpeta(anio); 
+      
+      if (carpetaAnio && nombreArchivo) {
+        const archivosEnCarpeta = carpetaAnio.getFilesByName(nombreArchivo);
+        
+        while (archivosEnCarpeta.hasNext()) {
+          const fichero = archivosEnCarpeta.next();
+          if (fichero.getId() !== fileId) {
+            fichero.setTrashed(true);
+          }
+        }
+      }
+
+      return { borrado: true, motivo: `Limpieza completada para el año ${anio}.` };
+
+    } catch (e) {
+      registrarLog("error_limpieza_drive", correoEjecutor, { fileId, anio, error: e.message });
+      return { borrado: false, motivo: "Error en Drive: " + e.message };
+    }
+  }
+
+  return { borrado: false, motivo: "Archivo conservado por uso en el año " + anio };
+}
 function validarArchivo(archivoBlob, config) {
   let extension = archivoBlob.getName().split(".").pop().toLowerCase();
   let tamanoMB = archivoBlob.getBytes().length / (1024 * 1024);
@@ -1082,6 +1116,8 @@ function doPost(e) {
 
       case "subirArchivoProducto":
         return subirArchivoProducto(e, isMultipart, usuario);
+      case "remplazarArchivoProducto":
+        return remplazarArchivoProducto(e, isMultipart, usuario);
       case "subirArchivoFacturas":
         return subirArchivoFacturas(e, isMultipart, usuario);
       case "actualizarConfig":
@@ -1110,8 +1146,6 @@ function doPost(e) {
         return actualizarProducto(data, usuario);
       case "eliminarProducto":
         return eliminarProducto(data.id, usuario);
-      case "remplazarArchivoProducto":
-        return remplazarArchivoProducto(data, usuario);
       case "eliminarRegistroProducto":
         return eliminarRegistroProducto(data, usuario);
       case "editarRegistroProducto":
@@ -2186,193 +2220,222 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     lock.releaseLock();
   }
 }
-function remplazarArchivoProducto(data, usuario) {
+function remplazarArchivoProducto(e, isMultipart, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
-
+    let config = leerJSON(JSON_CONFIGURACION);
     let bddatos = leerJSON(JSON_BDD_DATOS);
     const correoEjecutor = usuario?.correo || "sistema";
 
-    // 1. Buscar el registro base
-    let registroBase = bddatos.find(r => r.productoId === data.productoId && r.anio === data.anio);
-    if (!registroBase) {
-      return respuestaJSON({ status: "error", mensaje: "❌ No existe archivo para ese producto y año" });
+    const camposEsperados = ["productoId", "anio", "replaceOnlyThis"];
+    const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
+
+    const archivoBlob = payload.archivoBlob;
+    const productoId = payload.productoId;
+    const anio = payload.anio;
+    const replaceOnlyThis = payload.replaceOnlyThis === true || payload.replaceOnlyThis === "true";
+    const debugPayload = payload.debug;
+
+    if (!archivoBlob || !productoId || !anio) {
+      return respuestaJSON({
+        success: false,
+        status: "error_campos",
+        message: "❌ Faltan campos obligatorios",
+        debug: debugPayload
+      });
     }
 
-    // 2. Determinar registros a modificar
+    let registroBase = bddatos.find(r => r.productoId === productoId && r.anio === anio);
+
+    if (!registroBase) {
+      return respuestaJSON({
+        status: "error",
+        message: "❌ No existe archivo para ese producto y año",
+        debug: debugPayload
+      });
+    }
+
     let registrosRelacionados = [];
-    if (data.replaceOnlyThis === true) {
+    if (replaceOnlyThis) {
       registrosRelacionados = [registroBase];
     } else {
-      registrosRelacionados = bddatos.filter(r => r.fileId === registroBase.fileId && r.anio === data.anio);
+      registrosRelacionados = bddatos.filter(
+        r => r.fileId === registroBase.fileId && r.anio === anio
+      );
     }
 
     if (registrosRelacionados.length === 0) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ No se encontraron registros relacionados" });
+      return respuestaJSON({
+        status: "error",
+        message: "⚠️ No se encontraron registros relacionados",
+        debug: debugPayload
+      });
     }
 
-    // --- Datos de archivo viejo ---
+    const validacion = validarArchivo(archivoBlob, config);
+    if (!validacion.ok) {
+      return respuestaJSON({
+        success: false,
+        status: "error_validacion",
+        message: validacion.mensaje,
+        debug: debugPayload
+      });
+    }
+
+    // --- Datos archivo anterior (antes de actualizar) ---
     const oldFileId = registroBase.fileId;
     const oldFileName = registroBase.nombreArchivo || "(desconocido)";
-    let borradoOk = false;
 
-    // 3. Subir nuevo archivo (nombre normalizado)
-    let nombreNormalizado = normalizarNombreArchivo(data.archivo.nombre);
+    const usarExistente = isMultipart
+      ? e.parameter.usarExistente === "true"
+      : (JSON.parse(e.postData.contents).usarExistente === true);
 
-    const extensionMatch = data.archivo.nombre.match(/\.[^/.]+$/);
-    if (extensionMatch) {
-      nombreNormalizado += extensionMatch[0];
+    const resultadoDrive = guardarArchivoEnDrive(archivoBlob, anio, null, usarExistente);
+
+    if (!resultadoDrive.ok) {
+      return respuestaJSON({
+        success: true,
+        status: resultadoDrive.status,
+        message: resultadoDrive.mensaje,
+        idArchivo: resultadoDrive.idArchivo,
+        link: resultadoDrive.link,
+        nombreArchivo: resultadoDrive.nombreArchivo,
+        debug: debugPayload
+      });
     }
 
-    const archivoBlob = Utilities.newBlob(
-      Utilities.base64Decode(data.archivo.base64),
-      data.archivo.tipo || MimeType.BINARY,
-      nombreNormalizado
-    );
+    const file = resultadoDrive.file;
 
-    const carpetaPrincipal = obtenerOCrearCarpetaRaiz();
-    const carpetaAnio = obtenerOCrearCarpetaEn(carpetaPrincipal, data.anio);
-    let file = carpetaAnio.createFile(archivoBlob);
-
-    // 4. Actualizar registros seleccionados
+    // --- Actualizar registros en la variable bddatos ---
     registrosRelacionados.forEach(r => {
       r.fileId = file.getId();
-      r.nombreArchivo = file.getName();
-      r.link = file.getUrl();
+      r.nombreArchivo = resultadoDrive.nuevoNombre || file.getName();
+      r.link = resultadoDrive.link || file.getUrl();
       r.fecha = new Date().toISOString();
     });
 
-    // 5. Borrar archivo viejo solo si es global y nadie más lo usa
-    if (data.replaceOnlyThis !== true) {
-      try {
-        if (oldFileId) {
-          DriveApp.getFileById(oldFileId).setTrashed(true);
-          borradoOk = true;
-        }
-      } catch (e) {
-        Logger.log("⚠️ No se pudo borrar archivo anterior: " + e.message);
-      }
-    }
+    // --- IMPLEMENTACIÓN DE FUNCIÓN AUXILIAR ---
+    // Se pasa la variable 'bddatos' YA actualizada para que la validación sea correcta.
+    const resultadoLimpieza = verificarYEliminarArchivoDrive(
+      oldFileId, 
+      oldFileName, 
+      anio, 
+      bddatos, 
+      correoEjecutor
+    );
 
+    // Persistir cambios
     guardarJSON(JSON_BDD_DATOS, bddatos);
 
-    // ✅ Registrar log con nombres de productos afectados
+    // --- Log y Respuesta ---
     const productosAfectados = registrosRelacionados.map(r => {
-      return r.nombreProducto 
-        ? `${r.nombreProducto} (${r.entidad || "sin entidad"})` 
-        : r.productoId;
+      return r.nombreProducto ? `${r.nombreProducto} (${r.entidad || "sin entidad"})` : r.productoId;
     });
 
     registrarLog("remplazarArchivoProducto", correoEjecutor, {
       nuevoFileId: file.getId(),
-      nuevoNombre: nombreNormalizado,
+      nuevoNombre: file.getName(),
       productosAfectados,
-      anio: data.anio,
-      replaceOnlyThis: data.replaceOnlyThis === true,
-      archivoBorrado: borradoOk ? oldFileName : "no borrado",
+      anio,
+      replaceOnlyThis,
+      archivoBorrado: resultadoLimpieza.borrado ? oldFileName : "no borrado",
+      motivoLimpieza: resultadoLimpieza.motivo,
       linkNuevoArchivo: file.getUrl()
     });
 
-    // 6. Respuesta
     return respuestaJSON({
+      success: true,
       status: "ok",
-      mensaje: `Archivo reemplazado en ${registrosRelacionados.length} producto(s). ${borradoOk ? "📂 Archivo viejo borrado: " + oldFileName : "⚠️ Archivo anterior no fue borrado"}`,
+      message: `Archivo reemplazado. ${resultadoLimpieza.motivo}`,
       archivoId: file.getId(),
-      registros: registrosRelacionados
+      registros: registrosRelacionados,
+      debug: debugPayload
     });
 
+  } catch (error) {
+    return respuestaJSON({
+      success: false,
+      status: "error_interno",
+      message: "⚠️ Error interno: " + error.message
+    });
   } finally {
     lock.releaseLock();
   }
 }
 function eliminarRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+  lock.waitLock(30000); 
 
   try {
-
     const correoEjecutor = usuario?.correo || "sistema";
-
     const registroId = data.id;
 
     if (!registroId) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "ID de registro no proporcionado"
-      });
+      return respuestaJSON({ status: "error", mensaje: "ID de registro no proporcionado" });
     }
 
-    // Leer bddatos.json
-    const datos = leerJSON(JSON_BDD_DATOS);
+    // 1. Leer la base de datos
+    const datos = leerJSON(JSON_BDD_DATOS) || [];
 
-    // Buscar registro
+    // 2. Buscar el registro que queremos eliminar
     const index = datos.findIndex(r => r.registroId === registroId);
     if (index === -1) {
-      return respuestaJSON({
-        status: "error",
-        mensaje: "Registro no encontrado"
-      });
+      return respuestaJSON({ status: "error", mensaje: "Registro no encontrado" });
     }
 
-    const registro = datos[index];
-    const { nombreArchivo, fileId, productoId, anio } = registro;
+    // Guardamos los datos necesarios antes de borrar el registro de la lista
+    const { fileId, nombreArchivo, anio, productoId } = datos[index];
 
-    // Contar cuántos registros usan el mismo archivo
-    const usosArchivo = datos.filter(
-      r => r.nombreArchivo === nombreArchivo
-    ).length;
-
-    let archivoEliminado = false;
-
-    // Si es el único uso, eliminar archivo en Drive
-    if (usosArchivo === 1 && fileId) {
-      try {
-        DriveApp.getFileById(fileId).setTrashed(true);
-        archivoEliminado = true;
-      } catch (e) {
-        Logger.log("⚠️ Error eliminando archivo en Drive: " + e);
-      }
-    }
-
-    // Eliminar registro del JSON
+    // 3. CAMBIO IMPORTANTE: Eliminar el registro del JSON primero (en memoria)
+    // Esto permite que la función auxiliar vea la base de datos SIN este registro.
     datos.splice(index, 1);
+
+    // 4. ADICIÓN: Llamar a la función auxiliar para gestionar Drive de forma inteligente
+    // Esta función borrará el ID y buscará "clones" manuales solo si nadie más los usa.
+    const resultadoDrive = verificarYEliminarArchivoDrive(
+      fileId, 
+      nombreArchivo, 
+      anio, 
+      datos, 
+      correoEjecutor
+    );
+
+    // 5. Guardar la base de datos actualizada
     guardarJSON(JSON_BDD_DATOS, datos);
 
-    // Log
+    // 6. Registrar la acción en los logs
     registrarLog("eliminarRegistroProducto", correoEjecutor, {
       registroId,
-      nombreArchivo,
+      productoId,
+      anio,
       fileId,
-      archivoEliminado
+      nombreArchivo,
+      archivoEliminadoEnDrive: resultadoDrive.borrado,
+      detalleDrive: resultadoDrive.motivo
     });
 
-    // Respuesta al frontend
+    // 7. Respuesta al frontend
     return respuestaJSON({
       status: "ok",
-      mensaje: "Registro eliminado correctamente",
+      mensaje: "Registro eliminado correctamente. " + resultadoDrive.motivo,
       eliminado: {
         registroId,
         nombreArchivo,
-        fileId,
-        productoId,
-        anio,
-        archivoEliminado
+        archivoEliminado: resultadoDrive.borrado
       }
     });
 
   } catch (e) {
-    Logger.log(e);
     return respuestaJSON({
       status: "error",
-      mensaje: e.message || "Error eliminando registro"
+      mensaje: "Error interno: " + (e.message || e)
     });
   } finally {
     lock.releaseLock();
   }
 }
-// funcionando cambio de link
 function editarRegistroProducto(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2555,7 +2618,6 @@ function obtenerFacturasPorAnio(anio) {
     data: filtrado,
   });
 }
-// funcion con cambio de link
 function actualizarFactura(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2754,41 +2816,6 @@ function obtenerDatosTributarios() {
 
   return respuestaJSON({ status: "ok", data: datos });
 }
-// function actualizarDatosTributarios(data, usuario) {
-//   const lock = LockService.getScriptLock();
-//   lock.waitLock(30000);
-//   try {
-//     // --- LÓGICA DE NORMALIZACIÓN ---
-//     let arrayParaGuardar = data;
-
-//     // Si data no es array pero tiene una propiedad 'data' que sí lo es
-//     if (!Array.isArray(data) && data && Array.isArray(data.data)) {
-//       arrayParaGuardar = data.data;
-//     } 
-//     // Si Apps Script lo recibió como objeto de argumentos (a veces pasa en apiPost)
-//     else if (!Array.isArray(data) && typeof data === 'object') {
-//        arrayParaGuardar = Object.values(data).filter(item => typeof item === 'object');
-//     }
-
-//     if (!Array.isArray(arrayParaGuardar)) {
-//       throw new Error("Los datos recibidos no tienen un formato de array válido");
-//     }
-
-//     // Guardar en el archivo JSON
-//     guardarJSON(JSON_DATOS_TRIBUTARIOS, arrayParaGuardar);
-
-//     registrarLog("actualizarDatosTributarios", usuario?.correo || "sistema", {
-//       cantidad: arrayParaGuardar.length
-//     });
-
-//     return respuestaJSON({ status: "ok", mensaje: "Datos sincronizados correctamente", data: arrayParaGuardar });
-//   } catch (error) {
-//     return respuestaJSON({ status: "error", mensaje: error.message });
-//   } finally {
-//     lock.releaseLock();
-//   }
-// }
-
 function actualizarDatosTributarios(data, usuario) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -2870,9 +2897,6 @@ function actualizarDatosTributarios(data, usuario) {
     lock.releaseLock();
   }
 }
-
-
-// Manejo de logs
 function obtenerLogs() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000); // Espera hasta 30s si otro proceso usa el recurso
