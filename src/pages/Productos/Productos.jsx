@@ -140,12 +140,7 @@ export default function Productos() {
     }
 
     // 4️⃣ Mostrar resultado final
-    showToast(
-      respuesta.mensaje,
-      respuesta.ok ? "success" : "danger",
-      3000,
-      "Productos"
-    );
+    showToast(respuesta.mensaje, respuesta.ok ? "success" : "danger", 10000, "Productos");
   }
 
   /* =============================

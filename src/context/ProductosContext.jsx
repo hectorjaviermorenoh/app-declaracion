@@ -199,11 +199,21 @@ export function ProductosProvider({ children }) {
           showToast(`${data.message}`, "info", 15000, "ProductosContext");
         }
 
+
+
         if (data.status === "ok") {
           await refreshProductos();
           return { ok: true, mensaje: "Archivo subido correctamente", data };
         }
 
+        if (data.status === "archivo_existente") {
+          return {
+            ok: false,
+            mensaje:
+              data.message ||
+              "⚠️ Ya existe un archivo para este producto"
+          };
+        }
         if (data.status === "exists") {
           return {
             ok: false,

@@ -350,11 +350,33 @@ function Contador() {
                       <p><strong>Producto:</strong> {a.nombreProducto}</p>
                       <p><strong>Tipo:</strong> {a.tipo}</p>
                       <p><strong>Descripción:</strong> {a.descripcion || "-"}</p>
+                      <div className="acciones">
+                        <i
+                          className={`bi bi-pencil-square accion-icon ${!editRecord ? 'disabled-icon' : ''}`}
+                          title={editRecord ? "Editar" : "No tienes permisos para editar"}
+                          onClick={(e) => {
+                            if (!editRecord) return;
+                            e.stopPropagation();
+                            setRegistroSeleccionado(a);
+                            setShowEditModal(true);
+                          }}
+                        ></i>
+                        <i
+                          className={`bi bi-x-circle accion-icon text-danger ${!deleteRecord ? 'disabled-icon' : ''}`}
+                          title={deleteRecord ? "Eliminar" : "No tienes permisos para eliminar"}
+                          onClick={(e) => {
+                            if (!deleteRecord) return;
+                            e.stopPropagation();
+                            setRegistroSeleccionado(a);
+                            setShowDeleteModal(true);
+                          }}
+                        ></i>
+                      </div>
                       <button
                         className="btn btn-primary btn-sm w-100 mt-2"
                         onClick={() => window.open(a.link, "_blank")}
                       >
-                        📄 Abrir archivo
+                        📄 Abrir archivo1
                       </button>
                     </div>
                   )}

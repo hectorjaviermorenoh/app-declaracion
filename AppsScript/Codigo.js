@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "0603261028PM";
+ const VERSION = "1003261912PM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -1970,6 +1970,9 @@ function subirArchivoProducto(e, isMultipart, usuario) {
   try {
 
     let config = leerJSON(JSON_CONFIGURACION);
+    let bddatos = leerJSON(JSON_BDD_DATOS);
+    let productos = leerJSON(JSON_PRODUCTOS);
+
     const correoEjecutor = usuario?.correo || "sistema";
 
     // 👀 Capturamos el payload que llegó
@@ -1979,6 +1982,8 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     const archivoBlob = payload.archivoBlob;
     const anio = payload.anio;
     let productosId = payload.productosId || [];
+
+
 
     const debugPayload = payload.debug;
 
@@ -1994,6 +1999,46 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     if (typeof productosId === "string") {
       productosId = productosId.split(",");
     }
+
+    productosId = productosId.map(p => String(p));
+
+    // *****************************************************
+    // obtener nombres de los productos que se quieren subir
+    // 🔎 buscar duplicados
+    const nombresProductos = productos
+      .filter(p => productosId.includes(String(p.id)))
+      .map(p => p.nombre);
+
+    // 🔎 buscar duplicados
+    const registrosExistentes = bddatos.filter(r =>
+      r.anio === anio &&
+      (
+        productosId.includes(String(r.productoId)) ||
+        nombresProductos.includes(r.nombreProducto)
+      )
+    );
+
+    if (registrosExistentes.length > 0) {
+
+      const productosDuplicados = [
+        ...new Set(
+          registrosExistentes
+            .map(r => r.nombreProducto)
+            .filter(Boolean)
+        )
+      ];
+
+      return respuestaJSON({
+        success: true,
+        status: "archivo_existente",
+        existe: true,
+        message: `⚠️ Ya existe archivo para ${productosDuplicados.join(", ")} en el año ${anio}`,
+        registros: registrosExistentes,
+        debug: debugPayload
+      });
+
+    }
+    // *****************************************************
 
 
     // --- Validar extensión y tamaño ---
@@ -2037,12 +2082,8 @@ function subirArchivoProducto(e, isMultipart, usuario) {
 
     const file = resultadoDrive.file;
 
-
-
     // --- Registrar en base de datos ---
-    let bddatos = leerJSON(JSON_BDD_DATOS);
-    let productos = leerJSON(JSON_PRODUCTOS);
-
+  
     productosId.forEach(pid => {
       let prod = productos.find(p => p.id === pid);
       if (prod) {
@@ -2975,5 +3016,8 @@ function limpiarLogsAntiguos(usuario) {
   }
 }
 
+/******************************
+ * FIN BACKEND
+ ******************************/
 
 
