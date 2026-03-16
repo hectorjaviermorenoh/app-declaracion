@@ -1,0 +1,84 @@
+// src/pages/Legal/Privacidad.jsx
+import React from 'react';
+import './Styles/privacidad.scss';
+
+const Privacidad = () => {
+  return (
+    <div className="legal-container">
+      <h1>Política de Privacidad</h1>
+      <p>Última actualización: 20 de enero de 2026</p>
+
+      <p>Esta Política de Privacidad describe cómo <strong>AppDeclaración</strong> recopila, utiliza y protege su información al utilizar nuestro servicio de autenticación a través de Google.</p>
+
+      <div class="highlight">
+          <strong>Nota importante sobre la arquitectura:</strong> Esta aplicación es una herramienta descentralizada. Los datos que usted genera se almacenan exclusivamente en su propia cuenta de Google Drive a través de su implementación personal de Google Apps Script. Nosotros no tenemos acceso a sus archivos ni a su información privada.
+      </div>
+
+      <h2>1. Información que recopilamos</h2>
+      <p>Nuestra aplicación utiliza los servicios de Google OAuth para la autenticación. Al iniciar sesión, solicitamos acceso a:</p>
+      <ul>
+          <li><strong>Dirección de correo electrónico:</strong> Para identificar su cuenta y gestionar los permisos de acceso.</li>
+          <li><strong>Información básica de perfil (Nombre y foto):</strong> Para personalizar su experiencia dentro de la interfaz.</li>
+      </ul>
+
+      <h2>1.1 Información que NO recopilamos</h2>
+      <p>
+      AppDeclaración no recopila, almacena ni procesa:
+      </p>
+      <ul>
+          <li>Contraseñas de Google.</li>
+          <li>Contenido de correos electrónicos.</li>
+          <li>Archivos personales fuera del entorno creado por la aplicación.</li>
+          <li>Información bancaria, financiera o datos de pago.</li>
+      </ul>
+
+
+      <h2>2. Uso de la información</h2>
+      <p>La información obtenida a través de Google se utiliza únicamente para:</p>
+      <ul>
+          <li>Validar su identidad y permitir el acceso a las funciones del backend.</li>
+          <li>Registrar logs de auditoría de inicio de sesión (almacenados en su propio Google Drive).</li>
+          <li>Garantizar que el sistema de permisos y roles funcione correctamente.</li>
+      </ul>
+
+      <h2>3. Almacenamiento de datos</h2>
+      <p>Todos los datos operativos (usuarios, logs, configuraciones y archivos) se almacenan en archivos JSON dentro de la infraestructura de <strong>Google Drive del usuario</strong>. Esta aplicación no posee una base de datos centralizada y los desarrolladores no pueden ver, editar ni eliminar sus datos.</p>
+
+      <h2>4. Intercambio de datos con terceros</h2>
+      <p>
+      <strong>No vendemos, alquilamos ni compartimos</strong> su información personal con terceros.
+      </p>
+      <p>
+      El frontend de la aplicación puede estar alojado en plataformas como GitHub Pages,
+      las cuales únicamente sirven contenido estático y no tienen acceso a información personal,
+      datos de autenticación ni archivos del usuario.
+      </p>
+      <p>Los datos solo fluyen entre su navegador, el frontend alojado en GitHub y su backend personal en Google Apps Script.</p>
+
+      <h2>5. Seguridad</h2>
+      <p>
+      La seguridad de su información se apoya en los protocolos y estándares de seguridad proporcionados por Google.
+      Al utilizar OAuth 2.0, la aplicación no conoce, no solicita ni almacena su contraseña de Google en ningún momento.
+      </p>
+
+      <h2>6. Sus Derechos</h2>
+      <p>Usted puede revocar el acceso de esta aplicación a su cuenta de Google en cualquier momento a través de la configuración de seguridad de su cuenta de Google en: <a href="https://myaccount.google.com/permissions" target="_blank">Google - Aplicaciones con acceso a tu cuenta</a>.</p>
+
+      <h2>7. Cambios a esta Política de Privacidad</h2>
+      <p>
+          Esta Política de Privacidad puede actualizarse ocasionalmente para reflejar mejoras técnicas
+          o cambios normativos. Cualquier modificación será publicada en esta misma página con la fecha
+          de última actualización correspondiente.
+      </p>
+
+      <h2>8. Contacto</h2>
+      <p>Si tiene preguntas sobre esta política, puede contactarnos en: <strong>hectorjaviermorenoh@gmail.com</strong></p>
+
+
+
+
+    </div>
+  );
+};
+
+export default Privacidad;

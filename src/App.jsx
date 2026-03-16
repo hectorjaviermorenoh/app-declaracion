@@ -13,6 +13,8 @@ import Productos from "./pages/Productos/Productos";
 import DatosTributarios from "./pages/DatosTributarios/DatosTributarios";
 import Contador from "./pages/Contador/Contador";
 import Facturas from "./pages/Facturas/Facturas";
+import Privacidad from './pages/Legal/Privacidad';
+import Terminos from './pages/Legal/Terminos';
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
           <Route path="/contador" element={<Contador />} />
           <Route path="/facturas" element={<Facturas />} />
           <Route path="/admin" element={<DashboardAdmin />} />
+          <Route path="/privacidad" element={<Privacidad />} />
+          <Route path="/terminos" element={<Terminos />} />
         </Routes>
       </Container>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useBackends } from "../../context/BackendsContext";
@@ -145,23 +146,13 @@ export default function Home() {
         {/* --- LINKS LEGALES AGREGADOS AQUÍ --- */}
         <hr className="mt-4 mb-3" />
         <div className="legal-links" style={{ fontSize: "0.85rem" }}>
-          <a
-            href="/app-declaracion/privacidad.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-decoration-none text-secondary mx-2"
-          >
+          <Link to="/privacidad" className="text-decoration-none text-secondary mx-2">
             Privacidad
-          </a>
+          </Link>
           <span className="text-muted">|</span>
-          <a
-            href="/app-declaracion/terminos.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-decoration-none text-secondary mx-2"
-          >
+          <Link to="/terminos" className="text-decoration-none text-secondary mx-2">
             Términos
-          </a>
+          </Link>
         </div>
       </div>
     </div>
