@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Form, Button, Toast, ToastContainer, Spinner } from "react-bootstrap";
 import { useProductos } from "../../../../context/ProductosContext";
 import LoadingOverlay from "../../../../components/LoadingOverlay/LoadingOverlay";
@@ -8,8 +8,8 @@ import { normalizeField } from "../../../../utils/formValidator";
 
 import "./AddProductoModal.scss";
 
-function AddProductoModal({ show, onHide }) {
-  const { addProducto } = useProductos();
+function AddProductoModal({ show, onHide, productoAEditar }) {
+  const { addProducto, updateProducto } = useProductos();
 
   const { errors, validateField, validateForm, clearError, clearErrors } = useFormValidator();
 
@@ -34,12 +34,28 @@ function AddProductoModal({ show, onHide }) {
     clearError(name);
   };
 
+  useEffect(() => {
+    if (show && productoAEditar) {
+      // Si hay producto, llenamos el formulario (Modo Edición)
+      setForm({
+        nombre: productoAEditar.nombre || "",
+        descripcion: productoAEditar.descripcion || "",
+        entidadProducto: productoAEditar.entidad || "",
+        tipo: productoAEditar.tipo || "",
+      });
+    } else if (show && !productoAEditar) {
+      // Si no hay producto, limpiamos el formulario (Modo Adición)
+      setForm({ nombre: "", descripcion: "", entidadProducto: "", tipo: "" });
+      clearErrors();
+    }
+  }, [productoAEditar, show]);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearErrors();
 
-    const isValid = validateForm(form);
-    if (!isValid) return;
+    if (!validateForm(form)) return;
 
     setLoading(true);
 
@@ -47,31 +63,31 @@ function AddProductoModal({ show, onHide }) {
       const payload = {
         nombre: normalizeField(form.nombre),
         descripcion: form.descripcion ? normalizeField(form.descripcion) : "",
-        entidad: normalizeField(form.entidadProducto),
+        entidad: normalizeField(form.entidadProducto), // Backend espera 'entidad'
         tipo: form.tipo ? normalizeField(form.tipo) : "",
       };
 
-      const response = await addProducto(payload);
+      let response;
 
-      if (!response.ok) throw new Error("Error al guardar producto");
+      if (productoAEditar) {
+        // ✏️ MODO EDICIÓN: Agregamos el ID al payload
+        response = await updateProducto({ ...payload, id: productoAEditar.id });
+      } else {
+        // ➕ MODO ADICIÓN
+        response = await addProducto(payload);
+      }
 
-      // Limpiar formulario
-      setForm({
-        nombre: "",
-        descripcion: "",
-        entidadProducto: "",
-        tipo: "",
-      });
-
-      // Mostrar toast
-      setToastVariant("success");
-      setToastMsg(response.mensaje);
-      setShowToast(true);
-
-      onHide();
+      if (response.ok) {
+        setToastVariant("success");
+        setToastMsg(response.mensaje);
+        setShowToast(true);
+        onHide(); // Esto cerrará el modal y llamará a setSelectedProducto(null)
+      } else {
+        throw new Error(response.mensaje || "Error en la operación");
+      }
     } catch (err) {
       setToastVariant("danger");
-      setToastMsg("❌ Error al guardar el producto");
+      setToastMsg(`❌ ${err.message}`);
       setShowToast(true);
       console.error(err);
     } finally {
@@ -83,7 +99,8 @@ function AddProductoModal({ show, onHide }) {
     <>
       <Modal show={show} onHide={onHide} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Adicionar Producto</Modal.Title>
+          {/* <Modal.Title>Adicionar Producto</Modal.Title> */}
+          <Modal.Title>{productoAEditar ? "Editar Producto" : "Adicionar Producto"}</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
@@ -142,11 +159,11 @@ function AddProductoModal({ show, onHide }) {
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? (
                 <>
-                  <Spinner as="span" animation="border" size="sm" />
-                  {" "}Guardando...
+                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                  <span className="ms-2">Procesando...</span>
                 </>
               ) : (
-                "Guardar Producto"
+                productoAEditar ? "Guardar Cambios" : "Guardar Producto"
               )}
             </Button>
           </Form>

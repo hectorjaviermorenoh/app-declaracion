@@ -22,6 +22,7 @@ export default function Productos() {
   const puedeRemplazarArchivo = puede("remplaceArchivo");
   const puedeEliminarProducto = puede("eliminarProducto");
   const puedeAgregarProducto = puede("agregarProducto");
+  const puedeEditarProducto = puede("actualizarProducto");
 
   const {
     registroProductos,
@@ -217,19 +218,55 @@ export default function Productos() {
               <Col xs={12} md={6} lg={4} key={prod.id} className="mb-3">
                 <Card className={`producto-card ${prod.tieneArchivo ? "producto-ok" : ""}`}>
                   <Card.Body>
-                    <button
-                      type="button"
-                      className="btn-close position-absolute top-0 end-0 m-2"
-                      disabled={!puedeEliminarProducto} // Si es un <button> normal de HTML
-                      style={!puedeEliminarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
-                      onClick={() => {
-                        if(!puedeEliminarProducto) return;
-                        setSelectedProducto(prod);
-                        setShowDeleteModal(true);
-                      }}
-                    />
 
-                    <Card.Title>{prod.entidad} {prod.nombre}</Card.Title>
+                    {/* Contenedor de acciones (Esquina superior derecha) */}
+                    <div className="position-absolute top-0 end-0 m-2 d-flex gap-2 align-items-center">
+
+                      {/* ✏️ BOTÓN EDITAR */}
+                      <button
+                        type="button"
+                        className="editicon accion-icon"
+                        disabled={!puedeEditarProducto || prod.tieneArchivo}
+                        onClick={() => {
+                          if(!puedeEditarProducto) return;
+                          setSelectedProducto(prod); // Cargamos los datos del producto
+                          setShowAddModal(true);     // Abrimos el modal
+                        }}
+                        // title="Editar producto"
+                        title={
+                            prod.tieneArchivo
+                              ? "No se puede editar un producto con archivo vinculado"
+                              : !puedeEditarProducto
+                                ? "No tienes permisos para editar"
+                                : "Editar producto"
+                          }
+                          style={{
+                              // Aplicamos opacidad visual si está deshabilitado
+                              opacity: (!puedeEditarProducto || prod.tieneArchivo) ? 0.3 : 1,
+                              cursor: (!puedeEditarProducto || prod.tieneArchivo) ? 'not-allowed' : 'pointer'
+                            }}
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+
+                      {/* 🗑️ BOTÓN ELIMINAR (Tu botón original) */}
+                      <button
+                        type="button"
+                        className="editicon accion-icon text-danger"
+                        disabled={!puedeEliminarProducto}
+                        style={!puedeEliminarProducto ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+                        onClick={() => {
+                          if(!puedeEliminarProducto) return;
+                          setSelectedProducto(prod);
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    </div>
+
+
+                    <Card.Title className="producto-title-t">{prod.entidad} {prod.nombre}</Card.Title>
                     <Card.Text>{prod.descripcion}</Card.Text>
 
                     {prod.tieneArchivo ? (
@@ -311,9 +348,11 @@ export default function Productos() {
         />
         <AddProductoModal
           show={showAddModal}
-          onHide={() => setShowAddModal(false)}
-          onProductoAgregado={() => setShowAddModal(false)}
+          onHide={() => {setShowAddModal(false); setSelectedProducto(null);}}
+          productoAEditar={selectedProducto}
+          onProductoAgregado={() => {setShowAddModal(false); setSelectedProducto(null);}}
         />
+
         <ConfirmActionModal
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}

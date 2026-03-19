@@ -34,6 +34,7 @@ export default function SelectProductosModal({ show, onClose, onConfirm, product
     onConfirm(selectedProducts);
   };
 
+
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
@@ -51,7 +52,8 @@ export default function SelectProductosModal({ show, onClose, onConfirm, product
               <Form.Check
                 key={prod.id}
                 type="checkbox"
-                label={prod.nombre}
+                // label={prod.nombre}
+                label={`${prod.entidad} - ${prod.nombre}`}
                 checked={
                   selectedProducts.includes(prod.id) ||
                   prod.id === productoOrigen?.id

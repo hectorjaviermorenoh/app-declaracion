@@ -8,7 +8,9 @@ const ProductSkeleton = () => {
       <Card className="producto-card-skeleton">
         <Card.Body>
           {/* Espacio para el botón de cerrar (esquina superior derecha) */}
+          <div className="skeleton-edit-btn"></div>
           <div className="skeleton-close-btn"></div>
+
 
           {/* Título (Entidad + Nombre) */}
           <div className="skeleton-placeholder skeleton-title"></div>
