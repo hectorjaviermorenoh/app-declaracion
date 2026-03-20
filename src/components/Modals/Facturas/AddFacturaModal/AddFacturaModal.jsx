@@ -119,7 +119,15 @@ function AddFacturaModal({ onClose, onSaved }) {
 
       const filtrados = productos
         .filter((p) => p.nombre?.toLowerCase().startsWith("tarjeta"))
-        .map((p) => capitalizar(p.nombre));
+        .map((p) => {
+          const nombreLimpio = capitalizar(p.nombre);
+          const entidadLimpia = p.entidad ? capitalizar(p.entidad) : "";
+
+          // Si hay entidad, concatenamos "Entidad - Nombre", sino solo el nombre
+          return entidadLimpia
+            ? `${entidadLimpia} - ${nombreLimpio}`
+            : nombreLimpio;
+        });
 
       setMetodosDinamicos(filtrados);
       setLoadingMetodos(false);
