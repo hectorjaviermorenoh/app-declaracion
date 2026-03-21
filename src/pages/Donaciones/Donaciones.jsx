@@ -29,7 +29,7 @@ export default function Donaciones() {
 
           <div className="card shadow-lg border-0 p-4 p-md-5 text-center">
 
-            <header className="mb-5 text-center">
+            <header className="mb-3 text-center">
                 <div className="badge bg-warning-soft text-warning p-3 mb-3 fs-4 rounded-circle">
                     <i className="bi bi-cup-hot-fill"></i>
                 </div>

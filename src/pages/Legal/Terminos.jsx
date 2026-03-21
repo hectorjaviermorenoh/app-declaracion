@@ -1,10 +1,18 @@
 // src/pages/Legal/Terminos.jsx
 import React from 'react';
+import { useNavigate } from "react-router-dom";
 import './Styles/terminos.scss';
 
 const Terminos = () => {
+  const navigate = useNavigate();
   return (
+
     <div className="terminos-container">
+
+      <button className="btn btn-outline-secondary btn-sm mb-4" onClick={() => navigate(-1)}>
+      <i className="bi bi-arrow-left me-2"></i>Volver
+      </button>
+
       <h1>Términos y Condiciones de Uso</h1>
       <p>Última actualización: 20 de enero de 2026</p>
 

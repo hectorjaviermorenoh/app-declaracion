@@ -19,12 +19,12 @@ export default function AcercaDe() {
           </button>
 
           <div className="card shadow-sm p-4 p-md-5">
-            <header className="text-center mb-5">
+            <header className="text-center mb-3">
               <h1 className="fw-bold text-primary">AppDeclaración</h1>
               <p className="lead text-muted">Tu asistente personal para la organización tributaria</p>
             </header>
 
-            <section className="mb-5">
+            <section className="mb-3">
               <h4 className="fw-bold border-bottom pb-2 mb-3">¿Qué es AppDeclaración?</h4>
               <p>
                 Es una solución tecnológica diseñada para eliminar el estrés de la temporada de impuestos.
@@ -33,7 +33,7 @@ export default function AcercaDe() {
               </p>
             </section>
 
-            <section className="mb-5">
+            <section className="mb-3">
               <h4 className="fw-bold border-bottom pb-2 mb-3">Características Principales</h4>
               <div className="row g-4">
                 <div className="col-md-6">
@@ -83,7 +83,7 @@ export default function AcercaDe() {
               </div>
             </section>
 
-            <section className="bg-light p-4 rounded mb-5">
+            <section className="bg-light p-2 rounded mb-3">
               <h4 className="fw-bold mb-3">Arquitectura Descentralizada</h4>
               <p className="mb-0">
                 A diferencia de otras aplicaciones, <strong>AppDeclaración</strong> no utiliza bases de datos centrales.
@@ -93,18 +93,10 @@ export default function AcercaDe() {
               </p>
             </section>
 
-            <footer className="text-center mt-5 pt-4 border-top">
+            <footer className="text-center mt-3 pt-4 border-top">
               <p className="mb-1 text-muted">Desarrollado por <strong>Hector Javier Moreno</strong></p>
               <div className="mt-3">
                 <p className="small mb-2">Si esta herramienta te ha sido útil, puedes apoyar su mantenimiento:</p>
-                {/* <a
-                  href="https://tu-link-de-donacion.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-warning fw-bold"
-                >
-                  <i className="bi bi-cup-hot me-2"></i>Invítame un café
-                </a> */}
                 <Link to="/donaciones" className="btn btn-warning fw-bold">
                   <i className="bi bi-cup-hot me-2"></i>Invítame un café
                 </Link>
