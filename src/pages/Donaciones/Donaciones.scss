@@ -1,0 +1,90 @@
+.donaciones-container {
+  // Animación de entrada suave
+  .animate__fadeIn {
+    animation: fadeIn 0.8s ease-in-out;
+  }
+
+  .card {
+    border-radius: 20px;
+    background-color: #ffffff;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    letter-spacing: -0.5px;
+  }
+
+  // Soft Badge para el icono de café
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &.bg-warning-soft {
+      background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+  }
+
+  .qr-wrapper {
+    transition: all 0.3s ease;
+    // Borde sutil para que el QR resalte
+    border: 1px solid #e0e4e8 !important;
+
+    &:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+  }
+
+  // Colores de marca
+  .bg-nequi {
+    background-color: #ff007a; // Color característico de Nequi
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.5em 1em;
+  }
+
+  .bg-breb {
+    background-color: #00bcd4; // Color Bre-B / Transfiya
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.5em 1em;
+  }
+
+  .info-cuenta {
+    .h4 {
+      letter-spacing: 1px;
+    }
+  }
+
+  .disclaimer {
+    background-color: #fff9db;
+    color: #856404;
+    font-size: 0.85rem;
+    border: 1px solid #ffeeba;
+  }
+
+  // Media queries para diseño en escritorio
+  @media (min-width: 768px) {
+    .border-end-md {
+      border-end: 1px solid #eef0f2 !important;
+    }
+  }
+  @media (max-width: 768px) {
+    .d-flex {
+      justify-content: center;
+    }
+  }
+}
+
+// Fallback de animación por si no usas animate.css
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

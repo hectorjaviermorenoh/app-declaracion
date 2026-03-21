@@ -15,6 +15,8 @@ import Contador from "./pages/Contador/Contador";
 import Facturas from "./pages/Facturas/Facturas";
 import Privacidad from './pages/Legal/Privacidad';
 import Terminos from './pages/Legal/Terminos';
+import AcercaDe from "./pages/AcercaDe/AcercaDe";
+import Donaciones from "./pages/Donaciones/Donaciones";
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
 function App() {
@@ -51,6 +53,8 @@ function App() {
           <Route path="/admin" element={<DashboardAdmin />} />
           <Route path="/privacidad" element={<Privacidad />} />
           <Route path="/terminos" element={<Terminos />} />
+          <Route path="/acerca-de" element={<AcercaDe />} />
+          <Route path="/donaciones" element={<Donaciones />} />
         </Routes>
       </Container>
 

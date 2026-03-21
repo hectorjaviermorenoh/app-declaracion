@@ -80,7 +80,7 @@ function AppNavbar({ onOpenBackend }) {
               )}
 
               <div className="grupNavTex text-center">
-                <Navbar.Brand className="app-brand" as={Link} to="/">DeclaraciónApp</Navbar.Brand>
+                <Navbar.Brand className="app-brand" as={Link} to="/">AppDeclaración</Navbar.Brand>
                 {activeBackend?.alias && (
                   <h6 className="backend-alias mb-0" title={activeBackend.alias}>
                     {activeBackend.alias}
@@ -264,9 +264,9 @@ function AppNavbar({ onOpenBackend }) {
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={onOpenBackend}>Configurar Backend</NavDropdown.Item>
                     <NavDropdown.Divider />
-                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Donaciones</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/donaciones">Donaciones</NavDropdown.Item>
                     <NavDropdown.Divider />
-                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/about">Acerca de</NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/acerca-de">Acerca de</NavDropdown.Item>
                   </NavDropdown>
                   </OverlayTrigger>
 
@@ -335,8 +335,8 @@ function AppNavbar({ onOpenBackend }) {
           <Nav className="flex-column">
             <Nav.Link onClick={() => {setShowMoreMenu(false); navigate("/admin");}}>Admin & Config</Nav.Link>
             <Nav.Link onClick={() => {setShow(false);onOpenBackend()}}>Configurar Backend</Nav.Link>
-            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/about");}}>Donaciones</Nav.Link>
-            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/about");}}>Acerca de</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/donaciones");}}>Donaciones</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/acerca-de");}}>Acerca de</Nav.Link>
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>

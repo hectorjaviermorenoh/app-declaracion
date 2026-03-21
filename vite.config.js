@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         id: '/appdeclaracion/',
         name: "appdeclaracion",
-        short_name: "Declaración",
+        short_name: "AppDeclaración",
         description: "Administración archivos declaracion y facturas",
         start_url: "/appdeclaracion/#/",
         scope: "/appdeclaracion/",
