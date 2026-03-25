@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "1003261912PM";
+ const VERSION = "2408262028PM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -15,8 +15,8 @@ const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
-const ZEICHENSCHLUESSEL = "528138845199053779904519";
-const URL_PRODUCCION = "https://hectorjaviermorenoh.github.io/app-declaracion";
+
+const URL_PRODUCCION = "https://appdeclaracion.github.io/appdeclaracion";
 
 /******************************
  * CONSTANTE DE CONFIGURACIONES INICIALES
@@ -317,10 +317,38 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
 /******************************
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
+function obtenerConfigCentral() {
+
+  const cache = CacheService.getScriptCache();
+  let config = cache.get("CONFIG_CENTRAL");
+
+  if (config) {
+    return JSON.parse(config);
+  }
+
+  try {
+
+    const response = UrlFetchApp.fetch(`${URL_PRODUCCION}/entity_index.json`);
+    config = response.getContentText();
+
+    cache.put("CONFIG_CENTRAL", config, 21600);
+
+    return JSON.parse(config);
+
+  } catch (err) {
+
+    return {
+      idCliente: "fallback",
+      llave: "fallback_key"
+    };
+
+  }
+}
+
 function verificarTokenYAutorizar(token) {
 
-  const responseGithub = UrlFetchApp.fetch(`${URL_PRODUCCION}/idCliente.json`);
-  const { idCliente: CLIENT_ID } = JSON.parse(responseGithub.getContentText());
+  const configCentral = obtenerConfigCentral();
+  const CLIENT_ID = configCentral.idCliente;
 
 
   const tokenInfoUrl = 'https://oauth2.googleapis.com/tokeninfo?id_token=' + token;
@@ -414,6 +442,9 @@ function validarPermiso(usuario, accion) {
  */
 function generarTokenPropio(usuarioInfo) {
 
+  const configCentral = obtenerConfigCentral();
+  const ZEICHENSCHLUESSEL = configCentral.llave;
+
   // 1. Leer la configuración actual de Drive
   const config = leerJSON(JSON_CONFIGURACION) || {};
   // 2. Obtener los minutos o usar 60 por defecto si no existe
@@ -454,6 +485,10 @@ function generarTokenPropio(usuarioInfo) {
  * Se usará en CADA petición (doGet/doPost) excepto en el login.
  */
 function verificarTokenPropio(token) {
+
+  const configCentral = obtenerConfigCentral();
+  const ZEICHENSCHLUESSEL = configCentral.llave;
+
   if (!token) {
     return { autorizado: false, mensaje: "No se proporcionó token" };
   }
