@@ -37,17 +37,69 @@ export default function Home() {
   /***************************************************
    * 🚀 Renderizar botón de Google con reintentos
    ***************************************************/
+  // useEffect(() => {
+  //   if (loading || authenticated || isLoggingIn) return;
+
+  //   const renderGoogleButton = () => {
+  //     const container = document.getElementById("googleLoginDiv");
+  //     if (!container) return;
+
+  //     if (!window.google?.accounts?.id) return;
+
+  //     container.innerHTML = "";
+
+  //     window.google.accounts.id.initialize({
+  //       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  //       callback: (response) => {
+  //         const token = response.credential;
+  //         setIsLoggingIn(true);
+
+  //         login(token, () => {
+  //           setIsLoggingIn(false);
+  //         });
+  //       },
+  //     });
+
+  //     window.google.accounts.id.renderButton(container, {
+  //       theme: "filled_blue",
+  //       size: "large",
+  //       shape: "pill",
+  //       text: "signin_with",
+  //       width: 240,
+  //     });
+  //   };
+
+  //   // Primer intento inmediato
+  //   renderGoogleButton();
+
+  //   // Reintentos cada 500 ms hasta 10 veces
+  //   let attempts = 0;
+  //   const interval = setInterval(() => {
+  //     attempts++;
+  //     if (window.google?.accounts?.id) {
+  //       renderGoogleButton();
+  //       clearInterval(interval);
+  //     }
+  //     if (attempts > 10) {
+  //       clearInterval(interval);
+  //     }
+  //   }, 500);
+
+  //   return () => clearInterval(interval);
+  // }, [login, loading, authenticated, isLoggingIn]);
+
   useEffect(() => {
     if (loading || authenticated || isLoggingIn) return;
 
-    const renderGoogleButton = () => {
-      const container = document.getElementById("googleLoginDiv");
-      if (!container) return;
+    const container = document.getElementById("googleLoginDiv");
+    if (!container) return;
 
+    const waitForGoogle = setInterval(() => {
       if (!window.google?.accounts?.id) return;
 
-      container.innerHTML = "";
+      clearInterval(waitForGoogle);
 
+      // 🔐 Initialize SOLO UNA VEZ
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: (response) => {
@@ -60,6 +112,8 @@ export default function Home() {
         },
       });
 
+      container.innerHTML = "";
+
       window.google.accounts.id.renderButton(container, {
         theme: "filled_blue",
         size: "large",
@@ -67,25 +121,11 @@ export default function Home() {
         text: "signin_with",
         width: 240,
       });
-    };
 
-    // Primer intento inmediato
-    renderGoogleButton();
+    }, 300);
 
-    // Reintentos cada 500 ms hasta 10 veces
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      if (window.google?.accounts?.id) {
-        renderGoogleButton();
-        clearInterval(interval);
-      }
-      if (attempts > 10) {
-        clearInterval(interval);
-      }
-    }, 500);
+    return () => clearInterval(waitForGoogle);
 
-    return () => clearInterval(interval);
   }, [login, loading, authenticated, isLoggingIn]);
 
   /***************************************************
