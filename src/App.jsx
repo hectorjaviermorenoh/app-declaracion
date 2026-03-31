@@ -17,7 +17,7 @@ import Privacidad from './pages/Legal/Privacidad';
 import Terminos from './pages/Legal/Terminos';
 import AcercaDe from "./pages/AcercaDe/AcercaDe";
 import Donaciones from "./pages/Donaciones/Donaciones";
-import CrearBackend from "./pages/CrearBackend/CrearBackend";
+import BackendSetup from "./pages/BackendSetup/BackendSetup";
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
 
 function App() {
@@ -56,7 +56,7 @@ function App() {
           <Route path="/terminos" element={<Terminos />} />
           <Route path="/acerca-de" element={<AcercaDe />} />
           <Route path="/donaciones" element={<Donaciones />} />
-          <Route path="/crear-backend" element={<CrearBackend />} />
+          <Route path="/backend-setup" element={<BackendSetup />} />
         </Routes>
       </Container>
 

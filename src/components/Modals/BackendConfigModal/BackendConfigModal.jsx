@@ -3,6 +3,7 @@ import { useBackends } from "../../../context/BackendsContext";
 import { useToast } from "../../..//context/ToastContext";
 import ConfirmActionModal from "../../Modals/ConfirmActionModal/ConfirmActionModal";
 import { useState } from "react";
+import "./BackendConfigModal.scss";
 
 const BackendConfigModal = ({ show, onHide }) => {
   const {
@@ -43,43 +44,45 @@ const BackendConfigModal = ({ show, onHide }) => {
   return (
     <>
       {/* Modal principal */}
-      <Modal show={show} onHide={onHide} centered>
+      <Modal show={show} onHide={onHide} centered className="BackendConfigModal">
         <Modal.Header closeButton>
-          <Modal.Title>Configurar Backends</Modal.Title>
+          <Modal.Title>Adicionar Backends (URL del Worker)</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
           {backends.length === 0 ? (
             <p>No hay backends configurados.</p>
           ) : (
-            <ul className="list-group">
-              {backends.map((b) => (
-                <li
-                  key={b.alias}
-                  className={`list-group-item d-flex justify-content-between align-items-center ${
-                    activeBackend?.alias === b.alias ? "active" : ""
-                  }`}
-                >
-                  <span>{b.alias}</span>
-                  <div className="d-flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="success"
-                      onClick={() => setActiveBackend(b.alias)}
-                    >
-                      Usar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => setAliasToDelete(b.alias)}
-                    >
-                      Eliminar
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="backend-list-container">
+              <ul className="list-group">
+                {backends.map((b) => (
+                  <li
+                    key={b.alias}
+                    className={`list-group-item d-flex justify-content-between align-items-center ${
+                      activeBackend?.alias === b.alias ? "active" : ""
+                    }`}
+                  >
+                    <span>{b.alias}</span>
+                    <div className="d-flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="success"
+                        onClick={() => setActiveBackend(b.alias)}
+                      >
+                        Usar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => setAliasToDelete(b.alias)}
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           <hr />

@@ -1,0 +1,81 @@
+.tutorial-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px); // Efecto elegante de desenfoque al fondo
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  padding: 20px;
+
+  .tutorial-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    background: #000;
+    border-radius: 16px;
+    overflow: visible; // Para que la X pueda sobresalir si quieres
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+
+    .close-button {
+      position: absolute;
+      top: -45px;
+      right: -10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+      line-height: 1;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%; // 16:9 Aspect Ratio
+      height: 0;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+
+      iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .modal-footer-text {
+      background: #fff;
+      padding: 15px;
+      text-align: center;
+      border-radius: 0 0 16px 16px;
+
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Responsividad para móviles
+@media (max-width: 576px) {
+  .tutorial-modal-content {
+    .close-button {
+      top: -40px;
+      right: 0;
+    }
+  }
+}

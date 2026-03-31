@@ -1,0 +1,57 @@
+.modal-backend-overlay{
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.6);
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  z-index:9999;
+}
+
+.modal-backend{
+
+  background:white;
+  padding:30px;
+  border-radius:10px;
+  width:700px;
+  max-width:90%;
+
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-backend h2{
+  margin-bottom:20px;
+}
+
+.modal-backend pre{
+  background:#1e1e1e;
+  color:#dcdcdc;
+  padding:20px;
+  border-radius:6px;
+  overflow:auto;
+  max-height:300px;
+}
+
+.modal-botones{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.modal-botones button{
+  padding:10px 16px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.mensaje-copiado{
+  margin-top:10px;
+  color:green;
+  font-weight:bold;
+}

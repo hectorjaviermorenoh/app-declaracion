@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
   const { activeBackend } = useBackends();
   const backendUrl = activeBackend?.url || null;
 
+
   const navigate = useNavigate();
 
   const { showToast } = useToast();
@@ -33,41 +34,42 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
 
+  const backendUrlRef = React.useRef(backendUrl);
 
-  // 🧠 Cargar token desde localStorage una sola vez al montar
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.token) {
-          setAuthToken(parsed.token);
-          setUser(parsed.user || null);
-          setAuthenticated(true);
-        }
-      } catch (err) {
-        console.error("Error parseando sesión guardada:", err);
-        localStorage.removeItem(STORAGE_KEY);
-      }
+    backendUrlRef.current = backendUrl;
+  }, [backendUrl]);
+
+  // 🚪 Cerrar sesión
+  const logout = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setAuthToken(null);
+    setUser(null);
+    setAuthenticated(false);
+
+    // 🔁 Redirige siempre al login
+    if (window.location.pathname !== "/") {
+      navigate("/", { replace: true }); // replace evita volver atrás con el navegador
     }
-    setLoading(false);
-  }, []);
+
+    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación");
+
+  }, [navigate, showToast ]);
 
   // 🧩 Guardar sesión persistente
-  const persistSession = (token, userData) => {
+  const persistSession = useCallback((token, userData) => {
     if (!token) return;
     const session = {
       token,
       user: userData || null,
-      backendUrl: backendUrl,
+      backendUrl: backendUrlRef.current,
       timestamp: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  };
-
+  }, []);
 
 // 🚀 Iniciar sesión
-  const login = async (idToken, onComplete = () => {}) => {
+  const login = useCallback(async (idToken, onComplete = () => {}) => {
 
     const handleFail = (mensaje, tipo = "danger") => {
       console.log(mensaje);
@@ -76,7 +78,10 @@ export function AuthProvider({ children }) {
       onComplete();
     };
 
-    if (!backendUrl) {
+    const currentBackendUrl = backendUrlRef.current;
+
+    if (!currentBackendUrl) {
+      console.log("Validando backend en login:", currentBackendUrl);
       const confirmar = await confirmarAccion({
         titulo: "Backend no configurado",
         mensaje:
@@ -104,12 +109,9 @@ export function AuthProvider({ children }) {
       return;
     }
 
-
-
-
     try {
       // 🔒 Intercambiar el token de Google por un token de sesión propio
-      const resp = await fetch(backendUrl, {
+      const resp = await fetch(currentBackendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -145,27 +147,38 @@ export function AuthProvider({ children }) {
       console.error("Error en login (intercambio de token):", err);
       handleFail("❌ Error de conexión con el backend");
     }
-  };
+  }, [showToast, logout, persistSession]);
 
-  // 🚪 Cerrar sesión
-  const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setAuthToken(null);
-    setUser(null);
-    setAuthenticated(false);
-
-    // 🔁 Redirige siempre al login
-    if (window.location.pathname !== "/") {
-      navigate("/", { replace: true }); // replace evita volver atrás con el navegador
+  // 🧠 Cargar token desde localStorage una sola vez al montar
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.token) {
+          setAuthToken(parsed.token);
+          setUser(parsed.user || null);
+          setAuthenticated(true);
+        }
+      } catch (err) {
+        console.error("Error parseando sesión guardada:", err);
+        localStorage.removeItem(STORAGE_KEY);
+      }
     }
+    setLoading(false);
+  }, []);
 
-    showToast("👋 Sesión cerrada correctamente", "info", 3000, "Autenticación");
 
-  }, [navigate, showToast ]);
+
+
+
+
+
 
 // 🔄 Verificar token (ahora valida el token PROPIO contra el 'ping')
   const verifyToken = useCallback(async () => {
-    if (!authToken || !activeBackend?.url) return false;
+    const currentUrl = backendUrlRef.current;
+    if (!authToken || !currentUrl) return false;
 
     try {
       // Esta llamada ahora envía el TOKEN PROPIO

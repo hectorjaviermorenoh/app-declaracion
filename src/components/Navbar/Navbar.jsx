@@ -9,6 +9,7 @@ import { useDatosTributarios } from "../../context/DatosTributariosContext";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, BoxArrowRight  } from "react-bootstrap-icons";
 import { usePermisos } from "../../hooks/usePermisos.js";
+import TutorialModal from "../../components/Modals/TutorialModal/TutorialModal";
 import "./Navbar.scss";
 
 
@@ -27,6 +28,7 @@ function AppNavbar({ onOpenBackend }) {
   const { user, logout } = useAuth();
   const [isWaitOver, setIsWaitOver] = useState(false);
   const [show, setShow] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const handleClose = () => setShow(false);
@@ -262,7 +264,11 @@ function AppNavbar({ onOpenBackend }) {
                   <NavDropdown title={<span className="icon-menu-kebab"></span>} id="nav-dropdown" className="Navbar-NavDropdown-Mas-Desktop">
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/admin">Admin & Config</NavDropdown.Item>
                     <NavDropdown.Divider />
-                    <NavDropdown.Item onClick={onOpenBackend}>Configurar Backend</NavDropdown.Item>
+                    <NavDropdown.Item onClick={onOpenBackend}>Adicionar Backend</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => setShowTutorial(true)}>Guía de uso</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/backend-setup">Configurar Backend</NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShow(false)} as={Link} to="/donaciones">Donaciones</NavDropdown.Item>
                     <NavDropdown.Divider />
@@ -334,12 +340,19 @@ function AppNavbar({ onOpenBackend }) {
         <Offcanvas.Body>
           <Nav className="flex-column">
             <Nav.Link onClick={() => {setShowMoreMenu(false); navigate("/admin");}}>Admin & Config</Nav.Link>
-            <Nav.Link onClick={() => {setShow(false);onOpenBackend()}}>Configurar Backend</Nav.Link>
+            <Nav.Link onClick={() => {setShow(false);onOpenBackend()}}>Adicionar Backend</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false); setShowTutorial(true)}}>Guía de uso</Nav.Link>
+            <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/backend-setup");}}>Configurar Backend</Nav.Link>
             <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/donaciones");}}>Donaciones</Nav.Link>
             <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/acerca-de");}}>Acerca de</Nav.Link>
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
 
       </div>
     </>

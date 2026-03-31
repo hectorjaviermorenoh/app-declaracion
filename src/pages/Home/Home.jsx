@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useBackends } from "../../context/BackendsContext";
+import TutorialModal from "../../components/Modals/TutorialModal/TutorialModal";
 import "./Home.scss";
 
 
@@ -14,6 +15,7 @@ export default function Home() {
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [backendPrompted, setBackendPrompted] = useState(false);
+  const [abrirVideoDemo, setAbrirVideoDemo] = useState(false);
 
   /***************************************************
    * 🔄 Si ya está autenticado → ir a productos
@@ -32,6 +34,7 @@ export default function Home() {
       navigate("/productos", { replace: true });
     }
   }, [authenticated, loading, activeBackend, backendPrompted, navigate]);
+
 
 
   /***************************************************
@@ -122,34 +125,72 @@ export default function Home() {
   //       </p>
 
   //       {/* Contenedor del botón */}
-  //       <div id="googleLoginDiv"></div>
+  //       <div id="googleLoginDiv" className="d-flex justify-content-center"></div>
+
+  //       {/* --- LINKS LEGALES AGREGADOS AQUÍ --- */}
+  //       <hr className="mt-4 mb-3" />
+  //       <div className="legal-links" style={{ fontSize: "0.85rem" }}>
+  //         <Link to="/privacidad" className="text-decoration-none text-secondary mx-2">
+  //           Privacidad
+  //         </Link>
+  //         <span className="text-muted">|</span>
+  //         <Link to="/terminos" className="text-decoration-none text-secondary mx-2">
+  //           Términos
+  //         </Link>
+  //       </div>
   //     </div>
   //   </div>
   // );
 
   return (
-    <div className="home-wrapper">
-      <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
+    <div className="home-wrapper d-flex flex-column align-items-center">
+      {/* Tarjeta de Login Principal */}
+      <div className="card shadow-lg p-4 text-center" style={{ maxWidth: 400, borderRadius: '20px' }}>
         <h3 className="mb-3 fw-bold">Bienvenido</h3>
         <p className="text-muted mb-4">
-          Inicia sesión con tu cuenta de Google para continuar
+          Inicia sesión con tu cuenta de Google para gestionar tus documentos.
         </p>
 
-        {/* Contenedor del botón */}
-        <div id="googleLoginDiv" className="d-flex justify-content-center"></div>
+        <div id="googleLoginDiv" className="d-flex justify-content-center mb-3"></div>
 
-        {/* --- LINKS LEGALES AGREGADOS AQUÍ --- */}
+        {/* BOTÓN DE AYUDA / TUTORIAL */}
+
+        <div className="bg-light p-3 rounded-3 mt-2">
+          <p className="small text-secondary mb-2">¿Quieres ver cómo funciona?</p>
+          <div className="d-flex flex-column gap-2">
+            {/* Botón para el Video de Uso (Vimeo) */}
+            <button
+              onClick={() => setAbrirVideoDemo(true)}
+              className="btn btn-sm btn-link text-decoration-none fw-bold"
+            >
+              <i className="bi bi-play-circle-fill me-1"></i> Ver Demo de la App
+            </button>
+
+            <Link to="/backend-setup" className="text-primary fw-bold text-decoration-none small">
+              Guía: Configurar mi Backend →
+            </Link>
+          </div>
+        </div>
+
         <hr className="mt-4 mb-3" />
         <div className="legal-links" style={{ fontSize: "0.85rem" }}>
-          <Link to="/privacidad" className="text-decoration-none text-secondary mx-2">
-            Privacidad
-          </Link>
+          <Link to="/privacidad" className="text-decoration-none text-secondary mx-2">Privacidad</Link>
           <span className="text-muted">|</span>
-          <Link to="/terminos" className="text-decoration-none text-secondary mx-2">
-            Términos
-          </Link>
+          <Link to="/terminos" className="text-decoration-none text-secondary mx-2">Términos</Link>
         </div>
       </div>
+
+      {/* SECCIÓN OPCIONAL DEBAJO DE LA TARJETA */}
+      <div className="mt-4 text-center text-white-50">
+        <small>AppDeclaración: Gestión descentralizada de documentos tributarios.</small>
+      </div>
+
+      <TutorialModal
+        isOpen={abrirVideoDemo}
+        onClose={() => setAbrirVideoDemo(false)}
+      />
+
     </div>
   );
+
 }

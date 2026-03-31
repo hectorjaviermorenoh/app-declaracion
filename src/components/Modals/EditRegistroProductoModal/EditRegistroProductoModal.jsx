@@ -17,8 +17,7 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
     entidad: "",
     nombreProducto: "",
     descripcion: "",
-    tipo: "",
-    anio: ""
+    tipo: ""
   });
 
   // 🔹 Cargar datos cuando se abre el modal
@@ -29,10 +28,9 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
         nombreProducto: registro.nombreProducto || "",
         descripcion: registro.descripcion || "",
         tipo: registro.tipo || "",
-        anio: registro.anio || ""
       });
     }
-    
+
   }, [registro, show]);
 
   const handleChange = (e) => {
@@ -63,7 +61,6 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
         descripcion: normalizeField(form.descripcion),
         entidad: normalizeField(form.entidad),
         tipo: normalizeField(form.tipo),
-        anio: form.anio
       };
 
       const response = await editRegistroProducto(payload);
@@ -90,8 +87,7 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
         entidad: registro.entidad || "",
         nombreProducto: registro.nombreProducto || "",
         descripcion: registro.descripcion || "",
-        tipo: registro.tipo || "",
-        anio: registro.anio || ""
+        tipo: registro.tipo || ""
       });
     }
 
@@ -102,7 +98,7 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
   return (
     <Modal show={show} onHide={onHide} backdrop="static" centered>
       <Modal.Header closeButton>
-        <Modal.Title>✏️ Editar registro</Modal.Title>
+        <Modal.Title>✏️ Editar registro añocxxxx</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -156,16 +152,6 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
             />
           </Form.Group>
 
-          <Form.Group className="mb-2">
-            <Form.Label>Año</Form.Label>
-            <Form.Control
-              type="number"
-              name="anio"
-              value={form.anio}
-              onChange={handleChange}
-              onBlur={(e) => validateField("anio", e.target.value)}
-            />
-          </Form.Group>
         </Form>
       </Modal.Body>
 
