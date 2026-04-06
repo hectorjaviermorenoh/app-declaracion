@@ -47,6 +47,12 @@ export function AuthProvider({ children }) {
     setUser(null);
     setAuthenticated(false);
 
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.disableAutoSelect();
+    }
+
+    window.googleInitialized = false;
+
     // 🔁 Redirige siempre al login
     if (window.location.pathname !== "/") {
       navigate("/", { replace: true }); // replace evita volver atrás con el navegador
@@ -71,7 +77,7 @@ export function AuthProvider({ children }) {
 // 🚀 Iniciar sesión
   const login = useCallback(async (idToken, onComplete = () => {}) => {
 
-    const handleFail = (mensaje, tipo = "danger") => {
+       const handleFail = (mensaje, tipo = "danger") => {
       console.log(mensaje);
       showToast(mensaje, tipo, 10000, "Autenticación");
       logout(); // 👈 Llama a logout para limpiar

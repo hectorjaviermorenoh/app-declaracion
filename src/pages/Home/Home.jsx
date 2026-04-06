@@ -57,14 +57,27 @@ export default function Home() {
       if (!window.googleInitialized) {
         window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+
           callback: (response) => {
+
+            if (isLoggingIn) return;
+
             const token = response.credential;
+
+            const start = Date.now();
             setIsLoggingIn(true);
 
             login(token, () => {
-              setIsLoggingIn(false);
+
+              const elapsed = Date.now() - start;
+
+              setTimeout(() => {
+                setIsLoggingIn(false);
+              }, Math.max(0, 500 - elapsed));
+
             });
-          },
+          }
+
         });
 
         window.googleInitialized = true;
@@ -116,32 +129,6 @@ export default function Home() {
   /***************************************************
    * 🎨 UI principal (login)
    ***************************************************/
-  // return (
-  //   <div className="home-wrapper">
-  //     <div className="card shadow p-4 text-center" style={{ maxWidth: 400 }}>
-  //       <h3 className="mb-3 fw-bold">Bienvenido</h3>
-  //       <p className="text-muted mb-4">
-  //         Inicia sesión con tu cuenta de Google para continuar
-  //       </p>
-
-  //       {/* Contenedor del botón */}
-  //       <div id="googleLoginDiv" className="d-flex justify-content-center"></div>
-
-  //       {/* --- LINKS LEGALES AGREGADOS AQUÍ --- */}
-  //       <hr className="mt-4 mb-3" />
-  //       <div className="legal-links" style={{ fontSize: "0.85rem" }}>
-  //         <Link to="/privacidad" className="text-decoration-none text-secondary mx-2">
-  //           Privacidad
-  //         </Link>
-  //         <span className="text-muted">|</span>
-  //         <Link to="/terminos" className="text-decoration-none text-secondary mx-2">
-  //           Términos
-  //         </Link>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
   return (
     <div className="home-wrapper d-flex flex-column align-items-center">
       {/* Tarjeta de Login Principal */}
