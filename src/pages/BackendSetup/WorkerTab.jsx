@@ -91,9 +91,12 @@ const WorkerTab = () => {
       <div className="video-container">
 
         <iframe
-          src="https://www.youtube.com/embed/TU_VIDEO_AQUI"
+          src="https://player.vimeo.com/video/1181670632?h=4dd87f29b3&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
           title="Tutorial Backend Workwe CloudFlare"
           allowFullScreen
+          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
         />
 
       </div>
