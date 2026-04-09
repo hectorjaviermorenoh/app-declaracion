@@ -19,6 +19,7 @@ import AcercaDe from "./pages/AcercaDe/AcercaDe";
 import Donaciones from "./pages/Donaciones/Donaciones";
 import BackendSetup from "./pages/BackendSetup/BackendSetup";
 import { DashboardAdmin } from "./pages/DashboardAdmin/DashboardAdmin";
+import RequireAuth from "./routes/RequireAuth";
 
 function App() {
   const [showBackendModal, setShowBackendModal] = useState(false);
@@ -47,11 +48,46 @@ function App() {
       <Container className="mt-4">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/productos" element={<Productos />} />
-          <Route path="/datos-tributarios" element={<DatosTributarios />} />
-          <Route path="/contador" element={<Contador />} />
-          <Route path="/facturas" element={<Facturas />} />
-          <Route path="/admin" element={<DashboardAdmin />} />
+          <Route
+            path="/productos"
+            element={
+              <RequireAuth>
+                <Productos />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/datos-tributarios"
+            element={
+              <RequireAuth>
+                <DatosTributarios />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/contador"
+            element={
+              <RequireAuth>
+                <Contador />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/facturas"
+            element={
+              <RequireAuth>
+                <Facturas />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequireAuth>
+                <DashboardAdmin />
+              </RequireAuth>
+            }
+          />
           <Route path="/privacidad" element={<Privacidad />} />
           <Route path="/terminos" element={<Terminos />} />
           <Route path="/acerca-de" element={<AcercaDe />} />

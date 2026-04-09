@@ -25,7 +25,7 @@ function AppNavbar({ onOpenBackend }) {
   // ---------------- Estados de UI ----------------
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, authenticated, logout } = useAuth();
   const [isWaitOver, setIsWaitOver] = useState(false);
   const [show, setShow] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -40,7 +40,7 @@ function AppNavbar({ onOpenBackend }) {
     } else {
       clearDatos();
     }
-  }, [tienePermisoDatoTributario, getDatos]);
+  }, [tienePermisoDatoTributario, getDatos, clearDatos]);
 
     // ---------------- Funciones ----------------
 
@@ -64,6 +64,7 @@ function AppNavbar({ onOpenBackend }) {
   const userPicture = isWaitOver ? (user?.picture || defaultAvatarImg) : defaultAvatarImg;
 
   const hasUser = Boolean(user);
+  const canNavigatePrivate = Boolean(authenticated && user);
 
   return (
     <>
@@ -106,8 +107,14 @@ function AppNavbar({ onOpenBackend }) {
                     filter: tienePermisoDatoTributario ? 'none' : 'grayscale(1)'
                   }}
                   // onClick={handleToggle}
-                  onClick={tienePermisoDatoTributario ? handleToggle : undefined}
-                  title={!tienePermisoDatoTributario ? "No tienes permisos para ver datos tributarios" : ""}
+                  onClick={(tienePermisoDatoTributario && canNavigatePrivate) ? handleToggle : undefined}
+                  title={
+                    !canNavigatePrivate
+                      ? "Inicia sesión para ver datos tributarios"
+                      : !tienePermisoDatoTributario
+                        ? "No tienes permisos para ver datos tributarios"
+                        : ""
+                  }
                 >
                   <Bell size={22} />
 
@@ -178,21 +185,48 @@ function AppNavbar({ onOpenBackend }) {
 
 
                   <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Ver Productos</Tooltip>}>
-                    <Nav.Link onClick={() => {setShow(false); navigate("/productos");}}>
+                    <Nav.Link
+                      onClick={() => {
+                        if (!canNavigatePrivate) return;
+                        setShow(false);
+                        navigate("/productos");
+                      }}
+                      disabled={!canNavigatePrivate}
+                      style={!canNavigatePrivate ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                      title={!canNavigatePrivate ? "Inicia sesión para ver productos" : ""}
+                    >
                       <span className="icon-Verproductos"></span>
                       <span className="ms-2 d-lg-none">Ver Productos</span> {/* ms-2 añade un margen a la izquierda */}
                     </Nav.Link>
                   </OverlayTrigger>
 
                   <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Add Facturas</Tooltip>}>
-                    <Nav.Link onClick={() => {setShow(false); navigate("/facturas");}}>
+                    <Nav.Link
+                      onClick={() => {
+                        if (!canNavigatePrivate) return;
+                        setShow(false);
+                        navigate("/facturas");
+                      }}
+                      disabled={!canNavigatePrivate}
+                      style={!canNavigatePrivate ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                      title={!canNavigatePrivate ? "Inicia sesión para ver facturas" : ""}
+                    >
                       <span className="icon-AddFacturas"></span>
                       <span className="ms-2 d-lg-none">Facturas</span>
                     </Nav.Link>
                   </OverlayTrigger>
 
                   <OverlayTrigger placement="bottom" animation={false} overlay={<Tooltip>Contador</Tooltip>}>
-                    <Nav.Link onClick={() => {setShow(false); navigate("/contador");}}>
+                    <Nav.Link
+                      onClick={() => {
+                        if (!canNavigatePrivate) return;
+                        setShow(false);
+                        navigate("/contador");
+                      }}
+                      disabled={!canNavigatePrivate}
+                      style={!canNavigatePrivate ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                      title={!canNavigatePrivate ? "Inicia sesión para ver contador" : ""}
+                    >
                       <span className="icon-Contador"></span>
                       <span className="ms-2 d-lg-none">Contador</span>
                     </Nav.Link>
@@ -339,7 +373,18 @@ function AppNavbar({ onOpenBackend }) {
 
         <Offcanvas.Body>
           <Nav className="flex-column">
-            <Nav.Link onClick={() => {setShowMoreMenu(false); navigate("/admin");}}>Admin & Config</Nav.Link>
+            <Nav.Link
+              onClick={() => {
+                if (!canNavigatePrivate) return;
+                setShowMoreMenu(false);
+                navigate("/admin");
+              }}
+              disabled={!canNavigatePrivate}
+              style={!canNavigatePrivate ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+              title={!canNavigatePrivate ? "Inicia sesión para entrar a Admin" : ""}
+            >
+              Admin & Config
+            </Nav.Link>
             <Nav.Link onClick={() => {setShow(false);onOpenBackend()}}>Adicionar Backend</Nav.Link>
             <Nav.Link onClick={() => {setShowMoreMenu(false); setShowTutorial(true)}}>Guía de uso</Nav.Link>
             <Nav.Link onClick={() => {setShowMoreMenu(false);navigate("/backend-setup");}}>Configurar Backend</Nav.Link>
