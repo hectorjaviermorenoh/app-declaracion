@@ -35,13 +35,9 @@ export default function Home() {
     }
   }, [authenticated, loading, activeBackend, backendPrompted, navigate]);
 
-
-
   /***************************************************
    * 🚀 Renderizar botón de Google con reintentos
    ***************************************************/
-
-
   useEffect(() => {
     if (loading || authenticated || isLoggingIn) return;
 
@@ -142,7 +138,7 @@ export default function Home() {
 
         {/* BOTÓN DE AYUDA / TUTORIAL */}
 
-        <div className="bg-light p-3 rounded-3 mt-2">
+        <div className={`bg-light p-3 rounded-3 mt-2 ${!activeBackend ? "backend-attention" : ""}`}>
           <p className="small text-secondary mb-2">¿Quieres ver cómo funciona?</p>
           <div className="d-flex flex-column gap-2">
             {/* Botón para el Video de Uso (Vimeo) */}
