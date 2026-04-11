@@ -3,15 +3,15 @@ import BackendSetupModal from "../../components/Modals/BackendSetup/BackendSetup
 import codigoBackend from "../../assets/code/backend.gs.txt?raw";
 import "./stylos.scss";
 
-import img1 from "../../assets/img/imgBackend1.jpg";
-import img2 from "../../assets/img/imgBackend2.jpg";
-import img3 from "../../assets/img/imgBackend3.jpg";
-import img4 from "../../assets/img/imgBackend4.jpg";
-import img5 from "../../assets/img/imgBackend5.jpg";
-import img6 from "../../assets/img/imgBackend6.jpg";
-import img7 from "../../assets/img/imgBackend7.jpg";
-import img8 from "../../assets/img/imgBackend8.jpg";
-import img9 from "../../assets/img/imgBackend9.jpg";
+import img1 from "../../assets/img/imgBackend1.webp";
+import img2 from "../../assets/img/imgBackend2.webp";
+import img3 from "../../assets/img/imgBackend3.webp";
+import img4 from "../../assets/img/imgBackend4.webp";
+import img5 from "../../assets/img/imgBackend5.webp";
+import img6 from "../../assets/img/imgBackend6.webp";
+import img7 from "../../assets/img/imgBackend7.webp";
+import img8 from "../../assets/img/imgBackend8.webp";
+import img9 from "../../assets/img/imgBackend9.webp";
 
 const AppsScriptTab = () => {
 

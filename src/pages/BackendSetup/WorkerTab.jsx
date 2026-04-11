@@ -3,13 +3,13 @@ import BackendSetupModal from "../../components/Modals/BackendSetup/BackendSetup
 import codigoWorker from "../../assets/code/worker.gs.txt?raw";
 import "./stylos.scss";
 
-import img1 from "../../assets/img/imgWorker1.jpg";
-import img2 from "../../assets/img/imgWorker2.jpg";
-import img3 from "../../assets/img/imgWorker3.jpg";
-import img4 from "../../assets/img/imgWorker4.jpg";
-import img5 from "../../assets/img/imgWorker5.jpg";
-import img6 from "../../assets/img/imgWorker6.jpg";
-import img7 from "../../assets/img/imgWorker7.jpg";
+import img1 from "../../assets/img/imgWorker1.webp";
+import img2 from "../../assets/img/imgWorker2.webp";
+import img3 from "../../assets/img/imgWorker3.webp";
+import img4 from "../../assets/img/imgWorker4.webp";
+import img5 from "../../assets/img/imgWorker5.webp";
+import img6 from "../../assets/img/imgWorker6.webp";
+import img7 from "../../assets/img/imgWorker7.webp";
 
 const WorkerTab = () => {
 
