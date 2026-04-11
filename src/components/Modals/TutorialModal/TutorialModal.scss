@@ -4,46 +4,63 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px); // Efecto elegante de desenfoque al fondo
+  background: rgba(0, 0, 0, 0.88); // Un poco más oscuro para mejor contraste
+  backdrop-filter: blur(6px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
-  padding: 20px;
+  z-index: 9999;
+  padding: 15px;
+}
 
-  .tutorial-modal-content {
-    position: relative;
-    width: 100%;
-    max-width: 900px;
-    background: #000;
-    border-radius: 16px;
-    overflow: visible; // Para que la X pueda sobresalir si quieres
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+.tutorial-modal-content {
+  position: relative;
+  background: #fff;
+  width: 100%;
+  /* Aumentamos el ancho máximo para que el video crezca */
+  max-width: 950px;
+  /* Aseguramos que no toque los bordes superior/inferior */
+  max-height: 92vh;
+  max-width: 80vw;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 
-    .close-button {
-      position: absolute;
-      top: -45px;
-      right: -10px;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 40px;
-      cursor: pointer;
-      line-height: 1;
-      transition: transform 0.2s ease;
+  .close-x-btn {
+    position: absolute;
+    top: 7px;
+    right: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    font-size: 26px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 100;
 
-      &:hover {
-        transform: scale(1.1);
-      }
+    &:hover {
+      background: #dc3545;
     }
+  }
 
-    .video-container {
+  .modal-body {
+    width: 100%;
+    background: #000;
+    /* Flex-grow permite que el video intente tomar el espacio disponible */
+    flex-grow: 1;
+
+    .video-aspect-ratio {
       position: relative;
-      padding-bottom: 56.25%; // 16:9 Aspect Ratio
+      padding-bottom: 56.25%;
       height: 0;
-      border-radius: 16px 16px 0 0;
-      overflow: hidden;
+      width: 100%;
 
       iframe {
         position: absolute;
@@ -51,31 +68,74 @@
         left: 0;
         width: 100%;
         height: 100%;
+        border: none;
       }
     }
+  }
 
-    .modal-footer-text {
-      background: #fff;
-      padding: 15px;
-      text-align: center;
-      border-radius: 0 0 16px 16px;
+  .modal-footer-area {
+    padding: 15px 20px;
+    text-align: center;
+    background: #fff;
+    flex-shrink: 0;
 
-      p {
-        margin: 0;
-        color: #666;
-        font-size: 0.9rem;
-        font-weight: 500;
+    h3 {
+      margin: 0 0 5px;
+      color: #0d6efd;
+      font-size: 1.1rem;
+    }
+
+    p {
+      margin: 0 0 10px;
+      color: #555;
+      font-size: 0.9rem;
+      /* Evita que el texto sea muy largo y empuje el video */
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .btn-action {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 8px 30px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        background: #0b5ed7;
       }
     }
   }
 }
 
-// Responsividad para móviles
+
+/* --- AJUSTE CLAVE PARA TU PORTÁTIL --- */
+@media (max-height: 750px) {
+  .tutorial-modal-content {
+    /* Si la pantalla es baja, permitimos que el modal sea más ancho
+       para que el video se mantenga grande, pero bajamos el padding del footer */
+    max-width: 150vh; // El ancho se adapta a la altura disponible
+
+    .modal-footer-area {
+      padding: 10px;
+      p { display: none; } // Quitamos el texto para ganar mucho espacio de video
+      h3 { font-size: 0.95rem; margin-bottom: 5px; }
+    }
+    .close-x-btn {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
 @media (max-width: 576px) {
   .tutorial-modal-content {
-    .close-button {
-      top: -40px;
-      right: 0;
-    }
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0; // En móviles aprovecha todo
   }
 }
