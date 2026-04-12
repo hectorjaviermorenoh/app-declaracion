@@ -114,7 +114,7 @@ const AppsScriptTab = () => {
       {/* VIDEO */}
       <div className="video-container">
         <iframe
-            src="https://player.vimeo.com/video/1182249253?h=65a4985a2a&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+            src="https://player.vimeo.com/video/1182426720?h=ddeac77678&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
             title="Tutorial Backend Apps Script"
             allowFullScreen
             allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
