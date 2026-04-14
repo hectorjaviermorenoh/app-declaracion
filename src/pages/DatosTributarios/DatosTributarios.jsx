@@ -64,6 +64,23 @@ export default function DatosTributarios() {
     setNuevo({ label: "", valor: "" });
   };
 
+
+  /**
+   * Evalúa si un texto es una URL y devuelve un componente de enlace (<a>).
+   * Soporta formatos: http, https, www.dominio.com y dominio.com.
+   * Si el enlace no tiene protocolo, le antepone 'https://' para asegurar la navegación externa.
+   */
+  const renderContenidoUrl = (valor) => {
+    const urlRegex = /^(https?:\/\/)?([\w\d-]+\.)+[\w\d]{2,}(\/.*)?$/i;
+    const texto = valor.toString().trim();
+
+    if (urlRegex.test(texto)) {
+      const urlFinal = texto.startsWith('http') ? texto : `https://${texto}`;
+      return <a href={urlFinal} target="_blank" rel="noreferrer">Ver Link</a>;
+    }
+    return valor;
+  };
+
 return (
     <div className="datos-tributarios container mt-4">
       {/* 🔹 Header Manteniendo tu estructura original */}
@@ -143,10 +160,17 @@ return (
                     : d.label}
                 </div>
 
-                <div className="fila-valor">
+                {/* <div className="fila-valor">
                   {editandoId === d.id ?
                     <textarea className="form-control form-control-sm" value={d.valor} onChange={e => handleFieldChange(d.id, 'valor', e.target.value)}/>
                     : (d.valor.toString().startsWith('http') ? <a href={d.valor} target="_blank" rel="noreferrer">Ver Link</a> : d.valor)
+                  }
+                </div> */}
+
+                <div className="fila-valor">
+                  {editandoId === d.id
+                    ? <textarea className="form-control form-control-sm" value={d.valor} onChange={e => handleFieldChange(d.id, 'valor', e.target.value)}/>
+                    : renderContenidoUrl(d.valor)
                   }
                 </div>
 
