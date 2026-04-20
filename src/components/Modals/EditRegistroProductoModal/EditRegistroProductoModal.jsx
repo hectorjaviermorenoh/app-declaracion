@@ -98,7 +98,7 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
   return (
     <Modal show={show} onHide={onHide} backdrop="static" centered>
       <Modal.Header closeButton>
-        <Modal.Title>✏️ Editar registro añocxxxx</Modal.Title>
+        <Modal.Title>✏️ Editar registro año</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
