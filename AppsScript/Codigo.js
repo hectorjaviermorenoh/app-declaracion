@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "2304260140AM";
+ const VERSION = "2504261245PM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -1627,13 +1627,6 @@ function actualizarUsuario(data, usuario) {
         mensaje: `⚠️ No se encontró el usuario con correo "${correo}".`,
       });
 
-    if (usuarios[index].rol.toLowerCase() === "administrador") {
-      return respuestaJSON({ 
-        status: "error", 
-        mensaje: "🚫 No se puede modificar el usuario con rol Administrador por este medio." 
-      });
-    }
-
     usuarios[index].nombre = nombre || usuarios[index].nombre;
     usuarios[index].rol = rol || usuarios[index].rol;
 
@@ -1673,14 +1666,6 @@ function toggleUsuarioActivo(data, usuario) {
 
     const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
     if (index === -1) return respuestaJSON({ status: "error", mensaje: "Usuario no encontrado." });
-
-    // 1️⃣ SEGURIDAD: Validar por el ROL real en la base de datos
-    if (usuarios[index].rol.toLowerCase() === "administrador") {
-      return respuestaJSON({ 
-        status: "error", 
-        mensaje: "🚫 No se puede activar o desactivar al Administrador principal." 
-      });
-    }
 
     if (nombre === "Administrador") {
       return respuestaJSON({ status: "error", mensaje: "🚫 No se puede activar o desactivar Administrador." });
@@ -1828,7 +1813,7 @@ function eliminarUsuario(data, usuario) {
     try {
       // Listamos los permisos de la carpeta para encontrar el ID del permiso del usuario
       const response = Drive.Permissions.list(carpetaId);
-      const permissions = response.permissions;
+      const permissions = response.permissions || [];
 
       const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
 
@@ -1836,13 +1821,21 @@ function eliminarUsuario(data, usuario) {
         // Eliminamos el permiso específico
         Drive.Permissions.delete(carpetaId, permiso.id);
       } else {
-        // Si no aparece en la lista, intentamos el método tradicional por si acaso
-        const carpeta = DriveApp.getFolderById(carpetaId);
-        carpeta.removeViewer(correo);
-        carpeta.removeEditor(correo);
+        // Si no está en la lista de la API avanzada, intentamos removerlo con DriveApp
+        try {
+          const carpeta = DriveApp.getFolderById(carpetaId);
+          carpeta.removeViewer(correo);
+          carpeta.removeEditor(correo);
+        } catch (e) {
+          // No hacemos nada, el usuario simplemente no tiene permisos
+        }
+
       }
     } catch (e) {
-      avisoDrive = `Aviso en Drive: ${e.message}`;
+      if (e.message.indexOf("No such user") === -1 && e.message.indexOf("not found") === -1) {
+        avisoDrive = `Aviso en Drive: ${e.message}`;
+      }
+      
     }
 
     // 4️⃣ Actualizar base de datos JSON

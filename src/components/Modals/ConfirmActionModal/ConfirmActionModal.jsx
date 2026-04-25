@@ -52,6 +52,7 @@ export default function ConfirmActionModal({
             checked={confirmado}
             onChange={(e) => setConfirmado(e.target.checked)}
           />
+          <LoadingOverlay show={loading} />
         </Modal.Body>
 
         <Modal.Footer>
@@ -73,7 +74,7 @@ export default function ConfirmActionModal({
         </Modal.Footer>
       </Modal>
 
-      <LoadingOverlay show={loading} />
+      {/* <LoadingOverlay show={loading} /> */}
     </>
   );
 }

@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-
 import AddProductoModal from "../../components/Modals/Productos/AddProductoModal/AddProductoModal";
 import UploadModal from "../../components/Modals/Productos/UploadModal/UploadModal";
 import SelectProductosModal from "../../components/Modals/Productos/SelectProductosModal/SelectProductosModal";
-
-// import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import ConfirmActionModal from "../../components/Modals/ConfirmActionModal/ConfirmActionModal";
 import { useProductos } from "../../context/ProductosContext.jsx";
 import { useToast } from "../../context/ToastContext";
@@ -367,8 +364,6 @@ export default function Productos() {
           confirmVariant="danger"
           onConfirm={() => deleteProducto(selectedProducto.id)}
         />
-
-        {/* <LoadingOverlay show={loading} /> */}
       </Container>
     </>
   );

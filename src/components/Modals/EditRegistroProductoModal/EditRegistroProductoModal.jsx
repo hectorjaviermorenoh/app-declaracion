@@ -4,6 +4,7 @@ import { useProductos } from "../../../context/ProductosContext";
 import { useFormValidator } from "../../../hooks/useFormValidator.js";
 import { normalizeField } from "../../../utils/formValidator.js";
 import FormErrorList from "../../../components/FormErrorList/FormErrorList";
+import LoadingOverlay from "../../LoadingOverlay/LoadingOverlay";
 
 function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
 
@@ -153,6 +154,8 @@ function EditRegistroProductoModal({show,onHide,registro,onUpdated}) {
           </Form.Group>
 
         </Form>
+
+        <LoadingOverlay show={loading} />
       </Modal.Body>
 
       <Modal.Footer>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
 import { useFacturas } from "../../../../context/FacturasContext";
+import LoadingOverlay from "../../../LoadingOverlay/LoadingOverlay";
 import "./EditFacturaModal.scss";
 
 function EditFacturaModal({ show, onHide, factura, onUpdated }) {
@@ -102,6 +103,8 @@ function EditFacturaModal({ show, onHide, factura, onUpdated }) {
               />
             </Form.Group>
           </Form>
+
+          <LoadingOverlay show={loading} />
         </Modal.Body>
 
         <Modal.Footer>

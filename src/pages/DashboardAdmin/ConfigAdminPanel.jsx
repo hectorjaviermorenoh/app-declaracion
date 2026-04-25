@@ -9,6 +9,7 @@ import ConfigSkeleton from "../../components/Skeletons/Admin/ConfigSkeleton/Conf
 import { usePermisos } from "../../hooks/usePermisos.js";
 import NoPermiso from "../../components/NoPermiso/NoPermiso";
 import ReinitModal from "../../components/Modals/ReinitModal/ReinitModal";
+import LoadingOverlay from "../../components/LoadingOverlay/LoadingOverlay";
 import "./Styles/ConfigAdminPanel.scss";
 
 
@@ -299,7 +300,6 @@ export const ConfigAdminPanel = () => {
                 )}
               </Button>
             </div>
-
           </div>
         </>
       )}
@@ -334,7 +334,9 @@ export const ConfigAdminPanel = () => {
         }}
         loading={loading}
       />
+      <LoadingOverlay show={loadingGuardar || loadingBackup || loadingReinit} />
     </div>
+
   );
 
 };

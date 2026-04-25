@@ -341,10 +341,12 @@ function AddFacturaModal({ onClose, onSaved }) {
               Cancelar
             </button>
           </div>
+          <LoadingOverlay show={loading} />
         </div>
+
       </div>
 
-      <LoadingOverlay show={loading} />
+
     </div>
   );
 }

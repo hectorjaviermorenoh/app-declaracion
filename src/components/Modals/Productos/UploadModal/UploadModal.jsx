@@ -1,6 +1,7 @@
 // src/components/productos/UploadModal/UploadModal.jsx
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import LoadingOverlay from "../../../../components/LoadingOverlay/LoadingOverlay";
 import "./UploadModal.scss";
 
 import { useFormValidator } from "../../../../hooks/useFormValidator";
@@ -119,6 +120,8 @@ export default function UploadModal({ show, onClose, onConfirm, title, anioDefau
             </Form.Group>
           )}
         </Form>
+
+        <LoadingOverlay show={loading} />
       </Modal.Body>
 
       <Modal.Footer>

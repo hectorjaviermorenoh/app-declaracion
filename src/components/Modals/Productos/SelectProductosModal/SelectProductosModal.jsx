@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./SelectProductosModal.scss";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import LoadingOverlay from "../../../../components/LoadingOverlay/LoadingOverlay";
 
 export default function SelectProductosModal({ show, onClose, onConfirm, productos = [], productoOrigen, loading  }) {
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -64,6 +65,8 @@ export default function SelectProductosModal({ show, onClose, onConfirm, product
               />
             ))}
         </Form>
+
+        <LoadingOverlay show={loading} />
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
