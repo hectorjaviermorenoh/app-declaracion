@@ -2,6 +2,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import { useBackends } from "../../../context/BackendsContext";
 import { useToast } from "../../..//context/ToastContext";
 import ConfirmActionModal from "../../Modals/ConfirmActionModal/ConfirmActionModal";
+import { normalizeField } from "../../../utils/formValidator.js";
 import { useState } from "react";
 import "./BackendConfigModal.scss";
 
@@ -24,9 +25,17 @@ const BackendConfigModal = ({ show, onHide }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAdd = () => {
+    const aliasLimpio = normalizeField(newAlias);
+    const urlLimpia = newUrl.trim();
+
+    if (!aliasLimpio || !urlLimpia) {
+      showToast("❌ Alias y URL son obligatorios", "danger", 3000);
+      return;
+    }
+
     try {
-      addBackend(newAlias, newUrl);
-      showToast(`✅ Backend "${newAlias}" agregado`, "success", 3000);
+      addBackend(aliasLimpio, urlLimpia);
+      showToast(`✅ Backend "${aliasLimpio}" agregado`, "success", 3000);
       setNewAlias("");
       setNewUrl("");
       setShowAddForm(false);
@@ -110,7 +119,7 @@ const BackendConfigModal = ({ show, onHide }) => {
                 <Form.Label>URL</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="http://localhost:8080"
+                  placeholder="https://appdeclaracion.usuario.workers.dev/"
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
                 />
