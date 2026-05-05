@@ -8,6 +8,7 @@ import { useProductos } from "../../context/ProductosContext.jsx";
 import { useToast } from "../../context/ToastContext";
 import { confirmarAccion } from "../../utils/alerts.js";
 import ProductSkeleton from "../../components/Skeletons/ProductSkeleton/ProductSkeleton";
+import { getAuthToken } from "../../utils/apiClient.js";
 import { usePermisos } from "../../hooks/usePermisos.js";
 import "./Productos.scss";
 
@@ -35,7 +36,6 @@ export default function Productos() {
 
   const { showToast } = useToast();
 
-  const [setBtnPos] = useState({ top: 80, left: null, right: 20 });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSelectModal, setShowSelectModal] = useState(false);
@@ -48,22 +48,18 @@ export default function Productos() {
   const [anioSeleccionado, setAnioSeleccionado] = useState("");
   const [showTitle, setShowTitle] = useState("");
 
-  /* =============================
-     Posición FAB
-  ============================== */
-  useEffect(() => {
-    const savedPos = localStorage.getItem("btnAddProductoPos");
-    if (savedPos) setBtnPos(JSON.parse(savedPos));
-  }, [setBtnPos]);
-
-
 
   /* =============================
      Carga inicial
   ============================== */
+
   useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
     refreshProductos();
-  }, [refreshProductos]);
+    // }, [refreshProductos]);
+    // eslint-disable-next-line
+  }, []);
 
   /* =============================
      Abrir modal upload

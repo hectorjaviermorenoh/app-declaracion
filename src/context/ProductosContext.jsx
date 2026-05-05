@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback} from "react";
 import { useToast } from "../context/ToastContext";
-import { apiGet, apiPost, getAuthToken } from "../utils/apiClient.js";
+import { apiGet, apiPost} from "../utils/apiClient.js";
 
 const ProductosContext = createContext(null);
 
@@ -15,7 +15,7 @@ export function ProductosProvider({ children }) {
 
 
   const fetchArchivosPorAnio = useCallback(async (anio) => {
-    setLoadingProductos(true);
+    // setLoadingProductos(true);
     try {
       const data = await apiGet("obtenerArchivosPorAnio", { anio });
       if (data && data.status === "ok") return data.archivos || [];
@@ -24,7 +24,7 @@ export function ProductosProvider({ children }) {
       console.error("❌ Error al obtener archivos por año:", e.message);
       return [];
     } finally {
-      setLoadingProductos(false);
+      // setLoadingProductos(false);
     }
   }, []);
 
@@ -46,41 +46,50 @@ export function ProductosProvider({ children }) {
   }, []);
 
   const refreshProductos = useCallback(async () => {
-    setLoadingProductos(true);
     try {
-      const data = await apiGet("obtenerProductos");
-      const productosRaw = data.data || [];
+      setLoadingProductos(true);
 
-      const archivos = await fetchArchivosPorAnio(String(anioAnterior));
+      // 🔥 Ejecutamos ambas consultas en paralelo
+      const [productosData, archivosData] = await Promise.all([
+        apiGet("obtenerProductos"),
+        apiGet("obtenerArchivosPorAnio", {
+          anio: String(anioAnterior),
+        }),
+      ]);
 
+      const productosRaw = productosData?.data || [];
+      const archivos = archivosData?.archivos || [];
+
+      // 🔥 Relacionamos productos con archivos
       const productosConEstado = productosRaw.map((p) => {
-        const a =
+        const archivoRelacionado =
           archivos.find(
             (x) =>
               String(x.productoId) === String(p.id) &&
               String(x.anio) === String(anioAnterior)
           ) || null;
-
         return {
           ...p,
-          tieneArchivo: !!a,
-          archivoInfo: a,
+          tieneArchivo: !!archivoRelacionado,
+          archivoInfo: archivoRelacionado,
         };
       });
 
-      const productosOrdenados = productosConEstado.sort((a, b) => {
+      // 🔥 Ordenamos primero los que NO tienen archivo
+      const productosOrdenados = [...productosConEstado].sort((a, b) => {
         if (!a.tieneArchivo && b.tieneArchivo) return -1;
         if (a.tieneArchivo && !b.tieneArchivo) return 1;
         return 0;
       });
 
+      // 🔥 Actualizamos estado
       setRegistroProductos(productosOrdenados);
     } catch (e) {
       console.error("❌ Error refreshProductos:", e.message);
     } finally {
       setLoadingProductos(false);
     }
-  }, [fetchArchivosPorAnio]);
+  }, []);
 
   const updateProducto = useCallback(async (productoEditado) => {
     setLoadingProductos(true);
@@ -349,14 +358,6 @@ export function ProductosProvider({ children }) {
     },
     [refreshProductos, showToast]
   );
-
-
-  useEffect(() => {
-    const token = getAuthToken();
-    if (!token) return;
-
-    refreshProductos();
-  }, [refreshProductos]);
 
   const deleteRegistroProducto = useCallback(
     async (registroId) => {

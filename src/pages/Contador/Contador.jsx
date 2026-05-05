@@ -17,7 +17,8 @@ function Contador() {
 
   const isMobile = window.innerWidth < 768; // 🔥 Detectar móvil
 
-  const { loading, fetchArchivosPorAnio, deleteRegistroProducto } = useProductos();
+  const { fetchArchivosPorAnio, deleteRegistroProducto } = useProductos();
+  const [loadingArchivos, setLoadingArchivos] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -44,10 +45,15 @@ function Contador() {
 
   const cargarArchivos = useCallback(async (anioSeleccionado) => {
     try {
+      setLoadingArchivos(true);
+
        const response = await fetchArchivosPorAnio(anioSeleccionado);
+
        setArchivos(response || []);
     } catch (e) {
       console.error("❌ Error cargando archivos:", e);
+    } finally {
+    setLoadingArchivos(false);
     }
   }, [fetchArchivosPorAnio]);
 
@@ -206,14 +212,14 @@ function Contador() {
                     Entidad
                     <select
                       className="form-select form-select-sm mt-1"
-                      disabled={loading}
+                      disabled={loadingArchivos}
                       value={filters.entidad}
                       onChange={(e) =>
                         setFilters({ ...filters, entidad: e.target.value })
                       }
                     >
                       <option value="">Todas</option>
-                      {!loading &&
+                      {!loadingArchivos &&
                         entidades.map((ent) => (
                           <option key={ent.value} value={ent.value}>
                             {ent.label}
@@ -226,14 +232,14 @@ function Contador() {
                     Nombre del producto
                     <select
                       className="form-select form-select-sm mt-1"
-                      disabled={loading}
+                      disabled={loadingArchivos}
                       value={filters.nombreProducto}
                       onChange={(e) =>
                         setFilters({ ...filters, nombreProducto: e.target.value })
                       }
                     >
                       <option value="">Todos</option>
-                      {!loading &&
+                      {!loadingArchivos &&
                         productos.map((prod) => (
                           <option key={prod.value} value={prod.value}>
                             {prod.label}
@@ -246,14 +252,14 @@ function Contador() {
                     Tipo
                     <select
                       className="form-select form-select-sm mt-1"
-                      disabled={loading}
+                      disabled={loadingArchivos}
                       value={filters.tipo}
                       onChange={(e) =>
                         setFilters({ ...filters, tipo: e.target.value })
                       }
                     >
                       <option value="">Todos</option>
-                      {!loading &&
+                      {!loadingArchivos &&
                         tipos.map((t) => (
                           <option key={t.value} value={t.value}>
                             {t.label}
@@ -267,7 +273,7 @@ function Contador() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {loadingArchivos ? (
                   /* Renderizamos Skeletons en las filas de la tabla */
                   Array.from({ length: 8 }).map((_, i) => (
                     <ContadorSkeleton key={`skel-d-${i}`} isMobile={false} />
@@ -320,7 +326,7 @@ function Contador() {
         ) : (
           /* VISTA MÓVIL: Acordeón / Cards */
           <div className="accordion-mobile">
-            {loading ? (
+            {loadingArchivos ? (
               /* Renderizamos Skeletons tipo Card */
               Array.from({ length: 6 }).map((_, i) => (
                 <ContadorSkeleton key={`skel-m-${i}`} isMobile={true} />
