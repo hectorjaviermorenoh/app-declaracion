@@ -1,7 +1,7 @@
 /******************************
  * Version 
  ******************************/
- const VERSION = "2504261245PM";
+ const VERSION = "0605261315PM";
 
 /******************************
  * CONFIGURACIÓN INICIAL
@@ -15,7 +15,6 @@ const JSON_BDD_DATOS = "bddatos.json";
 const JSON_BDD_FACTURAS = "bddatosFacturas.json";
 const JSON_LOGS = "logs.json";
 const JSON_DATOS_TRIBUTARIOS = "datosTributarios.json";
-
 const URL_PRODUCCION = "https://appdeclaracion.github.io/appdeclaracion";
 
 /******************************
@@ -139,7 +138,6 @@ const FUNCIONES_GENERALES = [
 // PROTECCIÓN: Quitar acceso a los JSON al crear usuario o toggleUsuario
 const ARCHIVOS_PROTEGIDOS = [JSON_CONFIGURACION, JSON_USUARIOS, JSON_ROLES, JSON_PRODUCTOS, JSON_BDD_DATOS, JSON_BDD_FACTURAS, JSON_LOGS, JSON_DATOS_TRIBUTARIOS];
 
-
 /******************************
  * FUNCIÓN DE INICIALIZACIÓN SISTEMA DESDE APPS SCRIPT Y CREACION DE CARPETAS Y ARCHIVOS INICIALES
  ******************************/
@@ -156,6 +154,7 @@ function inicializarSistema() {
 
     // 🔍 VALIDACIÓN: Buscar si la carpeta ya existe
     const carpetasExistentes = DriveApp.getRootFolder().getFoldersByName(nombreUnico);
+
 
     if (carpetasExistentes.hasNext()) {
       const carpetaExistente = carpetasExistentes.next();
@@ -182,9 +181,10 @@ function inicializarSistema() {
       Drive.Files.update({
         "folderColorRgb": "#198754"
       }, carpetaPrincipalId);
-    } catch (e) {
-      Logger.log("Nota: No se pudo aplicar el color en v3: " + e.message);
+    } catch (err) {
+      Logger.log("Nota: No se pudo aplicar el color en v3: " + err.message);
     }
+
 
     // 2️⃣ Construir configuración con el ID REAL
     const configInicialConId = {
@@ -212,13 +212,16 @@ function inicializarSistema() {
     });
 
     // 5️⃣ AUTO-PROTECCIÓN (Opcional)
+    // Si el administrador es el mismo dueño del script, no hace falta ocultárselos a él mismo,
+    // pero si inicializas para otro, aquí podrías llamar a la lógica de ocultar.
+
     Logger.log("✅ Sistema inicializado correctamente con ID: " + carpetaPrincipalId);
     
     return { status: "ok", id: carpetaPrincipalId, nombre: nombreUnico };
 
-  } catch (e) {
-    Logger.log("❌ Error en inicialización: " + e.message);
-    throw e;
+  } catch (err) {
+    Logger.log("❌ Error en inicialización: " + err.message);
+    throw err;
   } finally {
     lock.releaseLock();
   }
@@ -313,6 +316,7 @@ function inicializarSistemaForzado(correoAdmin, borrarCarpetas) {
  * 🔒 FUNCIONES DE SEGURIDAD
  ******************************/
 function obtenerConfigCentral() {
+
   const cache = CacheService.getScriptCache();
   let config = cache.get("CONFIG_CENTRAL");
 
@@ -329,6 +333,7 @@ function obtenerConfigCentral() {
     return JSON.parse(config);
 
   } catch (err) {
+
     return {
       idCliente: "fallback",
       llave: "fallback_key"
@@ -338,6 +343,7 @@ function obtenerConfigCentral() {
 }
 
 function verificarTokenYAutorizar(token) {
+
   const configCentral = obtenerConfigCentral();
   const CLIENT_ID = configCentral.idCliente;
 
@@ -431,6 +437,7 @@ function validarPermiso(usuario, accion) {
  * Este token se genera DESPUÉS de que Google valida al usuario.
  */
 function generarTokenPropio(usuarioInfo) {
+
   const configCentral = obtenerConfigCentral();
   const ZEICHENSCHLUESSEL = configCentral.llave;
 
@@ -449,19 +456,22 @@ function generarTokenPropio(usuarioInfo) {
     
     // 💡 Tiempos de vida (iat = issued at, exp = expiration)
     iat: Math.floor(Date.now() / 1000),
+    // exp: Math.floor(Date.now() / 1000) + (1 * 60) // 👈 Válido por 3 minutos
+    // exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 👈 Válido por 8 horas
+    // exp: Math.floor(Date.now() / 1000) + (30 * 60) // 👈 Válido por 1 horas
     exp: Math.floor(Date.now() / 1000) + (minutosExp * 60)
   };
   
   // Codificamos el payload (String -> Byte[] -> Base64WebSafe)
   const payloadStr = JSON.stringify(payload);
-  const payloadB64 = Utilities.base64EncodeWebSafe(payloadStr, Utilities.Charset.UTF_8);
+  const payloadB64 = Utilities.base64EncodeWebSafe(payloadStr, Utilities.Charset.UTF_8); // ✅ CORREGIDO 1
 
   // Creamos la firma
-  // computeHmacSha256Signature necesita el payloadB64 como String
+  // computeHmacSha256Signature necesita el payloadB64 como String, lo cual es correcto
   const signature = Utilities.computeHmacSha256Signature(payloadB64, ZEICHENSCHLUESSEL); 
 
   // Codificamos la firma (Byte[] -> Base64WebSafe)
-  const signatureB64 = Utilities.base64EncodeWebSafe(signature);
+  const signatureB64 = Utilities.base64EncodeWebSafe(signature); // ✅ CORREGIDO 2
   
   // Formato: [payload].[signature]
   return payloadB64 + "." + signatureB64;
@@ -471,6 +481,7 @@ function generarTokenPropio(usuarioInfo) {
  * Se usará en CADA petición (doGet/doPost) excepto en el login.
  */
 function verificarTokenPropio(token) {
+
   const configCentral = obtenerConfigCentral();
   const ZEICHENSCHLUESSEL = configCentral.llave;
 
@@ -507,8 +518,10 @@ function verificarTokenPropio(token) {
     // ✅ Si todo está ok, devolvemos el payload del usuario
     return { autorizado: true, ...payload };
   
-  } catch (e) {
-    return { autorizado: false, mensaje: "Error al validar token: " + e.message };
+  } catch (err) {
+    return { 
+      autorizado: false, 
+      mensaje: "Error al validar token: " + err.message };
   }
 }
 /**
@@ -525,7 +538,7 @@ function handleGoogleLogin(data) {
     return respuestaJSON({ status: "error", mensaje: "No se recibió el token de Google (googleToken)" });
   }
   
-  // 1. Validar el token de Google y buscar usuario.
+  // 1. Validar el token de Google y buscar usuario (función que YA TENÍAS)
   const infoUsuarioGoogle = verificarTokenYAutorizar(googleToken);
   
   if (!infoUsuarioGoogle.autorizado) {
@@ -536,16 +549,20 @@ function handleGoogleLogin(data) {
   // 2. Si es válido, generar nuestro propio token de sesión
   const tokenPropio = generarTokenPropio(infoUsuarioGoogle);
 
+  // ✅ LOG POSITIVO: Registrar solamente el correo
+  // registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo);
+
   registrarLog("LOGIN_EXITOSO", infoUsuarioGoogle.correo, {
     rol: infoUsuarioGoogle.rol,
     nombre: infoUsuarioGoogle.nombre,
   });
+
  
   // 3. Devolver el token propio y la info del usuario al cliente
   return respuestaJSON({
     status: "ok",
-    token: tokenPropio,
-    user: {  
+    token: tokenPropio, // 👈 Nuestro token
+    user: {            // 👈 Info del usuario para el AuthContext
       correo: infoUsuarioGoogle.correo,
       nombre: infoUsuarioGoogle.nombre,
       picture: infoUsuarioGoogle.picture,
@@ -622,7 +639,10 @@ function generarBackupZIP(usuario) {
     };
 
   } catch (err) {
-    return { status: "error", mensaje: "❌ Error al generar backup: " + err.message };
+    return { 
+      status: "error", 
+      mensaje: "❌ Error al generar backup: " + err.message 
+    };
   }
 }
 /******************************
@@ -642,9 +662,9 @@ function obtenerOCrearCarpetaRaiz() {
                             .toUpperCase();
                             
   nombreCarpeta = `${CARPETA_PRINCIPAL}_${prefijoUsuario}`.trim();
-
+  
   Logger.log("Buscando carpeta: '" + nombreCarpeta + "'");
-   
+  
   // 2. Buscar en la raíz
   const carpetas = root.getFoldersByName(nombreCarpeta);
   let carpetaDestino;
@@ -668,9 +688,9 @@ function crearArchivoJSONSiNoExiste(carpeta, nombreArchivo, contenidoInicial) {
   const archivos = carpeta.getFilesByName(nombreArchivo);
   if (!archivos.hasNext()) {
     carpeta.createFile(nombreArchivo, JSON.stringify(contenidoInicial, null, 2), MimeType.PLAIN_TEXT);
-    Logger.log(`📄 Archivo creado: ${nombreArchivo}`); // funcion auxiliar de inicializar sistema
+    Logger.log(`📄 Archivo creado: ${nombreArchivo}`);
   } else {
-    Logger.log(`ℹ️ Archivo ya existe: ${nombreArchivo}`); // funcion auxiliar de inicializar sistema
+    Logger.log(`ℹ️ Archivo ya existe: ${nombreArchivo}`);
   }
 }
 function guardarJSON(nombreArchivo, contenido) {
@@ -683,10 +703,11 @@ function guardarJSON(nombreArchivo, contenido) {
 
     if (!archivos.hasNext()) {
       throw new Error(`Archivo no encontrado: ${nombreArchivo}`);
-    }
+    };
 
     const archivo = archivos.next();
     archivo.setContent(JSON.stringify(contenido, null, 2));
+
     return true;
 
   } catch (err) {
@@ -798,9 +819,9 @@ function verificarYEliminarArchivoDrive(fileId, nombreArchivo, anio, bddatos, co
 
       return { borrado: true, motivo: `Limpieza completada para el año ${anio}.` };
 
-    } catch (e) {
-      registrarLog("error_limpieza_drive", correoEjecutor, { fileId, anio, error: e.message });
-      return { borrado: false, motivo: "Error en Drive: " + e.message };
+    } catch (err) {
+      registrarLog("error_limpieza_drive", correoEjecutor, { fileId, anio, error: err.message });
+      return { borrado: false, motivo: "Error en Drive: " + err.message };
     }
   }
 
@@ -816,6 +837,7 @@ function validarArchivo(archivoBlob, config) {
   if (tamanoMB > config.TAMANO_MAX_MB) {
     return { ok: false, mensaje: `❌ Tamaño máximo permitido: ${config.TAMANO_MAX_MB} MB` };
   }
+
   return { ok: true, extension };
 }
 function guardarArchivoEnDrive(archivoBlob, anio, subcarpeta, usarExistente) {
@@ -862,9 +884,9 @@ function capturarPayload(e, isMultipart) {
       postData: e.postData ? e.postData.contents : null,
       isMultipart: !!isMultipart
     };
-  } catch (error) {
+  } catch (err) {
     // Si falla la captura, devolvemos un objeto para que el caller lo maneje
-    throw new Error('Error al capturar payload: ' + error.message);
+    throw new Error('Error al capturar payload: ' + err.message);
   }
 }
 function obtenerPayloadArchivo(e, isMultipart, camposEsperados) {
@@ -887,11 +909,12 @@ function obtenerPayloadArchivo(e, isMultipart, camposEsperados) {
       payload[campo] = data[campo] || "";
     });
   }
+
   return payload;
 }
 function registrarLog(accion, usuario, detalle) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // hasta 30s esperando
+  lock.waitLock(30000);
 
   try {
     let logs = leerJSON(JSON_LOGS);
@@ -899,13 +922,13 @@ function registrarLog(accion, usuario, detalle) {
       // fecha: new Date().toISOString(),
       fecha: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss"),
       accion,
-      usuario: usuario || "desconocido",
+      usuario: usuario || "sistema",
       detalle: detalle || {}
     };
     logs.push(nuevoLog);
     guardarJSON(JSON_LOGS, logs);
 
-    return nuevoLog; 
+    return nuevoLog;
 
   } finally {
     lock.releaseLock();
@@ -921,10 +944,10 @@ function limpiarCarpetas() {
   const carpetaPrincipal = DriveApp.getFolderById(config.CARPETA_PRINCIPAL_ID);
   const subcarpetas = carpetaPrincipal.getFolders();
 
-  // 🗑️ Borrar solo subcarpetas
   while (subcarpetas.hasNext()) {
     subcarpetas.next().setTrashed(true);
   }
+
   return { mensaje: "🗑️ Carpetas borradas correctamente" };
 }
 /******************************
@@ -963,12 +986,13 @@ function doGet(e) {
     
     // --- 3. SWITCH DE ACCIONES ---
     switch (accion) {
+
       case "ping":
-        // 1. Si llegó aquí, el token es válido.
-        // 2. Generar un NUEVO token de sesión con 8 horas más de vida
+        
+        // Generar un NUEVO token de sesión con 8 horas más de vida
         const nuevoTokenPropio = generarTokenPropio(usuario);
         
-        // 3. Devolver el nuevo token y los datos de usuario
+        // Devolver el nuevo token y los datos de usuario
         return respuestaJSON({
           status: "ok",
           mensaje: "Token de sesión renovado",
@@ -1027,7 +1051,7 @@ function doPost(e) {
     let data = {};
     const isMultipart = e.files && Object.keys(e.files).length > 0;
 
-    // --- 1. PARSEO DE REQUEST
+    // --- 1. PARSEO DE REQUEST (Sin cambios) ---
     if (isMultipart) {
       accion = e.parameter.accion || "";
       data = e.parameter; 
@@ -1073,8 +1097,8 @@ function doPost(e) {
       });
     }
 
-    // --- 2. AUTENTICACIÓN Y AUTORIZACIÓN
-    let usuario; 
+    // --- 2. AUTENTICACIÓN Y AUTORIZACIÓN (NUEVO) ---
+    let usuario; // Variable para guardar el usuario validado
 
     // La acción 'googleLogin' es pública (no requiere token previo)
     // Todas las demás acciones SÍ requieren un token propio
@@ -1089,7 +1113,7 @@ function doPost(e) {
         });
       }
 
-      usuario = verificarTokenPropio(token);
+      usuario = verificarTokenPropio(token); // 👈 USA EL NUEVO VALIDADOR
 
       if (!usuario.autorizado) {
         return respuestaJSON({
@@ -1100,7 +1124,7 @@ function doPost(e) {
         });
       }
 
-      // Validar permisos
+      // Validar permisos (como antes, pero con el 'usuario' del token)
       if (!validarPermiso(usuario, accion)) {
         return respuestaJSON({
           autorizado: false,
@@ -1112,6 +1136,7 @@ function doPost(e) {
     }
 
     // --- 3. SWITCH DE ACCIONES ---
+    // Ahora 'usuario' está disponible para todas las funciones que lo necesiten
     switch (accion) {
       case "googleLogin":
         return handleGoogleLogin(data);
@@ -1330,6 +1355,7 @@ function agregarRol(data, usuario) {
 
   try {
     const roles = leerJSON(JSON_ROLES) || [];
+    // const nuevoRol = normalizarTexto(data?.rol || "").trim();
     const nuevoRol = data?.rol;
     const permisosIniciales = Array.isArray(data?.permisos)
       ? data.permisos
@@ -1380,15 +1406,15 @@ function actualizarRol(data, usuario) {
   try {
     const roles = leerJSON(JSON_ROLES) || [];
     const { rol, permisos } = data;
-    
-    if (!rol)
+
+    if (!rol) {
       return respuestaJSON({
         status: "error",
         mensaje: "⚠️ El nombre del rol es obligatorio.",
       });
+    }
 
-    const index = roles.findIndex((r) => r.rol.toLowerCase() === rol.toLowerCase());
-
+    const index = roles.findIndex((r) => r.rol === rol);
     if (index === -1)
       return respuestaJSON({
         status: "error",
@@ -1396,14 +1422,11 @@ function actualizarRol(data, usuario) {
       });
 
     // El rol administrador conserva permisos totales
-    const nombreRolEncontrado = roles[index].rol.toLowerCase();
-    // El rol administrador conserva permisos totales
-    if (nombreRolEncontrado === "administrador") {
+    if (rol === "administrador") {
       roles[index].permisos = ["*"];
     } else {
       roles[index].permisos = Array.isArray(permisos) ? permisos : [];
     }
-
 
     guardarJSON(JSON_ROLES, roles);
 
@@ -1433,14 +1456,14 @@ function eliminarRol(data, usuario) {
 
   try {
     const { rol } = data;
-
+    
     if (!rol)
       return respuestaJSON({
         status: "error",
         mensaje: "El nombre del rol es obligatorio",
       });
 
-    if (rol.toLowerCase() === "administrador")
+    if (rol === "administrador")
       return respuestaJSON({
         status: "error",
         mensaje: "⚠️ No se puede eliminar el rol administrador.",
@@ -1450,15 +1473,14 @@ function eliminarRol(data, usuario) {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
 
     // Verificar si el rol está asignado a algún usuario
-    const enUso = usuarios.some((u) => u.rol && u.rol.toLowerCase() === rol.toLowerCase());
+    const enUso = usuarios.some((u) => u.rol === rol);
     if (enUso)
       return respuestaJSON({
         status: "error",
         mensaje: `⚠️ No se puede eliminar el rol "${rol}" porque tiene usuarios asignados.`,
       });
 
-    const nuevosRoles = roles.filter((r) => r.rol.toLowerCase() !== rol.toLowerCase());
-
+    const nuevosRoles = roles.filter((r) => r.rol !== rol);
     guardarJSON(JSON_ROLES, nuevosRoles);
 
     registrarLog("eliminarRol", correoEjecutor, `Rol eliminado: ${rol}`);
@@ -1539,8 +1561,8 @@ function agregarUsuario(data, usuario) {
         'type': 'user',
         'emailAddress': correo
       }, carpetaId, { 'sendNotificationEmail': false });
-    } catch (e) {
-      const errorMsg = e.message.toLowerCase();
+    } catch (err) {
+      const errorMsg = err.message.toLowerCase();
 
       if (errorMsg.includes("no tiene una cuenta de google") || 
           errorMsg.includes("does not have a google account")) {
@@ -1550,33 +1572,39 @@ function agregarUsuario(data, usuario) {
         });
       }
 
-      throw new Error("Error al asignar carpeta: " + e.message);
+      throw new Error("Error al asignar carpeta: " + err.message);
 
     }
 
     // 2️⃣ TIEMPO DE ESPERA (Crucial para propagación de permisos)
-    Utilities.sleep(5000);
+    Utilities.sleep(5000); // Aumentamos a 2 segundos por seguridad
 
     // 3️⃣ PROTECCIÓN: Quitar acceso a los JSON
+
     ARCHIVOS_PROTEGIDOS.forEach(nombreArchivo => {
       const archivos = carpeta.getFilesByName(nombreArchivo);
-      while (archivos.hasNext()) { 
+      while (archivos.hasNext()) { // Usamos while por si hay duplicados
         const archivo = archivos.next();
         const archivoId = archivo.getId();
         
         try {
+          // MÉTODO DEFINITIVO: 
+          // Intentamos remover al usuario usando DriveApp (más sencillo para 'readers')
+          // Si no funciona, usamos el borrado por lista de permisos.
           archivo.removeViewer(correo); 
+          
+          // Refuerzo con API Avanzada
           const permissions = Drive.Permissions.list(archivoId).permissions;
           permissions.forEach(p => {
             if (p.emailAddress?.toLowerCase() === correo.toLowerCase()) {
               Drive.Permissions.delete(archivoId, p.id);
             }
           });
-        } catch (e) {
+        } catch (err) {
           return respuestaJSON({ 
             status: "error", 
             mensaje: `❌ Error de seguridad: No se pudo restringir el acceso al archivo "${nombreArchivo}".`,
-            detalle: e.message 
+            detalle: err.message 
           });
 
         }
@@ -1598,13 +1626,11 @@ function agregarUsuario(data, usuario) {
 
   } catch (err) {
     manejarError(err, "agregarUsuario", correoEjecutor);
-
     return respuestaJSON({ 
       status: "error", 
       mensaje: "❌ Error al crear el usuario.", 
       detalle: err.message || String(err),
     });
-
   } finally {
     lock.releaseLock();
   }
@@ -1619,8 +1645,7 @@ function actualizarUsuario(data, usuario) {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
     const { correo, nombre, rol } = data;
 
-    const index = usuarios.findIndex((u) => u.correo.toLowerCase() === correo.toLowerCase());
-
+    const index = usuarios.findIndex((u) => u.correo === correo);
     if (index === -1)
       return respuestaJSON({
         status: "error",
@@ -1679,6 +1704,7 @@ function toggleUsuarioActivo(data, usuario) {
     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
 
     if (activo === true) {
+      // --- LÓGICA DE ACTIVACIÓN ---
       try {
         // Intentar crear con v3, si falla intentar v2
         try {
@@ -1687,7 +1713,7 @@ function toggleUsuarioActivo(data, usuario) {
             'type': 'user',
             'emailAddress': correo
           }, carpetaId, { 'sendNotificationEmail': false });
-        } catch(e) {
+        } catch(err) {
           Drive.Permissions.insert({
             'role': 'reader',
             'type': 'user',
@@ -1695,8 +1721,8 @@ function toggleUsuarioActivo(data, usuario) {
           }, carpetaId, { 'sendNotificationEmail': false });
         }
         driveStatus = "Permisos activados.";
-      } catch (e) {
-        driveStatus = "Ya tenía permisos o error: " + e.message;
+      } catch (err) {
+        driveStatus = "Ya tenía permisos o error: " + err.message;
       }
 
       Utilities.sleep(5000);
@@ -1708,15 +1734,20 @@ function toggleUsuarioActivo(data, usuario) {
         const file = carpeta.getFilesByName(n);
         if (file.hasNext()) {
           const f = file.next();
-          try { f.removeViewer(correo); } catch(e){}
+          try { 
+            f.removeViewer(correo); 
+          } 
+          catch (err){
+
+          }
         }
         archivosOcultados++;
       });
-      // driveStatus += " Archivos protegidos.";
+
       driveStatus += ` Se protegieron ${archivosOcultados} archivos.`;
 
     } else {
-
+      // --- LÓGICA DE DESACTIVACIÓN (Corrección de .delete vs .remove) ---
       try {
         // Intentamos listar los permisos (v2 usa 'items', v3 usa 'permissions')
         const response = Drive.Permissions.list(carpetaId);
@@ -1743,8 +1774,8 @@ function toggleUsuarioActivo(data, usuario) {
           carpeta.removeEditor(correo);
           driveStatus = "Revocado mediante DriveApp.";
         }
-      } catch (e) {
-        driveStatus = "Error crítico al revocar: " + e.message;
+      } catch (err) {
+        driveStatus = "Error crítico al revocar: " + err.message;
       }
     }
 
@@ -1781,15 +1812,14 @@ function eliminarUsuario(data, usuario) {
   try {
     const usuarios = leerJSON(JSON_USUARIOS) || [];
     const { correo } = data;
-    let avisoDrive = null;
-
+    
     // 1️⃣ Validaciones previas
-    if (!correo) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ Debe especificar el correo." });
-    }
-
     if (correo?.toLowerCase() === correoEjecutor.toLowerCase()) {
       return respuestaJSON({ status: "error", mensaje: "⚠️ No puedes eliminar tu propio usuario" });
+    }
+
+    if (!correo) {
+      return respuestaJSON({ status: "error", mensaje: "⚠️ Debe especificar el correo." });
     }
 
     const usuarioAEliminar = usuarios.find((u) => u.correo.toLowerCase() === correo.toLowerCase());
@@ -1797,7 +1827,7 @@ function eliminarUsuario(data, usuario) {
       return respuestaJSON({ status: "error", mensaje: `⚠️ No se encontró el usuario "${correo}".` });
     }
 
-    if (usuarioAEliminar.rol.toLowerCase() === "administrador") {
+    if (usuarioAEliminar.rol === "administrador") {
       return respuestaJSON({ status: "error", mensaje: "🚫 No se puede eliminar administradores." });
     }
 
@@ -1806,50 +1836,41 @@ function eliminarUsuario(data, usuario) {
     const carpetaId = config?.CARPETA_PRINCIPAL_ID;
 
     if (!carpetaId) {
-      throw new Error("No se pudo obtener el ID de la carpeta principal.");
+      throw new Error("No se pudo obtener el ID de la carpeta principal desde la configuración.");
     }
 
     // 3️⃣ ELIMINAR PERMISOS EN DRIVE (Lógica Robusta v3)
     try {
       // Listamos los permisos de la carpeta para encontrar el ID del permiso del usuario
       const response = Drive.Permissions.list(carpetaId);
-      const permissions = response.permissions || [];
+      const permissions = response.permissions;
 
       const permiso = permissions.find(p => p.emailAddress?.toLowerCase() === correo.toLowerCase());
 
       if (permiso) {
         // Eliminamos el permiso específico
         Drive.Permissions.delete(carpetaId, permiso.id);
+        console.log(`✅ Permiso revocado en Drive para: ${correo}`);
       } else {
-        // Si no está en la lista de la API avanzada, intentamos removerlo con DriveApp
-        try {
-          const carpeta = DriveApp.getFolderById(carpetaId);
-          carpeta.removeViewer(correo);
-          carpeta.removeEditor(correo);
-        } catch (e) {
-          // No hacemos nada, el usuario simplemente no tiene permisos
-        }
-
+        // Si no aparece en la lista, intentamos el método tradicional por si acaso
+        const carpeta = DriveApp.getFolderById(carpetaId);
+        carpeta.removeViewer(correo);
+        carpeta.removeEditor(correo);
       }
-    } catch (e) {
-      if (e.message.indexOf("No such user") === -1 && e.message.indexOf("not found") === -1) {
-        avisoDrive = `Aviso en Drive: ${e.message}`;
-      }
-      
+    } catch (err) {
+      // Registramos el error pero no detenemos la eliminación del JSON
+      console.warn(`Aviso al quitar permisos de Drive: ${err.message}`);
     }
 
     // 4️⃣ Actualizar base de datos JSON
     const nuevosUsuarios = usuarios.filter((u) => u.correo.toLowerCase() !== correo.toLowerCase());
-
     guardarJSON(JSON_USUARIOS, nuevosUsuarios);
 
-    const detalleLog = avisoDrive ? `Usuario eliminado con aviso: ${correo}. (${avisoDrive})` : `Usuario eliminado: ${correo}`;
-
-    registrarLog("eliminarUsuario", correoEjecutor, detalleLog);
+    registrarLog("eliminarUsuario", correoEjecutor, `Usuario eliminado: ${correo}`);
     
     return respuestaJSON({
-      status: avisoDrive ? "warning" : "ok",
-      mensaje: avisoDrive || `🗑️ Usuario "${correo}" eliminado y permisos de carpeta revocados.`,
+      status: "ok",
+      mensaje: `🗑️ Usuario "${correo}" eliminado y permisos de carpeta revocados.`,
       datos: nuevosUsuarios,
     });
 
@@ -1879,15 +1900,7 @@ function agregarProducto(data, usuario) {
     let listaProductos = data.productos || [data];
 
     listaProductos.forEach(p => {
-
-      // 1️⃣ Validación: Evitar campos vacíos críticos
-      if (!p.nombre) {
-        resultados.push({ status: "error", mensaje: "⚠️ El nombre del producto es obligatorio." });
-        return;
-      }
-
       const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(p.nombre));
-
       if (yaExiste) {
         resultados.push({ nombre: p.nombre, status: "error", mensaje: "⚠️ Ya existe este producto" });
         return;
@@ -1901,24 +1914,18 @@ function agregarProducto(data, usuario) {
         tipo: p.tipo || ""
       };
       productos.push(nuevoProd);
-
-      registrarLog("agregarProducto", correoEjecutor, { producto: nuevoProd });
-
       resultados.push({ nombre: p.nombre, status: "ok", mensaje: "Producto agregado", id: nuevoProd.id });
 
+      registrarLog("agregarProducto", correoEjecutor, { producto: nuevoProd });
     });
 
-    const huboCambios = resultados.some(r => r.status === "ok");
-
-    if (huboCambios) {
-      guardarJSON(JSON_PRODUCTOS, productos);
-    }
+    guardarJSON(JSON_PRODUCTOS, productos);
 
     return respuestaJSON({ 
       status: "ok", 
       resultados,
       datos: productos
-      });
+    });
 
   } catch (err) {
     manejarError(err, "agregarProducto", correoEjecutor);
@@ -1928,7 +1935,6 @@ function agregarProducto(data, usuario) {
       mensaje: "❌ Error interno al procesar los productos.",
       detalle: err.message || String(err)
     });
-
   } finally {
     lock.releaseLock();
   }
@@ -1941,7 +1947,7 @@ function actualizarProducto(data, usuario) {
 
   try {
     let productos = leerJSON(JSON_PRODUCTOS) || [];
-
+    
     const { id, nombre, descripcion, entidad, tipo } = data;
 
     if (!id) {
@@ -2013,40 +2019,29 @@ function eliminarProducto(id, usuario) {
   try {
     let productos = leerJSON(JSON_PRODUCTOS);
 
-    if (!id) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ El ID del producto es necesario." });
-    }
-
     const eliminado = productos.find(p => p.id === id);
 
-    if (!eliminado) {
-      return respuestaJSON({ status: "error", mensaje: "⚠️ El producto no existe o ya fue eliminado." });
-    }
-
-    const nuevos = productos.filter(p => p.id !== id);
-
+    let nuevos = productos.filter(p => p.id !== id);
     guardarJSON(JSON_PRODUCTOS, nuevos);
 
     // ✅ Registrar log
     registrarLog("eliminarProducto", correoEjecutor, {
       productoEliminado: eliminado || id
     });
-
     return respuestaJSON({ 
       status: "ok", 
       mensaje: "Producto eliminado", 
       productos: nuevos 
     });
 
-    } catch (err) {
-      // Registro centralizado del error
-      manejarError(err, "eliminarProducto", correoEjecutor);
-      
-      return respuestaJSON({
-        status: "error",
-        mensaje: "❌ Error al intentar eliminar el producto.",
-        detalle: err.message || String(err)
-      });
+  } catch (err) {
+    manejarError(err, "eliminarProducto", correoEjecutor);
+    
+    return respuestaJSON({
+      status: "error",
+      mensaje: "❌ Error al intentar eliminar el producto.",
+      detalle: err.message || String(err)
+    });
 
   } finally {
     lock.releaseLock();
@@ -2063,7 +2058,7 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     let config = leerJSON(JSON_CONFIGURACION);
     let bddatos = leerJSON(JSON_BDD_DATOS);
     let productos = leerJSON(JSON_PRODUCTOS);
-
+   
 
     // 👀 Capturamos el payload que llegó
     const camposEsperados = ["anio", "productosId"];
@@ -2083,19 +2078,18 @@ function subirArchivoProducto(e, isMultipart, usuario) {
       });
     }
 
-    // Si viene como string separado por comas, convertir a array
     if (typeof productosId === "string") {
       productosId = productosId.split(",");
     }
 
     productosId = productosId.map(p => String(p));
 
-    // obtener nombres de los productos que se quieren subir
     // 🔎 buscar duplicados
     const nombresProductos = productos
       .filter(p => productosId.includes(String(p.id)))
       .map(p => p.nombre);
 
+    // 🔎 buscar duplicados
     const registrosExistentes = bddatos.filter(r =>
       r.anio === anio &&
       (
@@ -2131,8 +2125,8 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     if (!validacion.ok) {
       return respuestaJSON({ 
         success: false, 
-        status: "error_validacion", 
-        message: validacion.mensaje, 
+        status: "error_validacion", // Añadimos un status para identificarlo fácilmente
+        message: validacion.mensaje, // Esto traerá "❌ Tamaño máximo permitido..." o "❌ Tipo de archivo..."
         debug: debugPayload 
       });
     }
@@ -2160,14 +2154,14 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     }
 
     const file = resultadoDrive.file;
-    
+
     // --- Registrar en base de datos ---
     productosId.forEach(pid => {
       let prod = productos.find(p => p.id === pid);
       if (prod) {
         let registro = {
         registroId: "reg" + new Date().getTime() + "_" + pid,
-        fileId: file.getId(), 
+        fileId: file.getId(),       // 👈 ahora explícito
         productoId: pid,
         nombreProducto: prod.nombre,
         descripcion: prod.descripcion || "",
@@ -2183,6 +2177,7 @@ function subirArchivoProducto(e, isMultipart, usuario) {
     });
 
     guardarJSON(JSON_BDD_DATOS, bddatos);
+
 
     // ✅ Registrar log con nombres de productos
     const productosAfectados = productosId.map(pid => {
@@ -2203,10 +2198,10 @@ function subirArchivoProducto(e, isMultipart, usuario) {
       success: true,
       status: "ok",
       message: "📂 Archivo subido correctamente",
-      idArchivo: file.getId(),
-      link: file.getUrl(), 
+      idArchivo: file.getId(),          // 👈 ID en Drive
+      link: file.getUrl(),              // 👈 Enlace de Drive
       productosAsociados: productosId,
-      debug: debugPayload,
+      debug: debugPayload, // 👈 siempre devolvemos lo que entró
     });
   } catch (err) {
     manejarError(err, "subirArchivoProducto", correoEjecutor);
@@ -2216,7 +2211,7 @@ function subirArchivoProducto(e, isMultipart, usuario) {
       status: "error_interno",
       message: "⚠️ Error crítico al procesar la subida.",
       detalle: err.message || String(err),
-      stack: error.stack ? error.stack.substring(0, 500) : undefined, // útil para depuración
+      stack: err.stack ? err.stack.substring(0, 500) : undefined,
     });
 
   } finally {
@@ -2225,20 +2220,18 @@ function subirArchivoProducto(e, isMultipart, usuario) {
 }
 function subirArchivoFacturas(e, isMultipart, usuario) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+  lock.waitLock(30000); // espera hasta 30s si otro proceso lo está usando
 
   const correoEjecutor = usuario?.correo || "sistema";
 
   try {
     let config = leerJSON(JSON_CONFIGURACION);
-    let bddatos = leerJSON(JSON_BDD_FACTURAS) || [];
 
     // 👀 Capturamos el payload que llegó
     const camposEsperados = ["anio", "entidad", "descripcion", "valor", "metodoPago"];
     const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
 
     const archivoBlob = payload.archivoBlob;
-
     const anio = payload.anio;
     const entidad = payload.entidad;
     const descripcion = payload.descripcion;
@@ -2258,11 +2251,12 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     // --- Validar extensión y tamaño ---
     const validacion = validarArchivo(archivoBlob, config);
 
+    // MODIFICACIÓN AQUÍ:
     if (!validacion.ok) {
       return respuestaJSON({ 
         success: false, 
-        status: "error_validacion",
-        message: validacion.mensaje,
+        status: "error_validacion", // Añadimos un status para identificarlo fácilmente
+        message: validacion.mensaje, // Esto traerá "❌ Tamaño máximo permitido..." o "❌ Tipo de archivo..."
         debug: debugPayload 
       });
     }
@@ -2270,9 +2264,9 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     const extension = validacion.extension;
 
     // --- Guardar en Drive ---
-    const usarExistente = isMultipart 
-      ? e.parameter.usarExistente === "true" 
-      : (JSON.parse(e.postData.contents).usarExistente === true);
+     const usarExistente = isMultipart 
+        ? e.parameter.usarExistente === "true" 
+        : (JSON.parse(e.postData.contents).usarExistente === true);
 
     const resultadoDrive = guardarArchivoEnDrive(archivoBlob, anio, "facturas", usarExistente);
 
@@ -2290,16 +2284,18 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
 
     const file = resultadoDrive.file;
 
+
     // --- Registrar en base de datos ---
-    
+    let bddatos = leerJSON(JSON_BDD_FACTURAS);
+
 
     const registro = {
       registroId: "fac" + new Date().getTime() + Math.round(Math.random() * 10000),
       fileId: file.getId(),
       anio,
-      entidad: entidad || "Sin Entidad",
-      descripcion: descripcion || "",
-      valor: isNaN(Number(valor)) ? 0 : Number(valor),
+      entidad,
+      descripcion,
+      valor: Number(valor),   // 👈 convertir a número
       metodoPago,
       nombreArchivo: resultadoDrive.nuevoNombre,
       link: resultadoDrive.link,
@@ -2307,7 +2303,6 @@ function subirArchivoFacturas(e, isMultipart, usuario) {
     };
 
     bddatos.push(registro);
-
     guardarJSON(JSON_BDD_FACTURAS, bddatos);
 
     // ✅ Registrar log
@@ -2351,8 +2346,10 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
   try {
     let config = leerJSON(JSON_CONFIGURACION);
     let bddatos = leerJSON(JSON_BDD_DATOS);
+
     const camposEsperados = ["productoId", "anio", "replaceOnlyThis"];
     const payload = obtenerPayloadArchivo(e, isMultipart, camposEsperados);
+
     const archivoBlob = payload.archivoBlob;
     const productoId = payload.productoId;
     const anio = payload.anio;
@@ -2368,7 +2365,7 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
       });
     }
 
-    let registroBase = bddatos.find(r => String(r.productoId) === String(productoId) && String(r.anio) === String(anio));
+    let registroBase = bddatos.find(r => r.productoId === productoId && r.anio === anio);
 
     if (!registroBase) {
       return respuestaJSON({
@@ -2383,7 +2380,7 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
       registrosRelacionados = [registroBase];
     } else {
       registrosRelacionados = bddatos.filter(
-        r => r.fileId === registroBase.fileId && String(r.anio) === String(anio)
+        r => r.fileId === registroBase.fileId && r.anio === anio
       );
     }
 
@@ -2405,9 +2402,10 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
       });
     }
 
-    // --- Datos archivo anterior
+    // --- Datos archivo anterior (antes de actualizar) ---
     const oldFileId = registroBase.fileId;
     const oldFileName = registroBase.nombreArchivo || "(desconocido)";
+
     const usarExistente = isMultipart
       ? e.parameter.usarExistente === "true"
       : (JSON.parse(e.postData.contents).usarExistente === true);
@@ -2436,6 +2434,8 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
       r.fecha = new Date().toISOString();
     });
 
+    // --- IMPLEMENTACIÓN DE FUNCIÓN AUXILIAR ---
+    // Se pasa la variable 'bddatos' YA actualizada para que la validación sea correcta.
     const resultadoLimpieza = verificarYEliminarArchivoDrive(
       oldFileId, 
       oldFileName, 
@@ -2473,7 +2473,7 @@ function remplazarArchivoProducto(e, isMultipart, usuario) {
     });
 
   } catch (err) {
-    manejarError(err, "remplazarArchivoProducto", correoEjecutor);
+    manejarError(err, "remplazarArchivoProducto", correoEjecutor)
 
     return respuestaJSON({
       success: false,
@@ -2510,11 +2510,11 @@ function eliminarRegistroProducto(data, usuario) {
     // Guardamos los datos necesarios antes de borrar el registro de la lista
     const { fileId, nombreArchivo, anio, productoId } = datos[index];
 
-    // 3. Eliminar el registro del JSON primero (en memoria)
+    // 3. CAMBIO IMPORTANTE: Eliminar el registro del JSON primero (en memoria)
     // Esto permite que la función auxiliar vea la base de datos SIN este registro.
     datos.splice(index, 1);
 
-    // 4. Llamar a la función auxiliar para gestionar Drive de forma inteligente
+    // 4. ADICIÓN: Llamar a la función auxiliar para gestionar Drive de forma inteligente
     // Esta función borrará el ID y buscará "clones" manuales solo si nadie más los usa.
     const resultadoDrive = verificarYEliminarArchivoDrive(
       fileId, 
@@ -2618,10 +2618,11 @@ function editarRegistroProducto(data, usuario) {
       nombreProducto: data.nombreProducto ?? registroActual.nombreProducto,
       descripcion: data.descripcion ?? registroActual.descripcion,
       tipo: data.tipo ?? registroActual.tipo,
-      anio: String(data.anio ?? registroActual.anio),
+      anio: data.anio ?? registroActual.anio,
       fileId: nuevoFileId,
       link: nuevoLink
     };
+
 
     // Reemplazar en la base de datos
     datos[index] = registroEditado;
@@ -2654,13 +2655,13 @@ function editarRegistroProducto(data, usuario) {
     });
 
   } catch (err) {
-      manejarError(err, "editarRegistroProducto", correoEjecutor);
+    manejarError(err, "editarRegistroProducto", correoEjecutor);
 
-      return respuestaJSON({ 
-        status: "error", 
-        mensaje: "❌ Error crítico al editar el registro.",
-        detalle: err.message || String(err), 
-      });
+    return respuestaJSON({ 
+      status: "error", 
+      mensaje: "❌ Error crítico al editar el registro.",
+      detalle: err.message || String(err), 
+    });
   } finally {
     lock.releaseLock();
   }
@@ -2677,7 +2678,7 @@ function obtenerArchivosPorAnio(anio) {
     const prod = productos.find(p => p.id === r.productoId) || {};
     return {
       idArchivo: r.id,
-      registroId: r.registroId,
+      registroId: r.registroId,            // 👈 nuevo campo con el ID real en Drive
       productoId: r.productoId,
       nombreProducto: r.nombreProducto,
       entidad: r.entidad || "",
@@ -2715,11 +2716,11 @@ function obtenerProductos() {
       data: productos
     });
 
-  } catch (error) {
+  } catch (err) {
     return respuestaJSON({
       status: "error",
       mensaje: "Error al obtener productos",
-      detalle: error.message || "No se pudo leer el archivo JSON_PRODUCTOS"
+      detalle: err.message || "No se pudo leer el archivo JSON_PRODUCTOS"
     });
 
   } finally {
@@ -2728,6 +2729,7 @@ function obtenerProductos() {
 }
 function obtenerFacturasPorAnio(anio) {
   let data = leerJSON(JSON_BDD_FACTURAS);
+
   const filtrado = data.filter(f => String(f.anio) === String(anio));
 
   return respuestaJSON({
@@ -2744,7 +2746,6 @@ function actualizarFactura(data, usuario) {
   try {
     let bddatos = leerJSON(JSON_BDD_FACTURAS);
     const registroId = data.registroId;
-    let avisoDrive = null;
 
     if (!registroId) {
       return respuestaJSON({ status: "error", mensaje: "❌ Se requiere el registroId." });
@@ -2790,7 +2791,7 @@ function actualizarFactura(data, usuario) {
         }
       }
     } catch (err) {
-      avisoDrive = `No se pudo re-vincular el archivo en Drive: ${err.message}`;
+      // Si hay error en Drive, mantenemos lo que tenemos
     }
 
     // 3. Actualizar campos en el objeto
@@ -2798,7 +2799,7 @@ function actualizarFactura(data, usuario) {
       ...registroActual,
       entidad: data.entidad ?? registroActual.entidad,
       descripcion: data.descripcion ?? registroActual.descripcion,
-      valor: data.valor !== undefined ? (isNaN(Number(data.valor)) ? 0 : Number(data.valor)) : registroActual.valor,
+      valor: data.valor !== undefined ? Number(data.valor) : registroActual.valor,
       metodoPago: data.metodoPago ?? registroActual.metodoPago,
       fileId: nuevoFileId,
       link: nuevoLink
@@ -2811,8 +2812,7 @@ function actualizarFactura(data, usuario) {
     let infoLog = {
       registroId,
       antes: registroActual,
-      despues: registroEditado,
-      avisoDrive: avisoDrive
+      despues: registroEditado
     };
 
     if (huboCambioDeArchivo) {
@@ -2826,10 +2826,10 @@ function actualizarFactura(data, usuario) {
     registrarLog("actualizarFactura", correoEjecutor, infoLog);
 
     return respuestaJSON({
-      status: avisoDrive ? "warning" : "ok",
-      mensaje: avisoDrive || (huboCambioDeArchivo
+      status: "ok",
+      mensaje: huboCambioDeArchivo 
         ? "✅ Factura y link actualizados correctamente." 
-        : "✅ Factura actualizada correctamente."),
+        : "✅ Factura actualizada correctamente.",
       datos: registroEditado
     });
 
@@ -2841,7 +2841,6 @@ function actualizarFactura(data, usuario) {
       mensaje: "❌ Error crítico al actualizar la factura.",
       detalle: err.message || String(err), 
     });
-
   } finally {
     lock.releaseLock();
   }
@@ -2855,7 +2854,6 @@ function eliminarFactura(data, usuario) {
   try {
     let bddatos = leerJSON(JSON_BDD_FACTURAS);
     const { registroId } = data;
-    let avisoDrive = null;
 
     if (!registroId) {
       return respuestaJSON({
@@ -2874,26 +2872,21 @@ function eliminarFactura(data, usuario) {
 
     // --- 1. Eliminar archivo en Drive ---
     try {
-      if (factura.fileId) {
-        const archivo = DriveApp.getFileById(factura.fileId);
-        archivo.setTrashed(true);
-      }
-    } catch (err) {
-      avisoDrive = `El registro se eliminó, pero no se pudo borrar el archivo en Drive: ${err.message}`;
+      const archivo = DriveApp.getFileById(factura.fileId);
+      archivo.setTrashed(true);
+    } catch (_) {
+      // Si no existe, no se cae
     }
 
     // --- 2. Eliminar registro ---
     const nuevos = bddatos.filter(f => f.registroId !== registroId);
     guardarJSON(JSON_BDD_FACTURAS, nuevos);
 
-    registrarLog("eliminarFactura", correoEjecutor, { 
-      registroId,
-      avisoDrive: avisoDrive
-    });
+    registrarLog("eliminarFactura", correoEjecutor, { registroId });
 
     return respuestaJSON({
-      status: avisoDrive ? "warning" : "ok",
-      mensaje: avisoDrive || "🗑️ Factura eliminada correctamente.",
+      status: "ok",
+      mensaje: "🗑️ Factura eliminada correctamente.",
       datos: factura
     });
 
@@ -2963,7 +2956,7 @@ function actualizarDatosTributarios(data, usuario) {
   lock.waitLock(30000);
 
   const correoEjecutor = usuario?.correo || "sistema";
-
+  
   try {
     // 1. Normalización de datos recibidos
     let nuevosDatos = data;
@@ -2989,14 +2982,14 @@ function actualizarDatosTributarios(data, usuario) {
 
     // --- Detectar Agregados y Modificados ---
     nuevosDatos.forEach(nuevo => {
-      const anterior = datosActuales.find(old => String(old.id) === String(nuevo.id));
+      const anterior = datosActuales.find(old => old.id === nuevo.id);
       
       if (!anterior) {
         // No existía el ID: Es nuevo
         cambios.agregados.push({ id: nuevo.id, label: nuevo.label, valor: nuevo.valor });
       } else {
         // Existía: Comparamos si cambió el valor o el label
-        if (String(anterior.valor) !== String(nuevo.valor) || anterior.label !== nuevo.label) {
+        if (anterior.valor !== nuevo.valor || anterior.label !== nuevo.label) {
           cambios.modificados.push({
             campo: nuevo.label || nuevo.id,
             de: anterior.valor,
@@ -3008,7 +3001,7 @@ function actualizarDatosTributarios(data, usuario) {
 
     // --- Detectar Eliminados ---
     datosActuales.forEach(anterior => {
-      const existeEnNuevos = nuevosDatos.some(n => String(n.id) === String(anterior.id));
+      const existeEnNuevos = nuevosDatos.find(n => n.id === anterior.id);
       if (!existeEnNuevos) {
         // Estaba antes pero ya no: Fue eliminado
         cambios.eliminados.push({ id: anterior.id, label: anterior.label });
@@ -3073,12 +3066,12 @@ function obtenerLogs() {
       logs: logsOrdenados
     });
 
-  } catch (error) {
+  } catch (err) {
     // 🚨 Si hubo un problema al leer el archivo
     return respuestaJSON({
       status: "error",
       mensaje: "Error al obtener logs",
-      detalle: error.message || "No se pudo leer el archivo de logs"
+      detalle: err.message || "No se pudo leer el archivo de logs"
     });
 
   } finally {
@@ -3127,7 +3120,7 @@ function limpiarLogsAntiguos(usuario) {
       status: "error",
       mensaje: "❌ Falló el mantenimiento de logs.",
       detalle: err.message || String(err),
-    });
+    })
   } finally {
     lock.releaseLock();
   }
