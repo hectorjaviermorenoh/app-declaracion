@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import LoadingOverlay from "../../LoadingOverlay/LoadingOverlay";
 import "./ReinitModal.scss";
 
 export default function ReinitModal({ show, onHide, onConfirm, loading }) {
@@ -39,7 +40,9 @@ export default function ReinitModal({ show, onHide, onConfirm, loading }) {
             className="mt-2 modal-reinit-checkbox"
           />
         </Form>
+        <LoadingOverlay show={loading} />
       </Modal.Body>
+
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>Cancelar</Button>
         <Button
