@@ -684,6 +684,21 @@ function obtenerOCrearCarpetaEn(carpetaPadre, nombre) {
   let carpetas = carpetaPadre.getFoldersByName(nombre);
   return carpetas.hasNext() ? carpetas.next() : carpetaPadre.createFolder(nombre);
 }
+function obtenerCarpeta(anio) {
+  if (!anio) return null;
+
+  // 1. Primero obtenemos la carpeta raíz de la aplicación (ej. APP_HECT)
+  const carpetaRaizApp = obtenerOCrearCarpetaRaiz();
+
+  // 2. Buscamos la carpeta del año dentro de esa carpeta raíz
+  const carpetasAnio = carpetaRaizApp.getFoldersByName(anio.toString());
+
+  if (carpetasAnio.hasNext()) {
+    return carpetasAnio.next();
+  }
+
+  return null; // Si no existe la carpeta del año, no hay nada que limpiar
+}
 function crearArchivoJSONSiNoExiste(carpeta, nombreArchivo, contenidoInicial) {
   const archivos = carpeta.getFilesByName(nombreArchivo);
   if (!archivos.hasNext()) {
