@@ -1917,7 +1917,7 @@ function agregarProducto(data, usuario) {
     listaProductos.forEach(p => {
       const yaExiste = productos.some(u => normalizarTexto(u.nombre) === normalizarTexto(p.nombre));
       if (yaExiste) {
-        resultados.push({ nombre: p.nombre, status: "error", mensaje: "⚠️ Ya existe este producto" });
+        resultados.push({ nombre: p.nombre, status: "warning", mensaje: "⚠️ Ya existe este producto" });
         return;
       }
 

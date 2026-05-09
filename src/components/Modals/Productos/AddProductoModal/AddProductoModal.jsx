@@ -81,7 +81,11 @@ function AddProductoModal({ show, onHide, productoAEditar }) {
         setToastVariant("success");
         setToastMsg(response.mensaje);
         setShowToast(true);
-        onHide(); // Esto cerrará el modal y llamará a setSelectedProducto(null)
+        onHide();
+      } else if (response.ok === false && response.mensaje.includes("Ya existe")) {
+        setToastVariant("warning");
+        setToastMsg(response.mensaje);
+        setShowToast(true);
       } else {
         throw new Error(response.mensaje || "Error en la operación");
       }

@@ -133,9 +133,18 @@ export function ProductosProvider({ children }) {
           tipo,
         });
 
-        if (data.status === "ok") {
+        const resultado = data.resultados[0];
+
+        if (resultado.status === "ok") {
           await refreshProductos();
           return { ok: true, mensaje: "✅ Producto agregado con éxito", data };
+        } else if (resultado.status === "warning") {
+          return {
+              ok: false,
+              mensaje: resultado.mensaje || "⚠️ Ya existe este producto",
+              data
+          };
+
         }
 
         return {
